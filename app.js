@@ -36,8 +36,10 @@ app.use(bodyParser.json());
 var database;
 // 데이터베이스 스키마 객체를 위한 변수 선언
 var UserSchema;
+var UserSchema2;
 // 데이터베이스 모델 객체를 위한 변수 선언
 var UserModel;
+var UserModel2;
 
 //데이터베이스에 연결
 function connectDB() {
@@ -58,7 +60,7 @@ function connectDB() {
 
     // 스키마 정의 - 몽구스는 각각 다른 스키마를 다루기 가능 (관계db와 차이점)
     // 스키마 정의 (속성: type, required, unique)
-    UserSchema = mongoose.Schema({
+    UserSchema = mongoose.Schema({ // 사용자정보
       id: {type:String, required:true, unique:true, 'default':''}, // 아이디
       password: {type:String,required:true}, 'default':'', // 비번
       salt:{type:String,required:true},
@@ -68,6 +70,16 @@ function connectDB() {
       created_at:{type:Date, index:{unique:false},'default':Date.now} // 가입일
     });
     console.log('UserSchema 정의함');
+
+    UserSchema2 = mongoose.Schema({ // 감상결과
+      userid: {type:String, required:true, unique:true, 'default':''},// 사용자 아이디
+      movieID: {type:String, required:true, unique:true, 'default':''},
+      title: {type:String, required:true, 'default':''},
+      poster: {type:String, required:true},
+      genres: {type:Number, required:true},
+      emotion: {type:String, required:true},
+      highlight: {type:String, required:true}
+    });
 
     UserSchema
       .virtual('password')
@@ -119,6 +131,9 @@ function connectDB() {
      // UserModel 모델 정의
      UserModel = mongoose.model("users", UserSchema); // users2 콜렉션
      console.log('UserModel 정의함');
+
+     UserModel2 = mongoose.model("watchResult", UserSchema2);
+    
   });
 
   // 연결 끊어졌을 때 5초 후 재연결
@@ -197,6 +212,54 @@ router.route('/process/login').post(function(req, res){
       res.end();
   }
 });
+
+// 감상목록
+router.route('/watchlist').post(function(req, res) {
+  console.log('/watchlist(감상결과 목록 처리) 라우팅 함수 호출');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+
+  if(database) {
+      UserModel2.findById(paramId, function(err, results) {
+        if (err) {
+          callback(err, null);
+          return;
+        }
+
+        console.log(paramId + '의 감상결과 리스트 가져오기');
+
+        if(results.length>0) {
+          var resultArray = new Array(results.length);
+          console.log('감상결과 목록 존재');
+          for(var i=0;i<results.length;i++) {
+            resultArray[i].push([results.title, results.poster]);
+          }
+        }
+
+        res.status(200).send(resultArray); // 감상결과 목록 보내기
+      });
+  }
+});
+
+// 로그아웃
+router.get('/logout', async function (req, res, next) {
+  var session = req.session;
+  try {
+      if (session.user) { //세션정보가 존재하는 경우
+          await req.session.destroy(function (err) {
+              if (err)
+                  console.log(err)
+              else {
+                res.redirect('/');
+              }
+          })
+      }
+  }
+  catch (e) {
+    console.log(e)
+  }
+  res.redirect('/');
+})
 
 var authUser = function(db, id, password, callback) {
   console.log('authUser 호출됨' + id + ', ' + password);

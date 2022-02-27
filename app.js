@@ -9,6 +9,12 @@ var static = require("serve-static");
 var cookieParser = require('cookie-parser');
 var expressSession = require('express-session');
 
+// Mail 모듈
+var nodemailer = require("nodemailer");
+
+// 암호화 모듈
+var crypto = require("crypto");
+
 //===== mongoose 모듈 사용 =====//
 var mongoose = require("mongoose");
 
@@ -36,15 +42,15 @@ app.use(bodyParser.json());
 var database;
 // 데이터베이스 스키마 객체를 위한 변수 선언
 var UserSchema;
-var UserSchema2;
+var UserSchema2;  // 감상결과/기록 스키마
 // 데이터베이스 모델 객체를 위한 변수 선언
 var UserModel;
-var UserModel2;
+var UserModel2; // 감상결과/기록 모델
 
 //데이터베이스에 연결
 function connectDB() {
   // 데이터베이스 연결 정보
-  var databaseUrl = "mongodb://localhost:27017/local";
+  var databaseUrl = "mongodb://127.0.0.1:27017/local";
 
   // 데이터베이스 연결
   console.log("데이터베이스 연결을 시도합니다.");
@@ -62,32 +68,25 @@ function connectDB() {
     // 스키마 정의 (속성: type, required, unique)
     UserSchema = mongoose.Schema({ // 사용자정보
       id: {type:String, required:true, unique:true, 'default':''}, // 아이디
-      password: {type:String,required:true}, 'default':'', // 비번
-      salt:{type:String,required:true},
+      password: {type:String, required:true}, 'default':'', // 비번
       name:{type:String, required:'hashed','default':''}, // 닉네임
-      genres:{type:String, required:true}, // 선호 장르
-      result:{type:Boolean, required:true}, // 감상결과 여부
+      genres:{type:String, required:false}, // 선호 장르
+      result:{type:Boolean, required:false}, // 감상결과 여부
       created_at:{type:Date, index:{unique:false},'default':Date.now} // 가입일
     });
-    console.log('UserSchema 정의함');
 
-    UserSchema2 = mongoose.Schema({ // 감상결과
-      userid: {type:String, required:true, unique:true, 'default':''},// 사용자 아이디
-      movieID: {type:String, required:true, unique:true, 'default':''},
+    UserSchema2 = mongoose.Schema({ // 감상기록
+      userId: {type:String, required:true, unique:true, 'default':''},// 사용자 아이디
+      movieId: {type:String, required:true, unique:true, 'default':''},
       title: {type:String, required:true, 'default':''},
       poster: {type:String, required:true},
-      genres: {type:Number, required:true},
+      genres: {type:String, required:true},
       emotion: {type:String, required:true},
       highlight: {type:String, required:true}
     });
+    console.log('Schema 정의를 완료하였습니다.');
 
-    UserSchema
-      .virtual('password')
-      .set(function(password){
-          this.salt = makeSalt();
-          this.hashed_password = this.encryptPassword(password);
-          console.log('virtual password 저장됨 : ' + this.hashed_password);
-    });
+
 
     // 필수 속성에 대한 유효성 확인 (길이 값 체크)
     UserSchema.path('id').validate(function(id) {
@@ -107,33 +106,28 @@ function connectDB() {
       return this.find({}, callback);
     });
 
-    UserSchema.method('encryptPassword', function(plainText, inSalt) {
-      if(inSalt) {
-          return crypto.createHmac('sha1', inSalt).update(plainText).digest('hex');
-      }  else {
-          return crypto.createHmac('sha1', this.salt).update(plainText).digest('hex');
-      }
-    });
-
     // 비밀번호 비교
-    UserSchema.method('authenticate', function(plainText, inSalt, hashed_password) {
-      if (inSalt) {
-          console.log('authenticate 호출됨');
-          return this.encryptPassword(plainText, inSalt) === hashed_password;
-      } else {
-          console.log('authenticate 호출됨');
-          return this.encryptPassword(plainText) === this.hashed_password;
-      }
+    UserSchema.static('authenticate', function (password, callback) {
+      return this.find({ password: password }, callback);
     }); 
 
-    console.log('UserSchema 정의함');
+    // userschema2 id로 검색
+    UserSchema2.static('findById', function(id, callback) { // findById 함수 추가해서 모델객체에서 호출할 수 있도록함
+      return this.find({userId:id}, callback);
+    }); 
+    // userschema2 id로 검색
+    UserSchema2.static('findByMovieId', function(id, callback) { // findById 함수 추가해서 모델객체에서 호출할 수 있도록함
+      return this.find({movieId:id}, callback);
+    });
+
+    console.log('Schema 설정을 완료하였습니다.');
 
      // UserModel 모델 정의
-     UserModel = mongoose.model("users", UserSchema); // users2 콜렉션
-     console.log('UserModel 정의함');
+     UserModel = mongoose.model("allonsy_test1_users", UserSchema);
+     UserModel2 = mongoose.model("allonsy_test1_watchResult", UserSchema2);
+     console.log('Model 정의를 완료하였습니다.');
+     console.log('\n\n');
 
-     UserModel2 = mongoose.model("watchResult", UserSchema2);
-    
   });
 
   // 연결 끊어졌을 때 5초 후 재연결
@@ -146,8 +140,8 @@ function connectDB() {
 var router = express.Router();
 
 // 회원가입, 클라이언트에서 보내온 데이터를 이용해 데이터베이스에 추가
-router.route('/process/signup').post(function(req, res) {
-  console.log('/process/signup 라우팅 함수 호출됨.');
+router.route('/signup').post(function(req, res) {
+  console.log('/signup 라우팅 함수 호출됨.');
 
   var paramId = req.body.id || req.query.id;
   var paramPassword = req.body.password || req.query.password;
@@ -158,30 +152,37 @@ router.route('/process/signup').post(function(req, res) {
   // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
   if(database) {
     signUp(database, paramId, paramPassword, paramName, function(err, result) {
+      
       if(err) {
-          console.log('에러 발생.');
+          console.log('회원가입 에러 발생...');
+          console.dir(err);
           res.status(400).send();
       }
      // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
       if(result) {
+        console.log('회원가입 성공.');
         console.dir(result);
         res.status(200).send();
+        console.log('\n\n');
 
       } else { // 결과 객체가 없으면 실패 응답 전송
-        console.log('에러 발생');
+        console.log('회원가입 에러 발생...');
         res.status(400).send();
+        console.log('\n\n');
       }
     });
   } 
   else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
-    console.log('에러 발생');
+    console.log('회원가입 에러 발생...');
+    console.dir(err);
     res.status(400).send();
+    console.log('\n\n');
   }
 });
 
 // 로그인
-router.route('/process/login').post(function(req, res){
-  console.log('/process/login 라우팅 함수 호출됨'); 
+router.route('/login').post(function(req, res){
+  console.log('/login 라우팅 함수 호출됨'); 
 
   var paramId = req.body.id || req.query.id;
   var paramPassword = req.body.password || req.query.password;
@@ -189,27 +190,41 @@ router.route('/process/login').post(function(req, res){
   
   if(database) {
       authUser(database, paramId, paramPassword, function(err, docs) {
-          if(err) {
-              console.log('에러 발생');
-              res.status(404).send();
-          }
+          
+        if (err) {
+          console.log('로그인 에러 발생');
+          console.dir(err);
+          res.status(404).send();
+        }
 
-          if (docs) {
-              console.dir(docs);
+        if (docs) {
+          console.log('doc확인절차 : ' + docs[0].id + ', ' + docs[0].name);
 
-              var username = docs[0].name;
-              res.status(200).send(username);
+          // 찾은 결과 전송
+          var objToSend = {
+            id: docs[0].id,
+            name: docs[0].name
+          };
 
-          } else {
-              console.log('에러 발생');
-              res.status(400).send();
-          }
+          console.log('로그인 : 데이터베이스 존재 : 회원찾기 성공 : 찾은 결과 전송 성공');
+
+          // 정상 코드 전송
+          res.status(200).send(JSON.stringify(objToSend));
+          console.log('\n\n');
+
+        } 
+        
+        else {
+          console.log('로그인 에러 발생');
+          res.status(404).send();
+          console.log('\n\n');
+        }
           
       });
   } else {
-      res.writeHead(200, {"Content-Type":"text/html;charset=utf8"});
-      res.write('<h1>데이터 베이스 연결 실패</h1>');
-      res.end();
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log("\n\n");
   }
 });
 
@@ -241,6 +256,93 @@ router.route('/watchlist').post(function(req, res) {
   }
 });
 
+// 감상결과
+router.route('/watchresult').post(function(req, res) {
+  console.log('/watchresult(감상결과) 라우팅 함수 호출');
+
+  var paramId = req.body.id || req.query.userid; // 사용자 아이디 받아오기
+  var paramMovie = req.body.movieId || req.query.movieId; // 영화 아이디 받아오기
+
+  if(database) {
+
+    getWatchResult(database, paramId, paramMovie, function(err, results){
+
+      console.dir(results)
+
+      if (err){
+        console.log('감상결과 가져오는 중에 에러 발생...');
+        console.dir(err)
+        res.status(400).send();
+      }
+
+      else if (results.length > 0) {
+
+        var objToSend = {
+          title: results[0].title,
+          poster: results[0].poster,
+          genres: results[0].genres,
+          emotion: results[0].emotion,
+          highlight: results[0].highlight
+        };
+
+        res.status(200).send(JSON.stringify(objToSend));
+        console.log('감상기록 결과 : 데이터베이스 존재 : 기록 존재 : 찾은 결과 전송 성공');
+        console.log('\n\n');
+
+      }
+
+      else {
+        res.status(400).send();
+        console.log('감상기록 결과 없음.');
+        console.log('\n\n');
+      };
+
+    });
+
+  }
+  else{
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log("\n\n");
+  }
+});
+
+router.route('/email').post(function(req, res){
+  console.log('/email(이메일 인증) 라우팅 함수 호출');
+
+  if(database){
+
+      var paramId = req.body.id;
+
+      // 발신자 정의.
+      var app_email = 'smj85548554@gmail.com';
+      var app_pass = 'wtwslloltccugeiy';
+
+      console.log('수신자 : ', paramId);
+
+      sendEmail(app_email, app_pass, paramId, function(err, results){
+        
+        if(err){
+          console.log('이메일 발송 실패')
+          res.status(400).send();
+          console.log('\n\n');
+        }
+
+        if (results){
+          console.log('mail 전송을 완료하였습니다.');
+          res.status(200).send(JSON.stringify(results));
+          console.log('\n\n');
+        }
+      })
+  }
+  else{
+      console.log('데이터베이스가 정의되지 않음...');
+      res.status(400).send();
+      console.log("\n\n");
+  }
+});
+
+
 // 로그아웃
 router.get('/logout', async function (req, res, next) {
   var session = req.session;
@@ -259,60 +361,85 @@ router.get('/logout', async function (req, res, next) {
     console.log(e)
   }
   res.redirect('/');
-})
+});
+
+var getWatchResult = function(db, userid, movieid, callback){
+  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movieid : ' + movieid);
+
+  UserModel2.findById(userid, function(err, results_id) {
+
+        if (err) {
+          callback(err, null);
+          return;
+        };
+
+        if(results_id.length > 0) {
+
+          console.log(userid + '의 감상결과 발견');
+          UserModel2.findByMovieId(movieid, function(err, results_movie) {
+
+            if(err){
+              callback(err, null);
+            }
+
+            if (results_movie.length > 0) {
+              
+              console.log(movieid + ' : 감상 기록 존재');
+              callback(null, results_movie);
+            }
+
+            else {
+              callback(null, null);
+            };
+
+          });
+        }
+        else{
+          callback(null, null);
+        }
+      }); 
+}
 
 var authUser = function(db, id, password, callback) {
-  console.log('authUser 호출됨' + id + ', ' + password);
+  console.log('authUser(로그인) 호출됨' + id + ', ' + password);
 
   // 아이디를 사용해 검색
-  UserModel.findById(id, function(err, results){
+  UserModel.findById(id, function(err, results_id){
+
       if (err) {
           callback(err, null);
           return;
       }
 
       console.log('아이디 %s로 검색됨',id);
-      console.dir(results);
 
-      if (results.length > 0) {
+      if (results_id.length > 0) {
           console.log('아이디와 일치하는 사용자 찾음');
 
-          var user = new UserModel({id:id});
-          var authenticated = user.authenticate(password, results[0]._doc.salt, results[0]._doc.password);
+          UserModel.authenticate(password, function(err, results){
+                
+            if(err){
+                callback(err, null)
+                return;
+            }
 
-          // 비밀번호 확인
-          if(authenticated) {
-              console.log('비밀번호 일치');
-              callback(null, results);
-          } else {
-              console.log('비밀번호 일치하지 않음');
-              callback(null, null);
-          }
-      } else {
+            if(results.length > 0){
+                console.log('비밀번호 일치');
+                
+                callback(null, results_id);
+            }
+
+            else{
+                callback(null, null);
+            }
+            
+        })
+      } 
+      else {
           console.log('아이디와 일치하는 사용자를 찾지 못함');
           callback(null, null);
       }
 
-  });
-
-  // 아이디와 비밀번호를 사용해 검색, UserModel의 find() 사용
-  UserModel.find({"id" : id, "password" : password}, function(err, results) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-
-    console.log('아이디[%s], 비밀번호[%s]로 사용자 검색 결과', id, password);
-    console.dir(results);
-
-    if(results.length > 0) {
-      console.log('일치하는 사용자 찾음',id,password);
-      callback(null, results); // callback 함수를 사용해 docs 객체 전달
-    }
-    else {
-      console.log('일치하는 사용자를 찾지 못함');
-      callback(null,null);
-    }    
   });
 };
 
@@ -320,18 +447,25 @@ var authUser = function(db, id, password, callback) {
 var signUp = function(db, id, password, name, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
   console.log('signUp 호출됨' + id + ', ' + password + ', ' + name);
   
-  var user = new UserModel({'id':id, 'password':password,'name':name});
-
   // 아이디를 사용해 검색
   UserModel.findById(id, function(err, results){
+
     if (err) {
       console.log('회원가입 중 에러 발생');
+      console.dir(err);
       return;
     }
 
     if(results.length > 0) {
-      console.log('이미 가입된 아이디입니다.');   
-    } else {
+
+      console.log('이미 가입된 아이디입니다.');  
+      console.log('username : ', results[0].name); 
+
+    } 
+    else {
+
+      var user = new UserModel({'id' : id, 'password': password, 'name' : name});
+
       // save()로 저장
       user.save(function(err) {
         if(err) {
@@ -344,6 +478,54 @@ var signUp = function(db, id, password, name, callback) { // callback 함수는 
     }
   }
 )};
+
+var sendEmail = function (sendemail, sendpass, userid, callback) {
+
+  console.log('sendEmail 호출됨.');
+
+  const email = async () => {
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 3000,
+      secure: false,
+      auth: {
+        user: sendemail,
+        pass: sendpass,
+      },
+    });
+
+    console.log('transporter 설정 완료');
+
+    var salt = Math.round((new Date().valueOf() * Math.random())) + '';
+    var code = crypto.createHmac('sha1', salt).update(userid).digest('hex')
+
+    const objToSend = {
+      code: code
+    }
+
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: `"allonsy"`,
+      to: userid,
+      subject: 'allonsy Auth Number',
+      text: code,
+      html: '<b>' + code + '</b>',
+    });
+
+    console.log("Messege email address : ", userid)
+    console.log('Message sent: %s', info.messageId);
+    console.log("Mail Code : ", code)
+
+    callback(null, objToSend);
+    return;
+  };
+
+  callback(console.err, null);
+  email().catch(console.error);
+};
+
+app.use('/', router);
 
 const server = http.createServer(app).listen(app.get("port"), function () {
   console.log("서버 시작됨");

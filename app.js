@@ -315,8 +315,9 @@ router.route('/email').post(function(req, res){
       var paramId = req.body.id;
 
       // 발신자 정의.
-      var app_email = 'smj85548554@gmail.com';
-      var app_pass = 'wtwslloltccugeiy';
+      // 이메일, 비밀번호 작성
+      var app_email = '작성부분@gmail.com';
+      var app_pass = '작성부분';
 
       console.log('수신자 : ', paramId);
 
@@ -497,8 +498,7 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
 
     console.log('transporter 설정 완료');
 
-    var salt = Math.round((new Date().valueOf() * Math.random())) + '';
-    var code = crypto.createHmac('sha1', salt).update(userid).digest('hex')
+    var code = (Math.floor(Math.random()*9000)+1000).toString()
 
     const objToSend = {
       code: code
@@ -508,9 +508,12 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
     let info = await transporter.sendMail({
       from: `"allonsy"`,
       to: userid,
-      subject: 'allonsy Auth Number',
+      subject: '[하루뭅] 인증코드를 확인해주세요 ',
       text: code,
-      html: '<b>' + code + '</b>',
+      html: '<a>안녕하세요. <b>하루뭅(Harumub)</b>입니다.<br>'
+      +'고객님께서 입력하신 이메일의 소유확인을 위해 아래 인증번호를 회원가입 화면에 입력해주세요.</a> <br> <br><b>'
+      +code+'</b>'
+      
     });
 
     console.log("Messege email address : ", userid)

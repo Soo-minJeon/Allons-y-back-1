@@ -1,4 +1,5 @@
 
+var nodemailer = require('nodemailer');
 
 var signup = function(req, res) {
     console.log('/signup 라우팅 함수 호출됨.');
@@ -332,6 +333,7 @@ var email = function(req, res){
         // 발신자 정의.
         var app_email = '***@gmail.com';
         var app_pass = '****';
+
   
         console.log('수신자 : ', paramId);
   
@@ -487,9 +489,7 @@ var authUser = function(db, id, password, callback) {
 
       if (results_id.length > 0) {
           console.log('아이디와 일치하는 사용자 찾음');
-
-          UserModel.authenticate(password, function(err, results){
-
+          db.UserModel.authenticate(password, function(err, results){
             if(err){
                 callback(err, null)
                 return;

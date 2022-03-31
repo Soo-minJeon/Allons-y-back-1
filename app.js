@@ -89,6 +89,9 @@ router.route('/email').post(user.email);
 // 리액션공유 방 생성
 router.route('/makeRoom').post(user.makeRoom);
 
+// 장면분석
+router.route('/sceneAnalyze').post(user.sceneAnalyze);
+
 // 로그아웃 
 router.route('/logout').post(user.logout);
 

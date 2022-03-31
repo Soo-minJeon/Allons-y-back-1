@@ -66,6 +66,7 @@ var login = function(req, res){
             // 찾은 결과 전송
             var objToSend = {
               id: docs[0].id,
+              password: docs[0].password,
               name: docs[0].name
             };
   
@@ -176,6 +177,53 @@ var watchresult = function(req, res) {
       console.log("\n\n");
     }
   };
+
+var sceneAnalyze = function(req, res) {
+    console.log('/sceneAnalyze 라우팅 함수 호출');
+    var database = req.app.get('database');
+    // 감정맥스 초, 감정 종류 받아오기
+    //var maxSecond = req.body.maxSecond || req.query.maxSecond;
+    //var emotionKind = req.body.emotionKind || req.query.emotionKind;
+
+    if(database) {
+    // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
+      // 1. child-process모듈의 spawn 취득
+      const spawn = require('child_process').spawn;
+      // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+      const result = spawn('python', ['video_test2.py']);
+
+      // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+      result.stdout.on('data', function(data) {
+        const stringResult = data.toString();
+        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
+        var array = stringResult.split('\n');
+        for(var i=0;i<array.length;i++) {
+           //array[i]=array[i].replace(/[0-9]/g, '');
+           //array[i]=array[i].trim();
+           console.log(array[i]);
+        }
+        res.status(200).send(JSON.stringify(array));
+      });
+
+      // 4. 에러 발생 시, stderr의 'data'이벤트리스너로 실행결과를 받는다.
+      result.stderr.on('data', function(data) {
+        const stringResult = data.toString();
+        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
+        var array = stringResult.split('\n');
+        for(var i=0;i<array.length;i++) {
+           //array[i]=array[i].replace(/[0-9]/g, '');
+           //array[i]=array[i].trim();
+           console.log(array[i]);
+        }
+        res.status(200).send(JSON.stringify(array));
+      });
+    }
+    else{
+        console.log('데이터베이스가 정의되지 않음...');
+        res.status(400).send();
+        console.log("\n\n");
+    }
+}
 
 var recommend1 = function(req, res){
     var database = req.app.get('database');
@@ -363,49 +411,56 @@ var makeRoom = function(req, res) {
     console.log('/makeRoom 라우팅 함수 호출됨');
     var database = req.app.get('database');
     
+    var RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+
     if(database) {
-        const Checking = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
-    // 아이디를 사용해 검색
-    roomModel.findByRoomCode(Checking, function(err, results){
-      if (err) {
-        console.log('회원가입 중 에러 발생');
-        console.dir(err);
-        return;
-      }
-
-      if(results.length > 0) {
-        console.log('초대 코드 중복, 다시 생성..');
-        const Checking2 = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
-
-        // 방을 새로 생성합니다.
-        var room = new roomModel({'roomCode': Checking2});
-
-        // save()로 저장
-        room.save(function(err) {
-          if(err) {
-            callback(err, null);
-            return;
-          }
-          console.log('새로운 방 등록');
-          callback(null, user);
-        });
-      }
-
-      else {
-        // 방을 새로 생성합니다.
-        var room = new roomModel({'roomCode': Checking});
-
-        // save()로 저장
-        room.save(function(err) {
-          if(err) {
-            callback(err, null);
-            return;
-          }
-          console.log('새로운 방 등록');
-          callback(null, user);
-        });
+      makeroom(database,RoomCode, function(err, result){
+        if (err) {
+          console.log('회원가입 중 에러 발생');
+          console.dir(err);
+          return;
         }
-        });
+  
+        if(result.length > 0) {
+          console.log('초대 코드 중복, 다시 생성..');
+          const Checking2 = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+  
+          // 방을 새로 생성합니다.
+          var room = new database.RoomModel({'roomCode': Checking2});
+          console.log('RoomCode : ' + RoomCode);
+  
+          // save()로 저장
+          room.save(function(err) {
+            if(err) {
+              return;
+            }
+            console.log('새로운 방 등록');
+            // 찾은 결과 전송
+            var objToSend = {
+              roomCode: result[0].roomCode
+            };
+            res.status(200).send(JSON.stringify(objToSend));
+          });
+        }
+  
+        else {
+          // 방을 새로 생성합니다.
+          var room = new database.RoomModel({'roomCode': RoomCode});
+          console.log('RoomCode : ' + RoomCode);
+          // save()로 저장
+          room.save(function(err) {
+            if(err) {
+              return;
+            }
+            console.log('새로운 방 등록');
+            // 찾은 결과 전송
+            var objToSend = {
+              roomCode: RoomCode
+            };
+            res.status(200).send(JSON.stringify(objToSend));
+          });
+        }
+      });
     }
     else{
         console.log('데이터베이스가 정의되지 않음...');
@@ -415,23 +470,9 @@ var makeRoom = function(req, res) {
 };
 
 var logout = function (req, res) {
-    var database = req.app.get('database');
-    var session = req.session;
-    try {
-        if (session.user) { //세션정보가 존재하는 경우
-            req.session.destroy(function (err) {
-                if (err)
-                  console.log(err);
-                else {
-                  res.status(200).send(); // 로그아웃 성공
-                }
-            })
-        }
-    }
-    catch (e) {
-      console.log(e)
-    }
-  };
+    res.status(200).send();
+    console.log('로그아웃합니다..');
+};
 
   
 
@@ -634,7 +675,25 @@ var getRecommendUserList = function(database, result, callback){
     })
   })
 };
+var makeroom = function (db, roomcode, callback) {
+  db.RoomModel.findByRoomCode(roomcode, function(err, result){
+    if(err){
+      callback(err, null);
+      return;
+    }
 
+    else if(result.length > 0){
+      console.log('입력된 코드에 해당하는 같이보기 방 찾음.생성불가');
+
+      callback(null, result);
+    }
+
+    else{
+      callback(null, '');
+      return;
+    }
+  });
+};
 var sendEmail = function (sendemail, sendpass, userid, callback) {
 
     console.log('sendEmail 호출됨.');
@@ -693,4 +752,5 @@ module.exports.recommend2 = recommend2;
 module.exports.enterroom = enterroom;
 module.exports.email = email;
 module.exports.makeRoom = makeRoom;
+module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;

@@ -3,7 +3,7 @@ import pandas as pd
 from surprise import Reader, Dataset, SVD, NormalPredictor, KNNBasic # 알고리즘이 들어간다.
 from surprise import BaselineOnly, SVDpp, NMF, SlopeOne, CoClustering # 분석툴
 
-ratings = pd.read_csv('ratings_small.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
+ratings = pd.read_csv('recommend/ratings_small.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
 ratings = ratings[['userId', 'movieId', 'rating']] # 사용자 아이디, 영화 아이디, 평가
 ratings.head()
 ratings.movieId = pd.to_numeric(ratings.movieId, errors='coerce')
@@ -38,7 +38,7 @@ df = df[~df['userId'].isin(drop_cust_list)]
 df_p = pd.pivot_table(df, values='rating', index='userId', columns='movieId')
 
 # 영화 데이터를 가져왔다.
-meta = pd.read_csv('movies_metadata.csv',low_memory=False)
+meta = pd.read_csv('recommend/movies_metadata.csv',low_memory=False)
 # 필요한 컬럼만 가져온다. 아이디,제목,장르,개봉알,인기도,언어
 meta = meta[['id','original_title','genres','release_date','popularity','original_language']]
 
@@ -65,7 +65,7 @@ als = BaselineOnly(bsl_options)
 # 변수에 대한 가중치
 def user_release_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber] # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('movies_metadata.csv', low_memory=False) # 영화정보 가져옴
+    meta2 = pd.read_csv('recommend/movies_metadata.csv', low_memory=False) # 영화정보 가져옴
     value_meta = meta2[['id','original_title','release_date','genres']] # 필요한 영화 정보만 선별
 
     value_meta = value_meta.rename(columns={'id':'movieId'}) # 이름 변경 : id를 movieId로 고침

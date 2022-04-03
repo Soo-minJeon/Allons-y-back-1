@@ -62,6 +62,13 @@ function createRoomSchema(database){
   database.roomModel = mongoose.model("RoomSchema", RoomSchema);
   console.log('room Model 정의를 완료하였습니다.\n');
 }
+function createLikeSchema(database){
+  database.likeSchema = require('./database/likeSchema').createSchema(mongoose);
+
+  // likeModel 모델 정의
+  database.likeModel = mongoose.model("likeSchema", likeSchema);
+  console.log('like Model 정의를 완료하였습니다.\n');
+}
 
 var router = express.Router();
 
@@ -92,13 +99,13 @@ router.route('/makeRoom').post(user.makeRoom);
 // 장면분석
 router.route('/sceneAnalyze').post(user.sceneAnalyze);
 
-// 로그아웃 
+// 로그아웃
 router.route('/logout').post(user.logout);
 
 app.use('/', router);
 
 const server = http.createServer(app).listen(app.get("port"), function () {
   console.log("서버 시작됨");
-  
+
   database_loader.init(app, config);
 });

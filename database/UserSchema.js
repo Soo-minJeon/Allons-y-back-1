@@ -12,8 +12,6 @@ Schema.createSchema = function (mongoose) {
         id: { type: String, required: true, unique: true, 'default': '' }, // 아이디
         password: { type: String, required: true }, 'default': '', // 비번
         name: { type: String, required: 'hashed', 'default': '' }, // 닉네임
-        //genres: { type: String, required: false }, // 선호 장르
-        //result: { type: Boolean, required: false }, // 감상결과 여부
         created_at: { type: Date, index: { unique: false }, 'default': Date.now } // 가입일
     });
 
@@ -41,7 +39,6 @@ Schema.createSchema = function (mongoose) {
     UserSchema.static('authenticate', function (password, callback) {
         return this.find({ password: password }, callback);
     });
-
 
     console.log('Schema 설정을 완료하였습니다.');
 

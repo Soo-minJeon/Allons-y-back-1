@@ -181,11 +181,14 @@ var watchresult = function(req, res) {
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
     var database = req.app.get('database');
+    var paramGenre = null
+    var paramActor = null
+    var paramEmotion = null
     // 감정맥스 초, 감정 종류 받아오기
     //var maxSecond = req.body.maxSecond || req.query.maxSecond;
     //var emotionKind = req.body.emotionKind || req.query.emotionKind;
+    var paramId = 'pbkdpwls';//req.body.id || req.query.id;
 
-    if(database) {
     // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
       // 1. child-process모듈의 spawn 취득
       const spawn = require('child_process').spawn;
@@ -197,12 +200,45 @@ var sceneAnalyze = function(req, res) {
         const stringResult = data.toString();
         // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
         var array = stringResult.split('\n');
-        for(var i=0;i<array.length;i++) {
-           //array[i]=array[i].replace(/[0-9]/g, '');
-           //array[i]=array[i].trim();
+        for(var i=0;i<3;i++) {
            console.log(array[i]);
         }
-        res.status(200).send(JSON.stringify(array));
+        paramGenre = array[0]
+        paramActor = array[1]
+        paramEmotion = array[2]
+
+        console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion);
+
+        var database = req.app.get('database');
+
+        // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+        if(database) {
+          scene(database, paramId, paramGenre, paramActor, paramEmotion,function(err, result) {
+            if(err) {
+                console.log('장면분석 정보 등록 에러 발생...');
+                console.dir(err);
+                res.status(400).send();
+            }
+           // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+            if(result) {
+              console.log('장면분석 정보 등록 성공.');
+              console.dir(result);
+              res.status(200).send();
+              console.log('\n\n');
+
+            } else { // 결과 객체가 없으면 실패 응답 전송
+              console.log('장면분석 정보 등록 에러 발생...');
+              res.status(400).send();
+              console.log('\n\n');
+            }
+          });
+        }
+        else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+          console.log('장면분석 정보 등록 에러 발생...');
+          console.dir(err);
+          res.status(400).send();
+          console.log('\n\n');
+        }
       });
 
       // 4. 에러 발생 시, stderr의 'data'이벤트리스너로 실행결과를 받는다.
@@ -211,18 +247,12 @@ var sceneAnalyze = function(req, res) {
         // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
         var array = stringResult.split('\n');
         for(var i=0;i<array.length;i++) {
-           //array[i]=array[i].replace(/[0-9]/g, '');
-           //array[i]=array[i].trim();
            console.log(array[i]);
         }
-        res.status(200).send(JSON.stringify(array));
+        paramGenre = array[0]
+        paramActor = array[1]
+        paramEmotion = array[2]
       });
-    }
-    else{
-        console.log('데이터베이스가 정의되지 않음...');
-        res.status(400).send();
-        console.log("\n\n");
-    }
 }
 
 var recommend1 = function(req, res){
@@ -741,7 +771,35 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
     callback(console.err, null);
     email().catch(console.error);
 };
+var scene = function(db, id, gen, actor, emotion,callback){
+    console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion);
 
+  // 아이디를 사용해 검색
+  db.likeModel.findById(id, function(err, results){
+       if (err) {
+          console.log('장면분석 중 에러 발생');
+          console.dir(err);
+          return;
+       }
+
+        if(results.length < 0) {
+          console.log('회원정보가 없습니다.');
+        }
+        else {
+           var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion});
+
+           // save()로 저장
+           user.save(function(err) {
+           if(err) {
+                  callback(err, null);
+                  return;
+           }
+           console.log('사용자 장면분석 데이터 추가함');
+           callback(null, user);
+           });
+        }
+  })
+};
   
 module.exports.signup = signup;
 module.exports.login = login;

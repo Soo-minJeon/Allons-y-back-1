@@ -17,7 +17,12 @@ module.exports = {
         {file : './RoomSchema', 
         collection : 'RoomCollection', 
         schemaName : "RoomSchema", 
-        modelName : "RoomModel"}
+        modelName : "RoomModel"},
+
+        {file : './likeSchema',
+        collection : 'likeCollection',
+        schemaName : "likeSchema",
+        modelName : "likeModel"}
     ],
     route_info: [
         {file:'./routes/user', path:'/login', method:'login', type:'post'},

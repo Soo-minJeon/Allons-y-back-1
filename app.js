@@ -11,6 +11,7 @@ var expressSession = require('express-session');
 
 // 설정정보 모듈
 var config = require('./config');
+
 // 데이터베이스 로딩
 var database_loader = require('./database/database_loader');
 
@@ -39,36 +40,6 @@ app.use(expressSession({
 // body-parser 설정
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-// 스키마 생성
-function createUserSchema(database){
-  database.UserSchema = require('./database/UserSchema').createSchema(mongoose);
-
-  // UserModel 모델 정의
-  database.UserModel = mongoose.model("UserSchema", UserSchema);
-  console.log('user Model 정의를 완료하였습니다.\n');
-};
-function createWatchSchema(database){
-  database.WatchSchema = require('./database/WatchSchema').createSchema(mongoose);
-
-  // WatchModel 모델 정의
-  database.WatchModel = mongoose.model("WatchSchema", WatchSchema);
-  console.log('watch Model 정의를 완료하였습니다.\n');
-}
-function createRoomSchema(database){
-  database.RoomSchema = require('./database/RoomSchema').createSchema(mongoose);
-
-  // RoomModel 모델 정의
-  database.roomModel = mongoose.model("RoomSchema", RoomSchema);
-  console.log('room Model 정의를 완료하였습니다.\n');
-}
-function createLikeSchema(database){
-  database.likeSchema = require('./database/likeSchema').createSchema(mongoose);
-
-  // likeModel 모델 정의
-  database.likeModel = mongoose.model("likeSchema", likeSchema);
-  console.log('like Model 정의를 완료하였습니다.\n');
-}
 
 var router = express.Router();
 
@@ -99,13 +70,22 @@ router.route('/makeRoom').post(user.makeRoom);
 // 장면분석
 router.route('/sceneAnalyze').post(user.sceneAnalyze);
 
-// 로그아웃
+// 로그아웃 
 router.route('/logout').post(user.logout);
+
+// 감상 시작 시 신호
+router.route('/watchAloneStart').post(user.watchAloneStart);
+
+// s3버킷으로 사진보낼 때마다
+router.route('/watchImageCaptureEyetrack').post(user.watchImageCaptureEyetrack);
+
+// 감상 종료 시 신호
+router.route('/watchAloneEnd').post(user.watchAloneEnd);
 
 app.use('/', router);
 
 const server = http.createServer(app).listen(app.get("port"), function () {
   console.log("서버 시작됨");
-
+  
   database_loader.init(app, config);
 });

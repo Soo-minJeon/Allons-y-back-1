@@ -82,6 +82,9 @@ router.route('/watchImageCaptureEyetrack').post(user.watchImageCaptureEyetrack);
 // 감상 종료 시 신호
 router.route('/watchAloneEnd').post(user.watchAloneEnd);
 
+// 리뷰 등록 시 신호
+router.route('/addReview').post(user.addReview);
+
 app.use('/', router);
 
 const server = http.createServer(app).listen(app.get("port"), function () {

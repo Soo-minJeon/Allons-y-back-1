@@ -44,51 +44,68 @@ var signup = function(req, res) {
 };
 
 var login = function(req, res){
-    console.log('/login 라우팅 함수 호출됨');
-  
-    var paramId = req.body.id || req.query.id;
-    var paramPassword = req.body.password || req.query.password;
-    console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword);
-    var database = req.app.get('database');
-    if(database) {
-        authUser(database, paramId, paramPassword, function(err, docs) {
-  
-          if (err) {
-            console.log('로그인 에러 발생');
-            console.dir(err);
-            res.status(404).send();
-          }
-  
-          if (docs) {
-            console.log('doc확인절차 : ' + docs[0].id + ', ' + docs[0].name);
-  
-            // 찾은 결과 전송
-            var objToSend = {
-              id: docs[0].id,
-              password: docs[0].password,
-              name: docs[0].name
-            };
-  
-            console.log('로그인 : 데이터베이스 존재 : 회원찾기 성공 : 찾은 결과 전송 성공');
-  
+  console.log('/login 라우팅 함수 호출됨');
+
+  var paramId = req.body.id || req.query.id;
+  var paramPassword = req.body.password || req.query.password;
+  console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword);
+  var database = req.app.get('database');
+
+  if(database) {
+      authUser(database, paramId, paramPassword, function(err, docs) {
+
+        if (err) {
+          console.log('로그인 에러 발생');
+          console.dir(err);
+          res.status(404).send();
+        }
+
+        if (docs) {
+          console.log('doc확인절차 : ' + docs[0].id + ', ' + docs[0].name);
+
+          checkRecord(database, paramId, function (err, doc) {
+            if (doc) {
+              // 찾은 결과 전송
+              var objToSend = {
+                id: docs[0].id,
+                name: docs[0].name,
+                record: true
+              };
+
+              console.log(
+                "로그인 : 데이터베이스 존재 : 회원찾기 성공 : 기록 존재"
+              );
+            }
+            else {
+              // 찾은 결과 전송
+              var objToSend = {
+                id: docs[0].id,
+                name: docs[0].name,
+                record: false
+              };
+
+              console.log(
+                "로그인 : 데이터베이스 존재 : 회원찾기 성공 : 기록 없음"
+              );
+            }
             // 정상 코드 전송
             res.status(200).send(JSON.stringify(objToSend));
-            console.log('\n\n');
-  
-          }
-  
-          else {
-            console.log('로그인 에러 발생');
-            res.status(404).send();
-            console.log('\n\n');
-          }
-  
-        });
-    } else {
-      console.log('데이터베이스가 정의되지 않음...');
-      res.status(400).send();
-      console.log("\n\n");
-    }
+            console.log("\n\n");
+          });  
+        }
+
+        else {
+          console.log('로그인 에러 발생');
+          res.status(404).send();
+          console.log('\n\n');
+        }
+
+      });
+  } else {
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log("\n\n");
+  }
 };
 
 var watchlist = function(req, res) {
@@ -132,7 +149,7 @@ var watchresult = function(req, res) {
     console.log('/watchresult(감상결과) 라우팅 함수 호출');
   
     var paramId = req.body.id || req.query.userid; // 사용자 아이디 받아오기
-    var paramMovie = req.body.movieId || req.query.movieId; // 영화 아이디 받아오기
+    var paramMovie = req.body.movieTitle || req.query.movieTitle; // 영화 아이디 받아오기
     var database = req.app.get('database');
     if(database) {
   
@@ -653,6 +670,29 @@ var watchAloneEnd = function(req, res){
   
 };
 
+var addReview = function(req, res){
+  var database = req.app.get('database');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
+  var paramComment =req.body.comment || req.query.comment // 사용자가 작성한 한줄 평
+
+  async function addreview(){
+    await database.WatchModel.updateOne({ // 감상평,평점 업데이트
+      userId: paramId,
+      movieTitle: parammovieTitle
+    }, {  
+      $set: {
+        rating: paramRating,   
+        comment : paramComment
+      }
+    });
+    await res.status(200).send()
+  }
+  addreview()
+}
+
 var email = function(req, res){
     console.log('/email(이메일 인증) 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -756,10 +796,10 @@ var logout = function (req, res) {
     console.log('로그아웃합니다..');
 };
 
-var getWatchResult = function(db, userid, movieid, callback){
-  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movieid : ' + movieid);
+var getWatchResult = function(db, userid, movieTitle, callback){
+  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movietitle : ' + movieTitle);
 
-  WatchModel.findById(userid, function(err, results_id) {
+  db.WatchModel.findById(userid, function(err, results_id) {
 
         if (err) {
           callback(err, null);
@@ -769,7 +809,7 @@ var getWatchResult = function(db, userid, movieid, callback){
         if(results_id.length > 0) {
 
           console.log(userid + '의 감상결과 발견');
-          WatchModel.findByMovieId(movieid, function(err, results_movie) {
+          db.WatchModel.findByMovieTitle(movieTitle, function(err, results_movie) {
 
             if(err){
               callback(err, null);
@@ -834,41 +874,98 @@ var authUser = function(db, id, password, callback) {
   });
 };
 
+var checkRecord = function(db, id, callback){
+
+  console.log('checkRecord(감상기록 존재 유무 확인) 호출됨' + id );
+
+  // 아이디를 사용해 검색
+  db.WatchModel.findById(id, function(err, results){
+
+      if (err) {
+          callback(err, null);
+          return;
+      }
+
+      console.log('아이디 %s로 검색됨',id);
+
+      if (results.length > 0) {
+          console.log('감상기록 발견');
+          callback(null, results);
+      }
+      else {
+          console.log('감상기록 없음');
+          callback(null, null);
+      }
+  });
+
+}
+
 // 사용자를 추가하는 함수
 var signUp = function(db, id, password, name, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
   console.log('signUp 호출됨' + id + ', ' + password + ', ' + name);
 
-  // 아이디를 사용해 검색
-  db.UserModel.findById(id, function(err, results){
+  var getpython = "";
+  async function get_reco_id(){
 
-    if (err) {
-      console.log('회원가입 중 에러 발생');
-      console.dir(err);
-      return;
-    }
+    //파이썬 코드 실행 (사용자 감정 분석)
+    const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
 
-    if(results.length > 0) {
+    // (param) 이미지 경로 재설정 필요
+    const result = spawnSync("python", ["recommend/getUserId_reco2.py"]);
 
-      console.log('이미 가입된 아이디입니다.');
-      console.log('username : ', results[0].name);
+    if (result.status !== 0) {
+      process.stderr.write(result.stderr);
 
-    }
-    else {
+      process.exit(result.status);
+    } else {
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      getpython = Number(getpython)
 
-      var user = new db.UserModel({'id' : id, 'password': password, 'name' : name});
-
-      // save()로 저장
-      user.save(function(err) {
-        if(err) {
-          callback(err, null);
-          return;
-        }
-        console.log('사용자 데이터 추가함');
-        callback(null, user);
-      });
+      console.log('test : ', getpython) // PYTHON 결과 테스트 출력(추가될 추천2용 사용자 아이디)
     }
   }
-)};
+
+  async function addUser() {
+    // 아이디를 사용해 검색
+    db.UserModel.findById(id, function (err, results) {
+      if (err) {
+        console.log("회원가입 중 에러 발생");
+        console.dir(err);
+        return;
+      }
+
+      if (results.length > 0) {
+        console.log("이미 가입된 아이디입니다.");
+        console.log("username : ", results[0].name);
+      } else {
+        var user = new db.UserModel({ 
+          id: id, 
+          password: password, 
+          name: name,
+          reco2_id : getpython});
+
+        // save()로 저장
+        user.save(function (err) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
+          console.log("사용자 데이터 추가함");
+          callback(null, user);
+        });
+      }
+    });
+  }
+
+  async function main(){
+    await get_reco_id()
+    await addUser()
+  }
+
+  main()
+};
 
 var enterRoom = function(db, roomcode, callback){
   console.log('enterRoom (같이보기 방 입장)호출됨. 방 코드 : ' + roomcode);
@@ -1380,3 +1477,4 @@ module.exports.logout = logout;
 module.exports.watchAloneStart = watchAloneStart;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
 module.exports.watchAloneEnd = watchAloneEnd;
+module.exports.addReview = addReview;

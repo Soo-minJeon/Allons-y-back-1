@@ -101,16 +101,17 @@ def preprocessing(path):
         , "shaking3", "", "man1", "asiangirl2", "test"
     ]
 
-    with open('/Users/jeonsumin/PycharmProjects/eyetracking/eyetraking_from-image/new_user_credentials.csv',
+    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (1).csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:
-            access_key_id = line[2]
-            secret_access_key = line[3]
+            access_key_id = line[0]
+            secret_access_key = line[1]
+
 
     region = 'ap-northeast-2'
-    bucket = "eyetracking-bucket"
+    bucket = "allonsybucket1"
 
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key_id,
@@ -125,7 +126,7 @@ def preprocessing(path):
     testfolder = ('eyetracking/testfolder/')
 
     for i in range(0, len(photo_list)):
-        down = s3.download_file(bucket, "Eye/" + photo_list[i],
+        down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
         ImgArray = np.array(
             [testfolder + '/' + str(int(path) - 1) + '.jpg',

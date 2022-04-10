@@ -5,18 +5,18 @@ import sys
 
 def process(path):
     # def process():
-    with open('/Users/jeonsumin/PycharmProjects/aws_rekognition_test/aws/new_user_credentials.csv', 'r') as input:
+    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (1).csv', 'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:
-            access_key_id = line[2]
-            secret_access_key = line[3]
+            access_key_id = line[0]
+            secret_access_key = line[1]
 
-    folder = "Emotion/"
+    folder = "capture/"
     photo = folder + str(path)  + '.jpg'
 
     region = 'ap-northeast-2'
-    bucket = "eyetracking-bucket"
+    bucket = "allonsybucket1"
 
     client = boto3.client('rekognition',
                           aws_access_key_id=access_key_id,

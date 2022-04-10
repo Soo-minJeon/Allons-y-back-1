@@ -40,12 +40,14 @@ def process(id):
 
     # 대상이 되는 유저의 id
     # client_user = int(id)
-    client_user = int(1)
+    client_user = int(id)
 
     #
     recommend_user = 5
     users = []
     movieid = []
+    movieTitle = []
+    moviePoster = []
 
     # 가장 유사도가 높은 유저의 감상기록 가져오기
     for i in range(1, recommend_user+1):
@@ -54,7 +56,14 @@ def process(id):
         users.append(user)
         movieid.append(user2.head(5).index.values)
 
-    print(users, movieid)
+    for i in range(0, len(movieid)):
+        for j in range(0, len(movieid[0])):
+            find_row = movies.index[(movies['movieId'] == movieid[i][j])]
+            # print(find_row[0])
+            movieTitle.append(movies.loc[find_row[0]]['original_title'])
+            moviePoster.append(movies.loc[find_row[0]]['poster_path'])
+
+    print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
     process(sys.argv[1])

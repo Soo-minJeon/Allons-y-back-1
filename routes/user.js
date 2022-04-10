@@ -316,63 +316,57 @@ var recommend1 = function(req, res){
 };
 
 var recommend2 = function(req, res){
-    console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
-  
-    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-    var database = req.app.get('database');
-    if (database){
-  
-      //파이썬 코드 실행 (유사 사용자 추천)
-      const spawnSync = require('child_process').spawnSync; // child-process 모듈의 spawn 획득
-      var getpython = ''
-  
-      //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-      const result = spawnSync('python', ['recommend/main.py'], {input : paramId});
-      console.log('중간점검')
-  
-      if(result.status !== 0){
-        process.stderr.write(result.stderr)
-  
-        process.exit(result.status);
-      } else{
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        getpython = result.stdout.toString();
-        console.log('python 결과 형식 : ', typeof(getpython))
-      }
-  
-      getRecommendUserList(database, getpython, function(err, result){
-  
-        console.dir(result);
-  
-        if(err){
-          console.log('추천 사용자 목록 가져오는 중에 에러 발생 ...');
-          console.dir(err);
-          res.status(400).send();
-        }
-  
-        else if(result.length > 0){
-          console.log('추천 사용자 목록 가져오기 성공');
-          console.log(result);
-  
-          // 전달 : 추천 사용자들 목록 find id 통해서 포스터, 영화제목
-          res.status(200).send(JSON.stringify(result));
-          console.log('추천 사용자 목록 전송 성공');
-          console.log('\n\n');
-        }
-  
-        else {
-          res.status(400).send()
-          console.log('추천 사용자 목록 없음.');
-          console.log('\n\n');
-        }
-  
-      });
-  
-    } else {
-      console.log("데이터베이스가 정의되지 않음...");
-      res.status(400).send
+  console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var database = req.app.get('database');
+  if (database){
+
+    //파이썬 코드 실행 (유사 사용자 추천)
+    const spawnSync= require('child_process').spawnSync; // child-process 모듈의 spawn 획득
+    var getpython = ''
+
+    //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+    const result = spawnSync('python', ['recommend/main.py', paramId]);
+    console.log('중간점검')
+
+    if(result.status !== 0){
+      process.stderr.write(result.stderr)
+
+      process.exit(result.status);
+    } else{
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      console.log('python 결과 형식 : ', typeof(getpython))
     }
+
+    getRecommendUserList(getpython, function(err, result){
+
+      console.dir(result);
+
+      if(err){
+        console.log('추천 사용자 목록 가져오는 중에 에러 발생 ...');
+        console.dir(err);
+        res.status(400).send();
+      }
+
+      else if(result.length > 0){
+        console.log('추천 사용자 목록 가져오기 성공');
+        
+        res.status(200).send(result);
+      }  
+      else {
+        res.status(400).send()
+        console.log('추천 사용자 목록 없음.');
+        console.log('\n\n');
+      }
+    });
+    
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
 };
 
 var enterroom = function(req, res){
@@ -991,64 +985,50 @@ var enterRoom = function(db, roomcode, callback){
   })
 }
 
-var getRecommendUserList = function(database, result, callback){
+var getRecommendUserList = function(result, callback){
 
   console.log('getRecommendUserList 호출됨.');
 
-  substrResult = result.substring(2)
-  splitResult = substrResult.split(' ')
-  console.log(splitResult)
+  splitResult = result.split('] [')
 
-  console.log('result 개수 ; ', splitResult.length);
+  ids = splitResult[0];
+  ids = ids.split(", ")
 
-  splitResult2 = [];
-  var resultArray = [];
+  titles = splitResult[1];
+  titles = titles.split("', '")
 
-  for (var i = 0; i<splitResult.length; i++){
+  posters = splitResult[2];
+  posters = posters.split("', '")
 
-    if (splitResult[i] == ''){
-      // console.log(i+'번째는 continue')
-      continue
+  resultArray = []
+
+  for (let i = 0; i<5; i++){
+    var s = i*5;
+    var e = s+5;
+    var c = 0
+    var resultTitleArray = []
+    var resultPosterArray = []
+
+    for (let j = s; j < e; j++){
+      resultTitleArray[c] = titles[j]
+      resultPosterArray[c] = posters[j]
+      c = c+1
     }
-    else{
-      splitResult2.push(parseInt(splitResult[i]))
-      // console.log(i + '번째 검사결과 : ' + typeof(splitResult[i]))
-      console.log(splitResult2)
+    var obj = {
+      userId : ids[i],
+      title : resultTitleArray,
+      poster : resultPosterArray
     }
-  };
+    resultArray[i] = obj
+  }
 
-  var count = splitResult2.length
+  var count = resultArray.length
   console.log('===================\n결과 갯수 : ', count)
-  splitResult2.forEach(element => {
-    database.WatchModel.findByMovieId(element, function(err, result){
-      console.log('무비아이디로 찾는 중')
 
-      if(err){
-        console.log('추천 사용자 못찾음')
-        callback(err, null)
-      }
+  console.log("============================ 처리 결과 ============================\n", resultArray, "\n============================ 처리 결과 ============================\n");
 
-      if(result.length > 0){
-        console.log('추천 사용자 찾음')
-        resultArray.push({
-          id : result[0].userId,
-          title : result[0].title,
-          poster : result[0].poster
-        })
-        console.log(resultArray)
-      }
 
-      else {
-        console.log('추천 사용자 못찾음')
-        callback(null, null);
-      }
-
-      if(resultArray.length == count){
-        console.log('추천 사용자 | 추천 목록 생성 완료')
-        callback(null, resultArray);
-      }
-    })
-  })
+  callback(null, resultArray)
 };
 
 var makeroom = function (db, roomcode, callback) {

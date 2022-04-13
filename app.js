@@ -24,7 +24,7 @@ var mongoose = require("mongoose");
 
 var app = express();
 
-app.set('port', config.server_port || 3000);
+app.set('port', config.server_port || 27017);
 
 app.use('/public', static(path.join(__dirname,'public')));
 app.use(bodyParser.urlencoded({extended:false}));
@@ -98,6 +98,9 @@ router.route('/makeRoom').post(user.makeRoom);
 
 // 장면분석
 router.route('/sceneAnalyze').post(user.sceneAnalyze);
+
+// 수행모델- 감정이 같은지 확인
+//router.route('/sameEmotion').post(user.saveEmotion)
 
 // 로그아웃
 router.route('/logout').post(user.logout);

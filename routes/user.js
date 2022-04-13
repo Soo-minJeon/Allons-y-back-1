@@ -43,7 +43,6 @@ var signup = function(req, res) {
     }
 };
 
-
 var login = function(req, res){
     console.log('/login 라우팅 함수 호출됨');
   
@@ -184,9 +183,9 @@ var sceneAnalyze = function(req, res) {
     var paramGenre = null
     var paramActor = null
     var paramEmotion = null
+    var paramCorrect = null
     // 감정맥스 초, 감정 종류 받아오기
     //var maxSecond = req.body.maxSecond || req.query.maxSecond;
-    //var emotionKind = req.body.emotionKind || req.query.emotionKind;
     var paramId = 'pbkdpwls';//req.body.id || req.query.id;
 
     // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
@@ -203,17 +202,18 @@ var sceneAnalyze = function(req, res) {
         for(var i=0;i<3;i++) {
            console.log(array[i]);
         }
-        paramGenre = array[0]
-        paramActor = array[1]
-        paramEmotion = array[2]
+        paramGenre = (array[0].split(' ')).toString()
+        paramActor = (array[1].split(' ')).toString()
+        paramEmotion = (array[2].split(' ')).toString()
+        paramCorrect = (array[3].split(' ')).toString()
 
-        console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion);
+        console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion+', '+paramCorrect);
 
         var database = req.app.get('database');
 
         // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
         if(database) {
-          scene(database, paramId, paramGenre, paramActor, paramEmotion,function(err, result) {
+          scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect,function(err, result) {
             if(err) {
                 console.log('장면분석 정보 등록 에러 발생...');
                 console.dir(err);
@@ -254,6 +254,72 @@ var sceneAnalyze = function(req, res) {
         paramEmotion = array[2]
       });
 }
+/*
+var saveEmotion = function(req,res) {
+    console.log('/saveEmotion 라우팅 함수 호출');
+    var database = req.app.get('database');
+    var paramGenre = null
+    var paramActor = null
+    //var paramEmotion = null
+    // 감정맥스 초, 감정 종류 받아오기
+    //var maxSecond = req.body.maxSecond || req.query.maxSecond;
+    var emotionKind = 'Happy';//req.body.emotionKind || req.query.emotionKind;
+    var paramId = 'pbkdpwls';//req.body.id || req.query.id;
+
+    // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
+      // 1. child-process모듈의 spawn 취득
+      //const spawn = require('child_process').spawn;
+      // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+      //const result = spawn('python', ['video_test2.py']);
+
+      // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+      /*result.stdout.on('data', function(data) {
+        const stringResult = data.toString();
+        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
+        var array = stringResult.split('\n');
+        for(var i=0;i<3;i++) {
+           console.log(array[i]);
+        }*//*
+        var paramEmotion = 'Happy';//array[2] // 영화 장면 감정정보 받아오기
+
+        console.log('요청 파라미터 : ' + paramEmotion);
+
+        var database = req.app.get('database');
+
+        var correct=0
+        if (paramEmotion==emotionKind){
+            correct=1
+        }
+        // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+        if(database) {
+          correctEmotion(database, paramId, paramEmotion,correct,function(err, result) {
+            if(err) {
+               console.log('장면분석 정보 등록 에러 발생...');
+               console.dir(err);
+               res.status(400).send();
+            }
+           // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+            if(result) {
+              console.log('감정부합 여부 체크 성공.');
+              console.dir(result);
+              res.status(200).send();
+              console.log('\n\n');
+
+            } else { // 결과 객체가 없으면 실패 응답 전송
+              console.log('장면분석 정보 등록 에러 발생...');
+              res.status(400).send();
+              console.log('\n\n');
+            }
+          });
+        }
+        else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+          console.log('장면분석 정보 등록 에러 발생...');
+          console.dir(err);
+          res.status(400).send();
+          console.log('\n\n');
+        }
+      //});
+} */
 
 var recommend1 = function(req, res){
     var database = req.app.get('database');
@@ -543,8 +609,6 @@ var getWatchResult = function(db, userid, movieid, callback){
       });
 }
 
-
-
 var authUser = function(db, id, password, callback) {
   console.log('authUser(로그인) 호출됨' + id + ', ' + password);
 
@@ -771,8 +835,8 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
     callback(console.err, null);
     email().catch(console.error);
 };
-var scene = function(db, id, gen, actor, emotion,callback){
-    console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion);
+var scene = function(db, id, gen, actor, emotion,correctModel,callback){
+    console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion+', '+correctModel);
 
   // 아이디를 사용해 검색
   db.likeModel.findById(id, function(err, results){
@@ -786,7 +850,7 @@ var scene = function(db, id, gen, actor, emotion,callback){
           console.log('회원정보가 없습니다.');
         }
         else {
-           var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion});
+           var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion, 'correctModel':correctModel});
 
            // save()로 저장
            user.save(function(err) {
@@ -800,7 +864,45 @@ var scene = function(db, id, gen, actor, emotion,callback){
         }
   })
 };
-  
+// 수행모델 코드 - 나중에 참고를 위해 아직 삭제 안함
+/*
+var correctEmotion = function(db, id, emotion,correct,callback){
+    console.log('correctEmotion 호출됨' + id + ', ' + emotion);
+
+  // 아이디를 사용해 검색
+  db.likeModel.findById(id, function(err, results){
+       if (err) {
+          console.log('수행모델 에러 발생');
+          console.dir(err);
+          return;
+       }
+
+        if(results.length < 0) {
+            console.log('회원정보가 없습니다..');
+            callback(null,null)
+        }
+        else { // 여기서는 기존 정보 count에 +1씩 해주어야함
+            var sameCount=results[0].sameCount;
+            var sameAllCount = results[0].sameAllCount;
+
+            if(correct==1){
+                console.log('감정 일치!');
+
+                db.likeModel.updateOne({id: 'pbkdpwls'}, {$set: {sameCount: sameCount+1}
+                }, function (err, user) {
+                    if (err) throw err
+                })
+            }
+
+            db.likeModel.updateOne({ id: 'pbkdpwls'}, {$set: { sameAllCount: sameAllCount+1}
+            }, function (err, user) {
+                    if (err) throw err
+            })
+            callback(null, 200)
+        }
+  })
+};*/
+
 module.exports.signup = signup;
 module.exports.login = login;
 module.exports.watchlist = watchlist;
@@ -812,3 +914,4 @@ module.exports.email = email;
 module.exports.makeRoom = makeRoom;
 module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;
+//module.exports.saveEmotion = saveEmotion;

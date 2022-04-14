@@ -39,14 +39,32 @@ def process(id):
     user_based_collab = pd.DataFrame(user_based_collab, index=title_user.index, columns=title_user.index)
 
     # 대상이 되는 유저의 id
-    client_user = id
+    # client_user = int(id)
+    client_user = int(id)
+
+    #
+    recommend_user = 5
+    users = []
+    movieid = []
+    movieTitle = []
+    moviePoster = []
 
     # 가장 유사도가 높은 유저의 감상기록 가져오기
-    user = user_based_collab[client_user].sort_values(ascending=False)[:10].index[1]
-    user2 = (title_user.loc[user].sort_values(ascending=False))
-    user3 = np.array(user2.head(5).index.values)
-    print(user3)
+    for i in range(1, recommend_user+1):
+        user = user_based_collab[client_user].sort_values(ascending=False)[:10].index[i]
+        user2 = (title_user.loc[user].sort_values(ascending=False))
+        users.append(user)
+        movieid.append(user2.head(5).index.values)
+
+    for i in range(0, len(movieid)):
+        for j in range(0, len(movieid[0])):
+            find_row = movies.index[(movies['movieId'] == movieid[i][j])]
+            # print(find_row[0])
+            movieTitle.append(movies.loc[find_row[0]]['original_title'])
+            moviePoster.append(movies.loc[find_row[0]]['poster_path'])
+
+    print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
-    process(1)
+    process(sys.argv[1])
 

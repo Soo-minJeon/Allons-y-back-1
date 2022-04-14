@@ -44,52 +44,69 @@ var signup = function(req, res) {
 };
 
 var login = function(req, res){
-    console.log('/login 라우팅 함수 호출됨');
-  
-    var paramId = req.body.id || req.query.id;
-    var paramPassword = req.body.password || req.query.password;
-    console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword);
-    var database = req.app.get('database');
-    if(database) {
-        authUser(database, paramId, paramPassword, function(err, docs) {
-  
-          if (err) {
-            console.log('로그인 에러 발생');
-            console.dir(err);
-            res.status(404).send();
-          }
-  
-          if (docs) {
-            console.log('doc확인절차 : ' + docs[0].id + ', ' + docs[0].name);
-  
-            // 찾은 결과 전송
-            var objToSend = {
-              id: docs[0].id,
-              password: docs[0].password,
-              name: docs[0].name
-            };
-  
-            console.log('로그인 : 데이터베이스 존재 : 회원찾기 성공 : 찾은 결과 전송 성공');
-  
+  console.log('/login 라우팅 함수 호출됨');
+
+  var paramId = req.body.id || req.query.id;
+  var paramPassword = req.body.password || req.query.password;
+  console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword);
+  var database = req.app.get('database');
+
+  if(database) {
+      authUser(database, paramId, paramPassword, function(err, docs) {
+
+        if (err) {
+          console.log('로그인 에러 발생');
+          console.dir(err);
+          res.status(404).send();
+        }
+
+        if (docs) {
+          console.log('doc확인절차 : ' + docs[0].id + ', ' + docs[0].name);
+
+          checkRecord(database, paramId, function (err, doc) {
+            if (doc) {
+              // 찾은 결과 전송
+              var objToSend = {
+                id: docs[0].id,
+                name: docs[0].name,
+                record: true
+              };
+
+              console.log(
+                "로그인 : 데이터베이스 존재 : 회원찾기 성공 : 기록 존재"
+              );
+            }
+            else {
+              // 찾은 결과 전송
+              var objToSend = {
+                id: docs[0].id,
+                name: docs[0].name,
+                record: false
+              };
+
+              console.log(
+                "로그인 : 데이터베이스 존재 : 회원찾기 성공 : 기록 없음"
+              );
+            }
             // 정상 코드 전송
             res.status(200).send(JSON.stringify(objToSend));
-            console.log('\n\n');
-  
-          }
-  
-          else {
-            console.log('로그인 에러 발생');
-            res.status(404).send();
-            console.log('\n\n');
-          }
-  
-        });
-    } else {
-      console.log('데이터베이스가 정의되지 않음...');
-      res.status(400).send();
-      console.log("\n\n");
-    }
-  };
+            console.log("\n\n");
+          });  
+        }
+
+        else {
+          console.log('로그인 에러 발생');
+          res.status(404).send();
+          console.log('\n\n');
+        }
+
+      });
+  } else {
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log("\n\n");
+  }
+};
 
 var watchlist = function(req, res) {
     console.log('/watchlist(감상결과 목록 처리) 라우팅 함수 호출');
@@ -127,11 +144,12 @@ var watchlist = function(req, res) {
         console.log("\n\n");
     }
 };
+
 var watchresult = function(req, res) {
     console.log('/watchresult(감상결과) 라우팅 함수 호출');
   
     var paramId = req.body.id || req.query.userid; // 사용자 아이디 받아오기
-    var paramMovie = req.body.movieId || req.query.movieId; // 영화 아이디 받아오기
+    var paramMovie = req.body.movieTitle || req.query.movieTitle; // 영화 아이디 받아오기
     var database = req.app.get('database');
     if(database) {
   
@@ -175,8 +193,7 @@ var watchresult = function(req, res) {
       res.status(400).send();
       console.log("\n\n");
     }
-  };
-
+};
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -362,67 +379,62 @@ var recommend1 = function(req, res){
         console.log("\n\n");
     }
   
-  };
+};
 
 var recommend2 = function(req, res){
-    console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
-  
-    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-    var database = req.app.get('database');
-    if (database){
-  
-      //파이썬 코드 실행 (유사 사용자 추천)
-      const spawnSync = require('child_process').spawnSync; // child-process 모듈의 spawn 획득
-      var getpython = ''
-  
-      //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-      const result = spawnSync('python', ['recommend/main.py'], {input : paramId});
-      console.log('중간점검')
-  
-      if(result.status !== 0){
-        process.stderr.write(result.stderr)
-  
-        process.exit(result.status);
-      } else{
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        getpython = result.stdout.toString();
-        console.log('python 결과 형식 : ', typeof(getpython))
-      }
-  
-      getRecommendUserList(database, getpython, function(err, result){
-  
-        console.dir(result);
-  
-        if(err){
-          console.log('추천 사용자 목록 가져오는 중에 에러 발생 ...');
-          console.dir(err);
-          res.status(400).send();
-        }
-  
-        else if(result.length > 0){
-          console.log('추천 사용자 목록 가져오기 성공');
-          console.log(result);
-  
-          // 전달 : 추천 사용자들 목록 find id 통해서 포스터, 영화제목
-          res.status(200).send(JSON.stringify(result));
-          console.log('추천 사용자 목록 전송 성공');
-          console.log('\n\n');
-        }
-  
-        else {
-          res.status(400).send()
-          console.log('추천 사용자 목록 없음.');
-          console.log('\n\n');
-        }
-  
-      });
-  
-    } else {
-      console.log("데이터베이스가 정의되지 않음...");
-      res.status(400).send
+  console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var database = req.app.get('database');
+  if (database){
+
+    //파이썬 코드 실행 (유사 사용자 추천)
+    const spawnSync= require('child_process').spawnSync; // child-process 모듈의 spawn 획득
+    var getpython = ''
+
+    //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+    const result = spawnSync('python', ['recommend/main.py', paramId]);
+    console.log('중간점검')
+
+    if(result.status !== 0){
+      process.stderr.write(result.stderr)
+
+      process.exit(result.status);
+    } else{
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      console.log('python 결과 형식 : ', typeof(getpython))
     }
-  };
+
+    getRecommendUserList(getpython, function(err, result){
+
+      console.dir(result);
+
+      if(err){
+        console.log('추천 사용자 목록 가져오는 중에 에러 발생 ...');
+        console.dir(err);
+        res.status(400).send();
+      }
+
+      else if(result.length > 0){
+        console.log('추천 사용자 목록 가져오기 성공');
+        
+        res.status(200).send(result);
+      }  
+      else {
+        res.status(400).send()
+        console.log('추천 사용자 목록 없음.');
+        console.log('\n\n');
+      }
+    });
+    
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
+};
+
 var enterroom = function(req, res){
 
     console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
@@ -467,6 +479,279 @@ var enterroom = function(req, res){
   
 };
 
+var watchAloneStart = function(req, res){ // watch스키마 생성
+  var database = req.app.get('database');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+
+  if (database){
+
+    var posterurl = ''
+    var genres = ''
+    var newWatch
+
+    async function searchMovieInfo(){
+      const existing = await database.MovieModel.find(
+        {title : parammovieTitle}).clone()
+      
+      if (existing.length > 0) {
+        posterurl = existing[0].poster
+        genres = existing[0].genres
+      }
+    }
+    async function createWatchResult(){
+      newWatch = new database.WatchModel({ 
+        'userId': paramId, 
+        'movieTitle': parammovieTitle,
+        'poster': posterurl,
+        'genres': genres,
+        'concentration': 0,
+        'highlight_time': '1',
+        'highlight_emotion': '1',
+        'emotion_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
+        'highlight_array' : {},
+        'rating': 0,
+        'comment': '',
+        'sleepingCount ' : 0
+      });
+    }
+
+    async function main(){
+      await searchMovieInfo()
+      await createWatchResult()
+      await newWatch.save(function(err) {
+        if (err){
+          console.log('감상결과 스키마 생성 및 저장 오류')
+          res.status(400).send() // 저장오류
+          return;
+        }
+        console.log('감상 결과 데이터 추가 ');
+        res.status(200).send()
+      });
+      console.log(newWatch)
+    }
+    main()
+  }
+  else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+    console.log('데이터 베이스 에러 ...');
+    console.dir(err);
+    res.status(400).send();
+    console.log('\n\n');
+  }
+};
+var watchImageCaptureEyetrack = async function(req, res){
+  console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨.');
+
+  var database = req.app.get('database');
+
+  // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  var paramTime = req.body.time || req.query.time;
+
+  var sleepCount = 0
+  var checkLimit = 0
+
+  if (database){
+  
+    //파이썬 코드 실행 (유사 사용자 추천)
+    const spawnSync= require('child_process').spawnSync; // child-process 모듈의 spawn 획득
+    var getpython = ''
+
+    //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+    const result = spawnSync('python', ['eyetracking/eyetrack.py', paramTime]);
+
+    if(result.status !== 0){
+      process.stderr.write(result.stderr)
+      process.exit(result.status);
+    } else{
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
+    }
+
+    var newEyetrack = new database.EyetrackModel({ 
+      'userId': paramId, 'movieTitle': parammovieTitle, 'time' : paramTime,
+      'concentration' :  Number(getpython) 
+    });
+
+    newEyetrack.save(function(err) {
+      if (err){
+        console.dir(err);
+        res.status(400).send()
+      }
+      console.log('집중도 데이터 추가');
+    });
+
+    // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기 
+    // 영화 러닝타임 알아오기 -> (몇번 잤니?) 가 용인되는 횟수보다 적은가 확인해야 하기때문
+    /// ==> 기다려줘야함 1. 
+    const existing = await database.WatchModel.find(
+      {userId : paramId, movieTitle : parammovieTitle}).clone()
+    
+    async function countlimit() {
+      if (existing.length > 0) {
+        // console.dir(existing)
+
+        sleepCount = existing[0].sleepingCount 
+
+        await database.MovieModel.findByTitle(parammovieTitle, async function(err, result){
+          if (result.length > 0){
+            // console.dir(result[0])
+            checkLimit = result[0].runningTime / 10 / 2
+            console.log('러닝타임 : ', result[0].runningTime)
+            console.log('용인 한계 : ', checkLimit)
+            console.log('현재 : ', sleepCount, "\n")
+          }
+        }).clone()
+      }
+      else{
+        console.log('WatchModel에 정보 없음요')
+        res.status(400).send()
+      }
+    }
+    await countlimit()
+
+    // 자는 중이니?
+    /// 2.
+    async function isSleep(){
+
+      if (Number(getpython) == 0){
+        console.log('집중도 분석 결과 : 자는 중');
+        sleepCount = sleepCount + 1
+  
+        // 결과 스키마의 (몇번잤니?) 수정
+        /// 3.
+        await database.WatchModel.updateOne({
+          userId: paramId,
+          movieTitle: parammovieTitle
+        },{
+          $set: {
+            sleepingCount: sleepCount
+          }
+        }).clone()
+  
+        // sleepCount가 용인 횟수를 넘었을 때
+        /// 4.
+        if ((sleepCount) >= checkLimit) {
+          console.log('분석 횟수 중 절반 이상 자는 중.');
+          res.status(410).send() // 자는 중이라고 프론트에 알려줌 - 410 // 프론트에 알려줘야 함.
+        } else {
+          console.log('아직 분석 횟수 중 절반 이하 자는 중.');
+        }
+  
+      }
+      else{ // 안 자는 중
+        console.log('집중도 분석 결과 : 안 자는 중');
+  
+        path = '' // path - 수정필요
+  
+        // 감정분석 시작 - 수정 필요
+        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramTime, function(err, result){
+          if (result){
+            console.log('집중도 | 감정데이터 분석 및 정보 추가 완료');
+            res.status(200).send()
+          }
+          else {
+            console.log('집중도 성공 | 감정 실패');
+            console.dir(err)
+            res.status(400).send();
+          }
+        }); 
+      }
+    }
+    await isSleep()
+
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
+};
+
+var watchAloneEnd = function(req, res){
+  var database = req.app.get('database');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var tmp_highlight_array // 정규화 전 배열
+  var normalization_array // 정규화 후 배열
+  var highlight_time // 감정의 폭이 큰 시간
+
+  async function getWatchResult(userId, movieTitle){ // 감상결과 기록을 찾는 함수. / 하이라이트 계산 배열 찾아옴.
+
+    var existing_watch = await database.WatchModel.find({
+      userId : userId, movieTitle : movieTitle
+    }).clone()
+
+    if (existing_watch.length>0){
+      console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
+      tmp_highlight_array = existing_watch[0].highlight_array
+    }
+    else {
+      console.log('해당 유저의 해당 영화의 감상 기록 존재하지 않음.')
+      res.status(400).send();
+    }
+  }
+  async function getHighlightTile(){
+    tmp_highlight_array.sort(function(a,b){
+      if (a.emotion_diff > b.emotion_diff) return -1;
+      if (a.emotion_diff < b.emotion_diff) return 1;
+      if (a.emotion_diff == b.emotion_diff) return 0;
+    });
+    highlight_time = tmp_highlight_array[0].time
+  }
+
+  async function main(){
+
+    ////////////////////////// 하이라이트 정규화 //////////////////////////
+    await getWatchResult(paramId, parammovieTitle);
+    await normalization(tmp_highlight_array, function(result){
+      normalization_array = result
+    });
+    /////////////////////////////////////////////////////////////////
+
+    await database.WatchModel.updateOne({ // 감상목록 highlight_array 수정 // 
+      userId: paramId,
+      movieTitle: parammovieTitle
+    }, {  
+      $set: {
+        highlight_time : highlight_time,
+        highlight_array : normalization_array,   
+      },
+    })
+  }
+  main()
+  
+  
+  
+};
+
+var addReview = function(req, res){
+  var database = req.app.get('database');
+
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
+  var paramComment =req.body.comment || req.query.comment // 사용자가 작성한 한줄 평
+
+  async function addreview(){
+    await database.WatchModel.updateOne({ // 감상평,평점 업데이트
+      userId: paramId,
+      movieTitle: parammovieTitle
+    }, {  
+      $set: {
+        rating: paramRating,   
+        comment : paramComment
+      }
+    });
+    await res.status(200).send()
+  }
+  addreview()
+};
+
 var email = function(req, res){
     console.log('/email(이메일 인증) 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -501,7 +786,7 @@ var email = function(req, res){
         res.status(400).send();
         console.log("\n\n");
     }
-  };
+};
 
 var makeRoom = function(req, res) {
     console.log('/makeRoom 라우팅 함수 호출됨');
@@ -570,12 +855,10 @@ var logout = function (req, res) {
     console.log('로그아웃합니다..');
 };
 
-  
+var getWatchResult = function(db, userid, movieTitle, callback){
+  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movietitle : ' + movieTitle);
 
-var getWatchResult = function(db, userid, movieid, callback){
-  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movieid : ' + movieid);
-
-  WatchModel.findById(userid, function(err, results_id) {
+  db.WatchModel.findById(userid, function(err, results_id) {
 
         if (err) {
           callback(err, null);
@@ -585,7 +868,7 @@ var getWatchResult = function(db, userid, movieid, callback){
         if(results_id.length > 0) {
 
           console.log(userid + '의 감상결과 발견');
-          WatchModel.findByMovieId(movieid, function(err, results_movie) {
+          db.WatchModel.findByMovieTitle(movieTitle, function(err, results_movie) {
 
             if(err){
               callback(err, null);
@@ -607,7 +890,7 @@ var getWatchResult = function(db, userid, movieid, callback){
           callback(null, null);
         }
       });
-}
+};
 
 var authUser = function(db, id, password, callback) {
   console.log('authUser(로그인) 호출됨' + id + ', ' + password);
@@ -650,41 +933,98 @@ var authUser = function(db, id, password, callback) {
   });
 };
 
+var checkRecord = function(db, id, callback){
+
+  console.log('checkRecord(감상기록 존재 유무 확인) 호출됨' + id );
+
+  // 아이디를 사용해 검색
+  db.WatchModel.findById(id, function(err, results){
+
+      if (err) {
+          callback(err, null);
+          return;
+      }
+
+      console.log('아이디 %s로 검색됨',id);
+
+      if (results.length > 0) {
+          console.log('감상기록 발견');
+          callback(null, results);
+      }
+      else {
+          console.log('감상기록 없음');
+          callback(null, null);
+      }
+  });
+
+};
+
 // 사용자를 추가하는 함수
 var signUp = function(db, id, password, name, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
   console.log('signUp 호출됨' + id + ', ' + password + ', ' + name);
 
-  // 아이디를 사용해 검색
-  db.UserModel.findById(id, function(err, results){
+  var getpython = "";
+  async function get_reco_id(){
 
-    if (err) {
-      console.log('회원가입 중 에러 발생');
-      console.dir(err);
-      return;
-    }
+    //파이썬 코드 실행 (사용자 감정 분석)
+    const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
 
-    if(results.length > 0) {
+    // (param) 이미지 경로 재설정 필요
+    const result = spawnSync("python", ["recommend/getUserId_reco2.py"]);
 
-      console.log('이미 가입된 아이디입니다.');
-      console.log('username : ', results[0].name);
+    if (result.status !== 0) {
+      process.stderr.write(result.stderr);
 
-    }
-    else {
+      process.exit(result.status);
+    } else {
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      getpython = Number(getpython)
 
-      var user = new db.UserModel({'id' : id, 'password': password, 'name' : name});
-
-      // save()로 저장
-      user.save(function(err) {
-        if(err) {
-          callback(err, null);
-          return;
-        }
-        console.log('사용자 데이터 추가함');
-        callback(null, user);
-      });
+      console.log('test : ', getpython) // PYTHON 결과 테스트 출력(추가될 추천2용 사용자 아이디)
     }
   }
-)};
+
+  async function addUser() {
+    // 아이디를 사용해 검색
+    db.UserModel.findById(id, function (err, results) {
+      if (err) {
+        console.log("회원가입 중 에러 발생");
+        console.dir(err);
+        return;
+      }
+
+      if (results.length > 0) {
+        console.log("이미 가입된 아이디입니다.");
+        console.log("username : ", results[0].name);
+      } else {
+        var user = new db.UserModel({ 
+          id: id, 
+          password: password, 
+          name: name,
+          reco2_id : getpython});
+
+        // save()로 저장
+        user.save(function (err) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
+          console.log("사용자 데이터 추가함");
+          callback(null, user);
+        });
+      }
+    });
+  }
+
+  async function main(){
+    await get_reco_id()
+    await addUser()
+  }
+
+  main()
+};
 
 var enterRoom = function(db, roomcode, callback){
   console.log('enterRoom (같이보기 방 입장)호출됨. 방 코드 : ' + roomcode);
@@ -708,67 +1048,54 @@ var enterRoom = function(db, roomcode, callback){
     }
 
   })
-}
+};
 
-var getRecommendUserList = function(database, result, callback){
+var getRecommendUserList = function(result, callback){
 
   console.log('getRecommendUserList 호출됨.');
 
-  substrResult = result.substring(2)
-  splitResult = substrResult.split(' ')
-  console.log(splitResult)
+  splitResult = result.split('] [')
 
-  console.log('result 개수 ; ', splitResult.length);
+  ids = splitResult[0];
+  ids = ids.split(", ")
 
-  splitResult2 = [];
-  var resultArray = [];
+  titles = splitResult[1];
+  titles = titles.split("', '")
 
-  for (var i = 0; i<splitResult.length; i++){
+  posters = splitResult[2];
+  posters = posters.split("', '")
 
-    if (splitResult[i] == ''){
-      // console.log(i+'번째는 continue')
-      continue
+  resultArray = []
+
+  for (let i = 0; i<5; i++){
+    var s = i*5;
+    var e = s+5;
+    var c = 0
+    var resultTitleArray = []
+    var resultPosterArray = []
+
+    for (let j = s; j < e; j++){
+      resultTitleArray[c] = titles[j]
+      resultPosterArray[c] = posters[j]
+      c = c+1
     }
-    else{
-      splitResult2.push(parseInt(splitResult[i]))
-      // console.log(i + '번째 검사결과 : ' + typeof(splitResult[i]))
-      console.log(splitResult2)
+    var obj = {
+      userId : ids[i],
+      title : resultTitleArray,
+      poster : resultPosterArray
     }
-  };
+    resultArray[i] = obj
+  }
 
-  var count = splitResult2.length
+  var count = resultArray.length
   console.log('===================\n결과 갯수 : ', count)
-  splitResult2.forEach(element => {
-    database.WatchModel.findByMovieId(element, function(err, result){
-      console.log('무비아이디로 찾는 중')
 
-      if(err){
-        console.log('추천 사용자 못찾음')
-        callback(err, null)
-      }
+  console.log("============================ 처리 결과 ============================\n", resultArray, "\n============================ 처리 결과 ============================\n");
 
-      if(result.length > 0){
-        console.log('추천 사용자 찾음')
-        resultArray.push({
-          id : result[0].userId,
-          title : result[0].title,
-          poster : result[0].poster
-        })
-        console.log(resultArray)
-      }
 
-      else {
-        console.log('추천 사용자 못찾음')
-        callback(null, null);
-      }
-
-      if(resultArray.length == count){
-        console.log('추천 사용자 | 추천 목록 생성 완료')
-        callback(null, resultArray);
-      }
-    })
-  })
+  callback(null, resultArray)
 };
+
 var makeroom = function (db, roomcode, callback) {
   db.RoomModel.findByRoomCode(roomcode, function(err, result){
     if(err){
@@ -788,6 +1115,7 @@ var makeroom = function (db, roomcode, callback) {
     }
   });
 };
+
 var sendEmail = function (sendemail, sendpass, userid, callback) {
 
     console.log('sendEmail 호출됨.');
@@ -864,44 +1192,320 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
         }
   })
 };
-// 수행모델 코드 - 나중에 참고를 위해 아직 삭제 안함
-/*
-var correctEmotion = function(db, id, emotion,correct,callback){
-    console.log('correctEmotion 호출됨' + id + ', ' + emotion);
 
-  // 아이디를 사용해 검색
-  db.likeModel.findById(id, function(err, results){
-       if (err) {
-          console.log('수행모델 에러 발생');
-          console.dir(err);
-          return;
-       }
+var watchImageCaptureRekognition = function (db, userId, movieTitle, time, callback) {
 
-        if(results.length < 0) {
-            console.log('회원정보가 없습니다..');
-            callback(null,null)
+  console.log('rekognition 함수 호출')
+
+  var result_total // python 감정분석 실행 결과 배열
+
+  //////////////////////////////////////////////////감정분석 파이썬 코드 실행//////////////////////////////////////////////////
+  function rekognition_python() {
+    //파이썬 코드 실행 (사용자 감정 분석)
+    const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+    var getpython = "";
+
+    // (param) 이미지 경로 재설정 필요
+    const result = spawnSync("python", ["rekognition/rekognition.py", time]);
+
+    if (result.status !== 0) {
+      process.stderr.write(result.stderr);
+
+      process.exit(result.status);
+    } else {
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      getpython = result.stdout.toString();
+      // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
+      //console.log(getpython)
+    }
+
+    // 문자 예쁘게 정리
+    removedResult = getpython.replace(/\'/g, "");
+    removedResult = removedResult.replace(/\[/g, "");
+    removedResult = removedResult.replace(/\]/g, "");
+
+    result_total = removedResult.split(", ");
+  }
+  rekognition_python()
+  //////////////////////////////////////////////////감정분석 파이썬 코드 완료//////////////////////////////////////////////////
+
+  //////////////////////////////////////////////////감정의 폭 관련 코드 시작//////////////////////////////////////////////////
+  var calm_count = 0
+  var calm_sum = 0
+  var calm_emotion_count = 0
+  var calm_emotion_sum = 0
+  var calm_emotion_calm_sum = 0
+
+  // rekognition모델 10초전의 기록을 찾아서 변수에 넣어야 함.
+  var tmp_calm_count = 0
+  var tmp_calm_sum = 0
+  var tmp_calm_emotion_count = 0
+  var tmp_calm_emotion_sum = 0
+  var tmp_calm_emotion_calm_sum = 0
+
+  // 감정의 폭 계산 결과
+  var highlight_emotion_diff = 0
+  var highlight_emotion_time = 0
+
+
+  // watch모델에 기록된 감상결과
+  var tmp_emotion_array = []
+
+  // 수정된 감상결과
+  var edit_emotionArray = []
+
+  async function getPastRekognition(userId, movieTitle, time){ // 10초 전의 rekognition 기록을 찾는 함수.
+
+    var pastTime = time - 10
+
+    var existing_re = await db.RekognitionModel.find({
+      userId : userId, movieTitle : movieTitle, time : pastTime
+    }).clone()
+
+    if (existing_re.length>0){
+      console.log('10초 전의 rekognition 기록 찾음.', existing_re[0])
+
+      tmp_calm_count = existing_re[0].calm_count
+      tmp_calm_sum = existing_re[0].calm_sum
+      tmp_calm_emotion_count = existing_re[0].calm_emotion_count
+      tmp_calm_emotion_sum = existing_re[0].calm_emotion_sum
+      tmp_calm_emotion_calm_sum = existing_re[0].calm_emotion_calm_sum
+    }
+    else {
+      console.log('10초 전의 rekognition 기록 존재하지 않음.')
+    }
+  }
+
+
+  async function getWatchResult(userId, movieTitle){ // 감상결과 기록을 찾는 함수.
+
+    var existing_watch = await db.WatchModel.find({
+      userId : userId, movieTitle : movieTitle
+    }).clone()
+
+    if (existing_watch.length>0){
+      console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
+      tmp_emotion_array = existing_watch[0].emotion_array
+      return true;
+    }
+    else {
+      console.log('해당 유저의 해당 영화의 감상 기록 존재하지 않음.')
+      callback(null, null); // 감상기록을 찾지 못하면 콜백으로 돌아가버림 - 문제가 있는것.
+    }
+  }
+
+  async function getCalmConcentration(){ // 감정분석 후 calm 의 confidence를 찾기 위한 함수
+    for (var i = 0; i < 15; i += 2){
+      if (result_total[i] == "CALM"){
+        calm_emotion_calm_sum = Number(tmp_calm_emotion_calm_sum) + Number(result_total[i+1])
+        break;
+      }
+    }
+  }
+  async function check_highlight(){
+
+      calm_emotion_count = tmp_calm_emotion_count + 1
+      calm_emotion_sum = Number(tmp_calm_emotion_sum) + Number(result_total[1])
+      console.log('calm_emotion_sum: ', calm_emotion_sum)
+
+      await getCalmConcentration();
+
+      console.log('tmp_calm_count : ', tmp_calm_count)
+      console.log('calm_emotion_count : ', calm_emotion_count)
+
+      if (tmp_calm_count == 0){
+        calm_count = 0;
+        calm_sum = 0;
+        calm_emotion_count = 0;
+        calm_emotion_sum = 0;
+        calm_emotion_calm_sum = 0;
+      }
+
+      else if (tmp_calm_count == 1){
+        calm_count = 0;
+        calm_sum = 0;
+        calm_emotion_count = 0;
+        calm_emotion_sum = 0;
+        calm_emotion_calm_sum = 0;
+      }
+
+      else if (tmp_calm_count == 2){
+        if (calm_emotion_count == 2){
+          // 감정의 폭 계산
+          calm_aver = (tmp_calm_sum / 2)
+          calm_emotion_calm_aver = (calm_emotion_calm_sum / 2)
+          calm_emotion_aver = (calm_emotion_sum / 2)
+          highlight_emotion_diff = (((calm_aver - calm_emotion_calm_aver) + calm_emotion_aver)/2)
+          highlight_emotion_time = time
+
+          // 초기화
+          calm_count = 0;
+          calm_sum = 0;
+          calm_emotion_count = 0;
+          calm_emotion_sum = 0;
+          calm_emotion_calm_sum = 0;
         }
-        else { // 여기서는 기존 정보 count에 +1씩 해주어야함
-            var sameCount=results[0].sameCount;
-            var sameAllCount = results[0].sameAllCount;
+      }
+  }
 
-            if(correct==1){
-                console.log('감정 일치!');
+  async function edit_emotion_array(first){
+    if (first == 'HAPPY') {
+      edit_emotionArray[0].HAPPY += 1
+      await check_highlight()
+    }
+    else if (first == 'SAD') {
+      edit_emotionArray[0].SAD += 1
+      await check_highlight()
+    }
+    else if (first == 'ANGRY') {
+      edit_emotionArray[0].ANGRY += 1
+      check_highlight()
+    }
+    else if (first == 'CONFUSED') {
+      edit_emotionArray[0].CONFUSED += 1
+      check_highlight()
+    }
+    else if (first == 'DISGUSTED') {
+      edit_emotionArray[0].DISGUSTED += 1
+      check_highlight()
+    }
+    else if (first == 'SURPRISED') {
+      edit_emotionArray[0].SURPRISED += 1
+      check_highlight()
+    }
+    else if (first == 'FEAR') {
+      edit_emotionArray[0].FEAR += 1
+      check_highlight()
+    }
+    else if (first == 'CALM') {
+      calm_count = tmp_calm_count + 1
+      calm_sum = tmp_calm_sum + result_total[1]
 
-                db.likeModel.updateOne({id: 'pbkdpwls'}, {$set: {sameCount: sameCount+1}
-                }, function (err, user) {
-                    if (err) throw err
-                })
-            }
+      if (tmp_calm_emotion_count == 1){
+        calm_emotion_count = 0
+        calm_emotion_sum = 0
+        calm_emotion_calm_sum = 0
+      }
+    }
+  }
 
-            db.likeModel.updateOne({ id: 'pbkdpwls'}, {$set: { sameAllCount: sameAllCount+1}
-            }, function (err, user) {
-                    if (err) throw err
-            })
-            callback(null, 200)
+
+  async function main(){
+
+    await getPastRekognition(userId, movieTitle, time)
+    console.log('====================첫번째 완료====================')
+
+    await getWatchResult(userId, movieTitle);
+    console.log("====================두번째 완료====================");
+
+    // watch model 기록안에 있던 emotion_array를 대입.
+    edit_emotionArray = tmp_emotion_array;
+    console.log("확인필요 ; ", edit_emotionArray[0]);
+    console.log("확인필요 ; ", edit_emotionArray[0].SAD);
+
+    await edit_emotion_array(result_total[0])
+    console.log('====================네번째 완료====================')
+
+    if (highlight_emotion_time == 0){
+      await db.WatchModel.updateOne({ // 감상목록 emotion_array 수정 //
+        userId: userId,
+        movieTitle: movieTitle
+      }, {
+        $set: {
+          emotion_array: edit_emotionArray,
+        },
+      })
+    }
+    else {
+      await db.WatchModel.updateOne({ // 감상목록 emotion_array 수정 //
+        userId: userId,
+        movieTitle: movieTitle
+      }, {
+        $set: {
+          emotion_array: edit_emotionArray,
+        },
+        $push : {
+          highlight_array: {
+            time : highlight_emotion_time,
+            emotion_diff : highlight_emotion_diff
+          }
         }
-  })
-};*/
+      })
+    }
+    console.log('====================다섯번째 완료====================')
+
+    // 감정분석 기록 추가 //
+    var newRekognition = await new db.RekognitionModel({
+      'userId': userId, 'movieTitle': movieTitle, 'time': time,
+      'firstEmotion': result_total[0],
+      'firstConfidence': result_total[1],
+      'secondtEmotion': result_total[2],
+      'thirdEmotion': result_total[4],
+      'fourthEmotion': result_total[6],
+      'fifthEmotion': result_total[8],
+      'sixthEmotion': result_total[10],
+      'seventhEmotion': result_total[12],
+      'eighthEmotion': result_total[14],
+      'calm_count': calm_count, // calm 횟수
+      'calm_sum' : calm_sum, // calm confidence 합
+      'calm_emotion_count' : calm_emotion_count, // calm 2번 후에 emotion 횟수
+      'calm_emotion_sum' : calm_emotion_sum, // calm 2번 후에 emotion confidence 합
+     'calm_emotion_calm_sum' : calm_emotion_calm_sum // calm 2번 후에 emotion 나왔을 때 calm의 합
+    });
+    await newRekognition.save(function (err) {
+      if (err) {
+        console.dir(err);
+        callback(err, null)
+      }
+      console.log('감정분석 데이터 추가');
+      callback(null, true)
+    })
+    console.log('====================여섯번째 완료====================')
+
+
+
+  }
+  main()
+};
+
+var normalization = async function (highlight_array, callback) {
+
+  var min = 0;
+  var max = 0;
+  var normal_array = highlight_array;
+
+  async function getMinMax() {
+    var diff_array = [];
+
+    for (var i = 0; i < highlight_array.length; i++) {
+      diff_array.push(highlight_array[i].emotion_diff);
+    }
+
+    diff_array.sort(function (a, b) {
+      if (a > b) return 1;
+      if (a < b) return -1;
+      if (a == b) return 0;
+    });
+
+    min = diff_array[0];
+    max = diff_array[diff_array.length - 1];
+  }
+
+  async function normalization() {
+    for (var i = 0; i < normal_array.length; i++) {
+      normal_array[i].emotion_diff =
+        (Number(normal_array[i].emotion_diff) - min) / (max - min);
+    }
+  }
+
+  async function main(){
+    await getMinMax();
+    await normalization();
+    callback(null, normal_array)
+  }
+  main()
+};
 
 module.exports.signup = signup;
 module.exports.login = login;
@@ -914,4 +1518,7 @@ module.exports.email = email;
 module.exports.makeRoom = makeRoom;
 module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;
-//module.exports.saveEmotion = saveEmotion;
+module.exports.watchAloneStart = watchAloneStart;
+module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
+module.exports.watchAloneEnd = watchAloneEnd;
+module.exports.addReview = addReview;

@@ -10,6 +10,7 @@ Schema.createSchema = function (mongoose) {
     // 스키마 정의 (속성: type, required, unique)
     var UserSchema = mongoose.Schema({ // 사용자정보
         id: { type: String, required: true, unique: true, 'default': '' }, // 아이디
+        reco2_id: { type: Number, required: true, unique: true, 'default': '' }, // 추천2에 쓰일 아이디
         password: { type: String, required: true }, 'default': '', // 비번
         name: { type: String, required: 'hashed', 'default': '' }, // 닉네임
         created_at: { type: Date, index: { unique: false }, 'default': Date.now } // 가입일

@@ -8,7 +8,6 @@ class VideoDetect:
     sqs = boto3.client('sqs', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     sns = boto3.client('sns', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
-    # roleArn, sqs,sns 새로운 aws 계정으로 수정 필요
     roleArn = 'arn:aws:iam::805057381367:role/serviceRekognition'
     bucket = 'allonsybuckets'
     video = 'avengers.mp4'
@@ -55,7 +54,7 @@ class VideoDetect:
         return succeeded
 
     def GetLabelDetectionResults(self, second):
-        genreList = ""
+        genreList = []
         second = int(second/1000)
         maxResults = 10
         paginationToken = ''
@@ -64,7 +63,6 @@ class VideoDetect:
         adventure = ['Train','Vehicle','Transportation','Nature']
         fscount = 0 # 3 이상되면 sf 장르로 분류
         adventurecount = 0
-
         while finished == False:
             response = self.rek.get_label_detection(JobId=self.startJobId1, MaxResults=maxResults,
                                                     NextToken=paginationToken, SortBy='TIMESTAMP') # 시간순으로 정렬, SortBy TIMESTAMP
@@ -88,49 +86,36 @@ class VideoDetect:
                 finished = True
 
         if(fscount>=3):
-            genreList+='sf '
+            genreList.append('sf')
         if (adventurecount >= 3):
-            genreList+= 'adventure'
+            genreList.append('adventure')
         print(genreList)
 
-    def GetFaceDetectionResults(self, second):  # 장면분석, 감정은 가장 크게 느낀 2가지만 가져오기.
-        second = int(second / 1000)
-        emotionList = ""
-        correctSchema = ""  # 수행모델을 위한 10초 간격의 감정정보
-        timeList = []
-        maxResults = 10
-        paginationToken = ''
-        finished = False
-        t = 0
+    def GetFaceDetectionResults(self,second):
+            second = int(second / 1000)
+            emotionList = []
+            maxResults = 10
+            paginationToken = ''
+            finished = False
 
-        while finished == False:
-            response = self.rek.get_face_detection(JobId=self.startJobId2, MaxResults=maxResults,
-                                                   NextToken=paginationToken)
+            while finished == False:
+                response = self.rek.get_face_detection(JobId=self.startJobId2, MaxResults=maxResults, NextToken=paginationToken)
 
-            for faceDetection in response['Faces']:
-                time = faceDetection['Timestamp'] // 1000  # 초로 분류됨
-                if time // 10 == t:
-                    t += 1
-                    timeList.append(time)
-                    correctSchema += ((faceDetection['Face']['Emotions'][0])["Type"]) + " "
+                for faceDetection in response['Faces']:
+                    if faceDetection['Timestamp'] / 1000 >= 5:
+                        last1 = second - 5
 
-                if faceDetection['Timestamp'] / 1000 >= 5:
-                    last1 = second - 5
-                    if int(faceDetection['Timestamp'] / 1000) <= second + 5 and int(
-                            faceDetection['Timestamp'] / 1000) >= last1:
-                        if ((faceDetection['Face']['Emotions'][0])["Type"]) not in emotionList:
-                            if int((faceDetection['Face']['Emotions'][0])["Confidence"]) >= 80 and (
-                            (faceDetection['Face']['Emotions'][0])["Type"]) != "CALM":
-                                emotionList += (((faceDetection['Face']['Emotions'][0])["Type"])) + " "
-                    else:
-                        continue
+                        if int(faceDetection['Timestamp'] / 1000) <= second + 5 and int(faceDetection['Timestamp'] / 1000) >= last1:
+                            if str((faceDetection['Face']['Emotions'][0])["Type"]) not in emotionList:
+                                emotionList.append(str((faceDetection['Face']['Emotions'][0])["Type"]))
+                        else:
+                            continue
 
-            if 'NextToken' in response:
-                paginationToken = response['NextToken']
-            else:
-                finished = True
-        print(emotionList)
-        print(correctSchema)
+                if 'NextToken' in response:
+                    paginationToken = response['NextToken']
+                else:
+                    finished = True
+            print(emotionList)
 
     def CreateTopicandQueue(self):
 
@@ -211,7 +196,7 @@ class VideoDetect:
         maxResults = 10
         paginationToken = ''
         finished = False
-        celeblist = ""
+        celeblist = []
         while finished == False:
             response = self.rek.get_celebrity_recognition(JobId=self.startJobId3, MaxResults=maxResults,NextToken=paginationToken)
 
@@ -221,7 +206,7 @@ class VideoDetect:
                     if int(celebrityRecognition['Timestamp']/1000)<=second+2 and int(celebrityRecognition['Timestamp']/1000)>=last:
                         if str(celebrityRecognition['Celebrity']['Name']) not in celeblist:
                             name = str(celebrityRecognition['Celebrity']['Name'])
-                            celeblist+=name +" "
+                            celeblist.append(name)
                     else:
                         continue
             if 'NextToken' in response:

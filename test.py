@@ -2,8 +2,8 @@ import boto3, json, sys, time
 
 class VideoDetect:
     jobId = 'null' # 비디오 분석 작업용 ID, 작업 식별자
-    access_key_id = 'AKIAVWZQDIOGQ7C2OYJH'
-    secret_access_key = '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'
+    access_key_id = ''
+    secret_access_key = ''
     rek = boto3.client('rekognition', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     sqs = boto3.client('sqs', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     sns = boto3.client('sns', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)

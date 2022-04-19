@@ -110,11 +110,45 @@ def user_release_ratio(df, usernumber):
         release_data_list[i] = round(release_data_list[i]/sum, 3)
     return release_data_list
 
+# 영화 추천 시 측정치 + 변수에 따른 가중치를 더해 추천
+def Estimate_Score_sum1(user_df, user_release_ratio_list):
+    user_df = user_df.dropna(axis=0)
+
+    for i in range(0, len(user_df)):
+        if int(user_df.iloc[i]['release_date'][0:4]) <= 1900:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1900']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 1950:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1950']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 1960:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1960']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 1970:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1970']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 1980:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1980']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 1990:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['1990']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 2000:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['2000']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 2010:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['2010']
+        elif int(user_df.iloc[i]['release_date'][0:4]) <= 2020:
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['2020']
+    return user_df
+
 # 유저에 따른 개인 영화 추천
 # 리뷰 데이터, userId, 평점(5점일 때만), 영화 메타데이터, 사용하지 않을 영화데이터, reader함수, 알고리즘명
 def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     df = data
-    df_user = df[(df['userId']==usernumber) & (df['rating']==rating)]  # userId로 받아온 사용자 데이터만 남김
+    df_user = df[(df['userId']==usernumber) & (df['rating']==rating)]  # userId로 받아온 사용자 데이터만, 주어진 평점일때만 남김
     df_user = df_user.set_index('movieId')
     df_user = df_user.join(moviedata)['original_title']
     #print('1. 개인별 영화 추천을 위해 처리한 user 정보 : ')
@@ -122,23 +156,55 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
 
     #  유저의 연도 비율을 가져온다.
     user_release_ratio_list = user_release_ratio(df, usernumber) # 유저의 년도 비율을 가져온다.
-
+    print('유저 연도 비율 : ')
+    print(user_release_ratio_list)
     user_df = moviedata.copy()
     user_df = user_df[~user_df['movieId'].isin(dropdata)]  # 사용하지 않는 영화데이터 제거
+    print('영화 메타 데이터 : ')
+    print(user_df)
+
     data1 = Dataset.load_from_df(df[['userId', 'movieId', 'rating']], reader) #학습 데이터를 만들기 위해 Dataset 객체 생성
+    # data1 = <surprise.dataset.DatasetAutoFolds object at 0x7ff1d0196b00>
     trainset = data1.build_full_trainset() # 데이터를 학습데이터로 만드는 과정
     svd.fit(trainset) # 가지고있는 trainset으로 fit() 메소드를 실행시킨다. (fit = 훈련시킴)
     # Estimate_Score라는 새로운 칼럼을 만들고, 예측값 처리.
-    # user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x : svd.predict(usernumber, x).est) 나중에 다시 추가
+    user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x : svd.predict(usernumber, x).est) # 나중에 다시 추가
+    print('estimate_score : ')
+    print(user_df['Estimate_Score'].head(30))
+    user_df = user_df.drop('movieId', axis = 1)
 
-    #user_df = user_df.drop('movieId', axis = 1)
+    user_df = user_df.sort_values('Estimate_Score', ascending = False) # 나중에 다시 추가
 
-    # user_df = user_df.sort_values('Estimate_Score', ascending = False) 나중에 다시 추가
-
-    #print('2. 유저에 따른 개인 영화 추천 (10개) : ')
+    print('유저에 따른 개인 영화 추천 (10개) : ')
     print(user_df['original_title'].head(10))
 
     return user_df
 
-user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
+# 위 함수와 더불어 추천해주는 함수
+def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo):
+    df = data
+    user_release_ratio_list = user_release_ratio(df, usernumber) # 유저의 년도 비율을 가져온다.
+    #user_pop_ratio_list = user_pop_ratio(df, usernumber) # 유저의 popularity 비율을 가져온다.
+    #user_language_ratio_list = user_language_ratio(df, usernumber) # 유저의 language 비율을 가져온다.
+
+    user_df = moviedata.copy()
+    user_df = user_df[~user_df['movieId'].isin(dropdata)]
+    data1 = Dataset.load_from_df(df[['userId', 'movieId', 'rating']], reader)
+    trainset = data1.build_full_trainset()
+    algo.fit(trainset)
+    user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber,x).est)
+    user_df = user_df.sort_values('Estimate_Score', ascending=False)
+
+    user_df_sum = Estimate_Score_sum1(user_df, user_release_ratio_list)
+    #user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
+    user_df_sum_relase = user_df_sum.sort_values('Estimate_Score', ascending=False)
+    print("개봉일 별 가중치 반영하여 영화 추천 : ")
+    print(user_df_sum_relase['original_title'].head(10))
+
+    return user_df_sum_relase
+
+user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
+
+#user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
+
 #user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, nmf)

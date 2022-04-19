@@ -51,7 +51,7 @@ directory_name = []
 testfolder = ''
 
 
-def preprocessing(path):
+def preprocessing(id, title, path):
     global mp_face_mesh
     global LEFT_EYE
     global RIGHT_EYE
@@ -94,14 +94,16 @@ def preprocessing(path):
 
     # s3 bucket
     photo_list = [
-        str(int(path) - 1) + '.jpg', str(int(path)) + '.jpg', str(int(path) + 1) + '.jpg'
+        id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
+        id + '_' + title + '_' + str(int(path)) + '.jpg', 
+        id + '_' + title + '_' + str(int(path) + 1) + '.jpg'
     ]
     directory_name = [
         "blinking1", "lookother1", "lookother2", "shaking1", "asiangirl1", "sleeping1", "shaking2"
         , "shaking3", "", "man1", "asiangirl2", "test"
     ]
 
-    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (1).csv',
+    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)
@@ -129,9 +131,9 @@ def preprocessing(path):
         down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
         ImgArray = np.array(
-            [testfolder + '/' + str(int(path) - 1) + '.jpg',
-             testfolder + '/' + str(int(path)) + '.jpg',
-             testfolder + '/' + str(int(path) + 1) + '.jpg'])
+            [testfolder + '/' + id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
+             testfolder + '/' + id + '_' + title + '_' + str(int(path)) + '.jpg',
+             testfolder + '/' + id + '_' + title + '_' + str(int(path) + 1) + '.jpg'])
 
     # 첫번재 이미지로 프레임 크기를 지정함.
     Img1 = cv2.imread(ImgArray[0])
@@ -434,25 +436,24 @@ def main():
         concentration = 0  # 조는 중이면 집중도 0
 
 
-def afterprocessing(path):
-    # # s3 버킷 삭제
-    # for i in range(0, len(photo_list)):
-    #     down = s3.delete_object(Bucket = bucket, Key = "photo(youtube)/" + path + "/" + photo_list[i])
+def afterprocessing():
 
     # 로컬 저장소 삭제
     [os.remove(f)
      for f in
-     glob.glob('/Users/jeonsumin/Desktop/allonsy-back-node/Allons-y-back 2/eyetracking/testfolder/*.jpg')]
+     glob.glob('eyetracking/testfolder/*.jpg')]
 
 
 if __name__ == "__main__":
     # 7번은 인식 못함...
-    start = time.time()
+    times = sys.argv[1]
+    id = sys.argv[2]
+    title = sys.argv[3]
 
     # 테스트할 사진들 지정
-    preprocessing(sys.argv[1])
+    preprocessing(id, title, times)
     settingStandard(5, 3)  # 일단 기준은 cv = 7 / mp = 3
     main()
-    afterprocessing(sys.argv[1])
+    afterprocessing()
 
     print(concentration)

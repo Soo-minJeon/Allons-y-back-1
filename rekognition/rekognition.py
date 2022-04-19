@@ -5,7 +5,7 @@ import sys
 
 def process(path):
     # def process():
-    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (1).csv', 'r') as input:
+    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv', 'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:
@@ -13,7 +13,7 @@ def process(path):
             secret_access_key = line[1]
 
     folder = "capture/"
-    photo = folder + str(path)  + '.jpg'
+    photo = folder + str(path) # capture/+'프론트에서 넘겨받은 파일 명'
 
     region = 'ap-northeast-2'
     bucket = "allonsybucket1"

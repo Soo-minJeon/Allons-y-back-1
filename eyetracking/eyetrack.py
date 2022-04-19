@@ -95,9 +95,10 @@ def preprocessing(id, title, path):
     # s3 bucket
     photo_list = [
         id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
-        id + '_' + title + '_' + str(int(path)) + '.jpg', 
+        id + '_' + title + '_' + str(int(path)) + '.jpg',
         id + '_' + title + '_' + str(int(path) + 1) + '.jpg'
     ]
+
     directory_name = [
         "blinking1", "lookother1", "lookother2", "shaking1", "asiangirl1", "sleeping1", "shaking2"
         , "shaking3", "", "man1", "asiangirl2", "test"
@@ -125,15 +126,15 @@ def preprocessing(id, title, path):
 
     # get image file
     # 이미지 셋 선택
-    testfolder = ('eyetracking/testfolder/')
+    testfolder = '/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/eyetracking/testfolder/'
 
-    for i in range(0, len(photo_list)):
+    for i in range(3):
         down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
-        ImgArray = np.array(
-            [testfolder + '/' + id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
-             testfolder + '/' + id + '_' + title + '_' + str(int(path)) + '.jpg',
-             testfolder + '/' + id + '_' + title + '_' + str(int(path) + 1) + '.jpg'])
+
+    ImgArray = [testfolder + photo_list[0],
+             testfolder + photo_list[1],
+             testfolder + photo_list[2]]
 
     # 첫번재 이미지로 프레임 크기를 지정함.
     Img1 = cv2.imread(ImgArray[0])
@@ -169,7 +170,7 @@ def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준
     flag = 0
 
     # 집중도 분석 결과 ( 범위 : 0~5)
-    concentration = 5
+    concentration = 100
 
 
 def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
@@ -307,7 +308,8 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
 
     # 얼굴대비 눈 비율이 blinkStandard 보다 작으면 감은 것으로 판별
     if ratio < blinkStandard_cv:
-        blink_cv += 1
+        blink_cv += 15
+
     elif ratio >= blinkStandard_cv:  # open cv로 한번 걸러주고
         # 눈을 감고 있지 않으면 mediaPipe 적용해서 눈 초점 위치 파악
         with mp_face_mesh.FaceMesh(
@@ -357,17 +359,14 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                     b = abs(center_right[1] - standard_center_r[1])  # 선 b의 길이
                     r_distance = math.sqrt((a * a) + (b * b))
 
+                    # 왼|오 둘 중 하나라도
+                    # 첫 프레임에서 눈의 위치와 현재 프레임에서 눈 위치의 거리가 용인 영역(반지름)의 길이를 넘어가면
                     if l_distance >= radious or r_distance >= radious:
 
+                        # 평균
                         distance_sum = (l_distance + r_distance) // 2
 
-                        warning += 1
-                        if (distance_sum <= radious + radious // 50):
-                            warning += 2
-                        elif (distance_sum <= radious + 2 * radious // 50):
-                            warning += 3
-                        else:
-                            warning += 4
+                        warning = (distance_sum / (radious * 2)) * 50
 
                 cv2.circle(frame, center_left, int(l_radious), color, 1, cv2.LINE_AA)
                 cv2.circle(frame, center_right, int(r_radious), color, 1, cv2.LINE_AA)
@@ -393,7 +392,7 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                     ratio = (sum / 2) * 100 / FACE_SUB
 
                 if ratio < blinkStandard_mp:
-                    blink_mp += 1
+                    blink_mp += 15
 
                 # 얼굴 범위 확인
                 cv2.polylines(frame, [mesh_points[FACE_OVAL]], True, color, 1, cv2.LINE_AA)
@@ -426,14 +425,16 @@ def main():
             # 눈 그리기
             process([36, 37, 38, 39, 40, 41], [42, 43, 44, 45, 46, 47], landmarks, gray, frame, i)
 
+    if (blink_mp == len(ImgArray)):
+        concentration = 0  # 조는 중이면 집중도 0
+
     concentration = concentration - warning
     concentration = concentration - blink_cv
     concentration = concentration - blink_mp
     if (concentration < 0):
         concentration = 0
 
-    if (blink_mp == len(ImgArray)):
-        concentration = 0  # 조는 중이면 집중도 0
+
 
 
 def afterprocessing():
@@ -441,7 +442,7 @@ def afterprocessing():
     # 로컬 저장소 삭제
     [os.remove(f)
      for f in
-     glob.glob('eyetracking/testfolder/*.jpg')]
+     glob.glob('/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/eyetracking/testfolder/*.jpg')]
 
 
 if __name__ == "__main__":

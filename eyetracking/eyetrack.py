@@ -430,10 +430,9 @@ def main():
 
     concentration = concentration - warning
     concentration = concentration - blink_cv
-    concentration = concentration - blink_mp
+    concentration = concentration - (blink_mp*15)
     if (concentration < 0):
         concentration = 0
-
 
 
 

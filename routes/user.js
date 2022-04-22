@@ -812,16 +812,16 @@ var email = function(req, res){
     var database = req.app.get('database');
     if(database){
   
-        var paramId = req.body.id;
+        var paramEmail = req.body.email;
   
         // 발신자 정의.
-        var app_email = '***@gmail.com';
-        var app_pass = '****';
+        var app_email = '수정';
+        var app_pass = '수정';
 
   
-        console.log('수신자 : ', paramId);
+        console.log('수신자 : ', paramEmail);
   
-        sendEmail(app_email, app_pass, paramId, function(err, results){
+        sendEmail(app_email, app_pass, paramEmail, function(err, results){
   
           if(err){
             console.log('이메일 발송 실패')

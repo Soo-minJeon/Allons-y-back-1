@@ -51,6 +51,7 @@ function createSchema(app, config){
         console.log('스키마 [%s], [%s] 생성됨. ', curItem.schemaName, curItem.modelName);
     }
 
+    console.log('----------------------------------------------------------------------------')
     app.set('database', database);
 };
 

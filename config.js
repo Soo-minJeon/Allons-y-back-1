@@ -2,7 +2,7 @@
 
 module.exports = {
     server_port : 3000,
-    db_url : "mongodb://54.180.120.42:27017/local",
+    db_url : "mongodb://52.79.224.222:27017/local",
     db_schemas : [
         {file : './UserSchema', 
         collection : 'UserCollection', 

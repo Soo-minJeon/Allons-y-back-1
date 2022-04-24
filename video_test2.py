@@ -1,3 +1,5 @@
+# 영화 영상 분석 코드 - 사물인식으로 장르 판별, 유명인사 인식으로 배우 판별, 장면에서 배우 감정 판별
+# python, aws
 import boto3, json, sys, time
 
 class VideoDetect:

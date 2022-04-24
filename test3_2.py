@@ -1,3 +1,4 @@
+# 추천 1 코드, 컨텐츠 기반 필터링 영화 추천 시스템
 # -*- coding: utf-8 -*-
 import pandas as pd
 from surprise import Reader, Dataset, SVD, NormalPredictor, KNNBasic # 알고리즘이 들어간다.

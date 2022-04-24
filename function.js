@@ -1,4 +1,6 @@
+var nodemailer = require('nodemailer');
 
+// 감상결과 가져오기
 var getWatchResult = function(db, userid, movieTitle, callback){
   console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movietitle : ' + movieTitle);
 
@@ -163,6 +165,7 @@ var signUp = function(db, id, password, name, callback) { // callback 함수는 
   main()
 };
 
+// 같이보기 방 입장
 var enterRoom = function(db, roomcode, callback){
   console.log('enterRoom (같이보기 방 입장)호출됨. 방 코드 : ' + roomcode);
 
@@ -187,6 +190,7 @@ var enterRoom = function(db, roomcode, callback){
   })
 };
 
+// 유사사용자 영화목록 추천
 var getRecommendUserList = function(result, callback){
 
   console.log('getRecommendUserList 호출됨.');
@@ -233,6 +237,7 @@ var getRecommendUserList = function(result, callback){
   callback(null, resultArray)
 };
 
+// 같이보기 방 생성
 var makeroom = function (db, roomcode, callback) {
   db.RoomModel.findByRoomCode(roomcode, function(err, result){
     if(err){
@@ -253,6 +258,7 @@ var makeroom = function (db, roomcode, callback) {
   });
 };
 
+// 인증 이메일 전송
 var sendEmail = function (sendemail, sendpass, userid, callback) {
 
     console.log('sendEmail 호출됨.');
@@ -301,6 +307,7 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
     email().catch(console.error);
 };
 
+// 장면분석
 var scene = function(db, id, gen, actor, emotion,correctModel,callback){
     console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion+', '+correctModel);
 
@@ -331,6 +338,7 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
   })
 };
 
+// 사용자 감정분석
 var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callback) {
 
   console.log('rekognition 함수 호출')
@@ -607,6 +615,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
   main()
 };
 
+// 정규화
 var normalization = async function (highlight_array, callback) {
 
   var min = 0;
@@ -645,6 +654,7 @@ var normalization = async function (highlight_array, callback) {
   main()
 };
 
+// 모듈화 연결
 module.exports.getWatchResult = getWatchResult;
 module.exports.authUser = authUser;
 module.exports.checkRecord = checkRecord;

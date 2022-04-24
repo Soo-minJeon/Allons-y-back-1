@@ -1,5 +1,3 @@
-
-var nodemailer = require('nodemailer');
 var functionUser = require('../function');
 
 // 회원가입 라우팅 함수
@@ -109,6 +107,7 @@ var login = function(req, res){
   }
 };
 
+// 감상결과 목록
 var watchlist = function(req, res) {
     console.log('/watchlist(감상결과 목록 처리) 라우팅 함수 호출');
   
@@ -146,6 +145,7 @@ var watchlist = function(req, res) {
     }
 };
 
+// 감상결과
 var watchresult = function(req, res) {
     console.log('/watchresult(감상결과) 라우팅 함수 호출');
   
@@ -196,6 +196,7 @@ var watchresult = function(req, res) {
     }
 };
 
+// 장면분석
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -273,73 +274,8 @@ var sceneAnalyze = function(req, res) {
         paramEmotion = array[2]
       });
 }
-/*
-var saveEmotion = function(req,res) {
-    console.log('/saveEmotion 라우팅 함수 호출');
-    var database = req.app.get('database');
-    var paramGenre = null
-    var paramActor = null
-    //var paramEmotion = null
-    // 감정맥스 초, 감정 종류 받아오기
-    //var maxSecond = req.body.maxSecond || req.query.maxSecond;
-    var emotionKind = 'Happy';//req.body.emotionKind || req.query.emotionKind;
-    var paramId = 'pbkdpwls';//req.body.id || req.query.id;
 
-    // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
-      // 1. child-process모듈의 spawn 취득
-      //const spawn = require('child_process').spawn;
-      // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-      //const result = spawn('python', ['video_test2.py']);
-
-      // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-      /*result.stdout.on('data', function(data) {
-        const stringResult = data.toString();
-        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
-        var array = stringResult.split('\n');
-        for(var i=0;i<3;i++) {
-           console.log(array[i]);
-        }*//*
-        var paramEmotion = 'Happy';//array[2] // 영화 장면 감정정보 받아오기
-
-        console.log('요청 파라미터 : ' + paramEmotion);
-
-        var database = req.app.get('database');
-
-        var correct=0
-        if (paramEmotion==emotionKind){
-            correct=1
-        }
-        // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
-        if(database) {
-          correctEmotion(database, paramId, paramEmotion,correct,function(err, result) {
-            if(err) {
-               console.log('장면분석 정보 등록 에러 발생...');
-               console.dir(err);
-               res.status(400).send();
-            }
-           // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-            if(result) {
-              console.log('감정부합 여부 체크 성공.');
-              console.dir(result);
-              res.status(200).send();
-              console.log('\n\n');
-
-            } else { // 결과 객체가 없으면 실패 응답 전송
-              console.log('장면분석 정보 등록 에러 발생...');
-              res.status(400).send();
-              console.log('\n\n');
-            }
-          });
-        }
-        else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
-          console.log('장면분석 정보 등록 에러 발생...');
-          console.dir(err);
-          res.status(400).send();
-          console.log('\n\n');
-        }
-      //});
-} */
-
+// 추천1 - 컨텐츠 기반
 var recommend1 = function(req, res){
     var database = req.app.get('database');
     if(database) {
@@ -383,6 +319,7 @@ var recommend1 = function(req, res){
   
 };
 
+// 추천2 - 유사 사용자
 var recommend2 = function(req, res){
   console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
 
@@ -437,8 +374,8 @@ var recommend2 = function(req, res){
   }
 };
 
+// 같이보기 방 입장
 var enterroom = function(req, res){
-
     console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
     var database = req.app.get('database');
     if(database){
@@ -481,7 +418,7 @@ var enterroom = function(req, res){
   
 };
 
-// 감상시작 라우팅 함수
+// 감상 시작 - 혼자보기
 var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
 
@@ -557,6 +494,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   }
 };
 
+// 사용자 집중도-감정 분석
 var watchImageCaptureEyetrack = async function(req, res){
   console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨.');
 
@@ -691,6 +629,7 @@ var watchImageCaptureEyetrack = async function(req, res){
   }
 };
 
+// 감상 끝 - 혼자보기
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
@@ -799,9 +738,9 @@ var watchAloneEnd = function(req, res){
   
 };
 
+// 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
   var database = req.app.get('database');
-
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
@@ -822,6 +761,7 @@ var addReview = function(req, res){
   addreview()
 };
 
+// 회원가입 인증메일
 var email = function(req, res){
     console.log('/email(이메일 인증) 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -858,6 +798,7 @@ var email = function(req, res){
     }
 };
 
+// 같이보기 방 생성
 var makeRoom = function(req, res) {
     console.log('/makeRoom 라우팅 함수 호출됨');
     var database = req.app.get('database');
@@ -920,6 +861,7 @@ var makeRoom = function(req, res) {
     }
 };
 
+// 로그아웃
 var logout = function (req, res) {
     res.status(200).send();
     console.log('로그아웃합니다..');

@@ -13,9 +13,7 @@ Schema.createSchema = function (mongoose) {
         genres: { type: String, required: false }, // 선호 장르
         actors: { type: String, required: false }, // 선호 배우
         emotions: { type: String, required: false }, // 선호 감정
-        correctModel: {type: String, required: true, 'default':''},
-        sameCount: { type: Number, required: true, 'default': 0 },
-        sameAllCount: { type: Number, required: true, 'default': 0 }
+        correctModel: {type: String, required: true, 'default':''}
     });
 
     console.log('Schema 정의를 완료하였습니다.');

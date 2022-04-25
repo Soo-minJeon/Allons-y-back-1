@@ -75,6 +75,9 @@ router.route('/sceneAnalyze').post(user.sceneAnalyze);
 
 router.route('/logout').post(user.logout);
 
+// 혼자보기 - 영화검색 페이지에 영화정보 보내기
+router.route('/getAllMovieList').post(user.getAllMovieList);
+
 // 감상 시작 시 신호
 router.route('/watchAloneStart').post(user.watchAloneStart);
 

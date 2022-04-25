@@ -1,5 +1,7 @@
 var functionUser = require('../function');
 
+// 수정할 사항 : watchAloneStart - parammovieTitle (현재 toy story로 받게끔 코드 작성해놓은 상태)
+
 // 회원가입 라우팅 함수
 var signup = function(req, res) {
     console.log('/signup 라우팅 함수 호출됨.');
@@ -372,6 +374,26 @@ var recommend2 = function(req, res){
     console.log("데이터베이스가 정의되지 않음...");
     res.status(400).send()
   }
+
+  // async function searchMovieInfo(){ - movie_info.csv 에서 정보 찾는 코드 (후에 필요할까봐 주석처리해서 남겨둠)
+  //   //파이썬 코드 실행 (영화데이터 존재 유무 확인)
+  //   const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+
+  //   const result = spawnSync("python", ["/Users/jeonsumin/node-pycharm/newTest.py", 'Toy Story']);
+
+  //   if (result.status !== 0) {
+  //     process.stderr.write(result.stderr);
+  //     process.exit(result.status);
+  //   } else {
+  //     process.stdout.write(result.stdout);
+  //     process.stderr.write(result.stderr);
+  //     getpython = result.stdout.toString();
+
+  //     // csv 파일에서 영화 정보 받아온 후 문자열 처리
+  //     getpython = getpython.split(' | ')
+  //     genres = (getpython[1])
+  //     posterurl = console.log(getpython[2])
+  // }}
 };
 
 // 같이보기 방 입장
@@ -418,6 +440,33 @@ var enterroom = function(req, res){
   
 };
 
+// 영화검색 페이지에 영화 정보 전달하기
+var getAllMovieList = function(req, res){
+  console.log('/getAllMovieList ( 영화 검색 화면을 위한 영화정보 전달 ) 라우팅 함수 호출');
+
+  if (database){
+    async function searchMovieInfo(){
+      const existing = await database.MovieModel.find({}).clone() // 영화 스키마의 모든 정보를 찾고
+      
+      async function getInfo() {
+        if (existing.length > 0) {
+          // 형식 알려주면 형식에 맞춰서 구성 json구성 후
+          // 프론트로 전달
+        }
+      }
+      await getInfo()
+    }
+    async function main() {
+      await searchMovieInfo()
+    }
+  }
+  else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+    console.log('***ERROR!! 데이터 베이스 에러 ... : ', err);
+    res.status(400).send();
+    console.log('----------------------------------------------------------------------------')
+  }
+}
+
 // 감상 시작 - 혼자보기
 var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
@@ -425,7 +474,8 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   var database = req.app.get('database');
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var parammovieTitle = "toy story"
 
   if (database){
 
@@ -434,25 +484,18 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var newWatch
 
     async function searchMovieInfo(){
-      //파이썬 코드 실행 (영화데이터 존재 유무 확인)
-      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
-
-      const result = spawnSync("python", ["/Users/jeonsumin/node-pycharm/newTest.py", 'Toy Story']);
-
-      if (result.status !== 0) {
-        process.stderr.write(result.stderr);
-        process.exit(result.status);
-      } else {
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        getpython = result.stdout.toString();
-
-        // csv 파일에서 영화 정보 받아온 후 문자열 처리
-        getpython = getpython.split(' | ')
-        genres = (getpython[1])
-        posterurl = console.log(getpython[2])
-    }}
-
+      const existing = await database.MovieModel.find(
+        { title : parammovieTitle }).clone()
+      
+      async function getInfo() {
+        if (existing.length > 0) {
+  
+          posterurl = existing[0].poster
+          genres = existing[0].genres
+        }
+      }
+      await getInfo()
+    }
     async function createWatchResult(){
       newWatch = new database.WatchModel({ 
         'userId': paramId, 
@@ -697,8 +740,8 @@ var watchAloneEnd = function(req, res){
     if (existing_watch.length>0){
       console.log('해당 영화의 감상 기록 찾음.')
       movie_running_time = existing_movie[0].runningTime
-      count_eyetracking = parseInt(movie_running_time / 10)
-      ConcentrationPreScopeAverage = concentration_sum / count_eyetracking 
+      count_eyetracking = parseInt(movie_running_time / 10) // 집중도 계산한 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
+      ConcentrationPreScopeAverage = concentration_sum / count_eyetracking // 집중도 평균 계산
     }
     else {
       console.log('해당 영화의 기록 존재하지 않음.')
@@ -732,10 +775,7 @@ var watchAloneEnd = function(req, res){
 
     await HighlightImageTrans_ToFolder(highlight_time, paramId, parammovieTitle);
   }
-  main()
-  
-  
-  
+  main()  
 };
 
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
@@ -903,6 +943,7 @@ module.exports.email = email;
 module.exports.makeRoom = makeRoom;
 module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;
+module.exports.getAllMovieList = getAllMovieList;
 module.exports.watchAloneStart = watchAloneStart;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
 module.exports.watchAloneEnd = watchAloneEnd;

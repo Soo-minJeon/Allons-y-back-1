@@ -190,7 +190,7 @@ var enterRoom = function(db, roomcode, callback){
   })
 };
 
-// 유사사용자 영화목록 추천
+// 유사사용자 영화목록 추천 
 var getRecommendUserList = function(result, callback){
 
   console.log('getRecommendUserList 호출됨.');

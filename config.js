@@ -2,7 +2,7 @@
 
 module.exports = {
     server_port : 3000, // 접속 포트 번호
-    db_url : "mongodb://52.79.224.222:27017/local", // ip 주소 상시 변경 사항
+    db_url : "mongodb://localhost:27017/local", // ip 주소 상시 변경 사항
     db_schemas : [ // 스키마-콜렉션 정보
         {file : './UserSchema', 
         collection : 'UserCollection', 
@@ -51,6 +51,7 @@ module.exports = {
         {file:'./routes/user', path:'/email', method:'email', type:'post'},
         {file:'./routes/user', path:'/makeRoom', method:'makeRoom', type:'post'},
         {file:'./routes/user', path:'/logout', method:'logout', type:'post'},
+        {file:'./routes/user', path:'/getAllMovieList', method:'getAllMovieList', type:'post'},
         {file:'./routes/user', path:'/watchAloneStart', method:'watchAloneStart', type:'post'},
         {file:'./routes/user', path:'/watchImageCaptureEyetrack', method:'watchImageCaptureEyetrack', type:'post'},
         {file:'./routes/user', path:'/watchImageCaptureRekognition', method:'watchImageCaptureRekognition', type:'post'},

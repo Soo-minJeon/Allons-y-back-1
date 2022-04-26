@@ -16,6 +16,7 @@ def preprocess():
     global bucket
     global s3
 
+    # 버킷 접근 위한 기본 설정
     with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv',
               'r') as input:
         next(input)
@@ -38,9 +39,10 @@ def main(id, title, highlight_time):
     global highlight_folder
     global s3
 
-    testfolder = 'eyetracking/testfolder/'
-    capture_folder = "capture/"
-    highlight_folder = "highlight/"
+    # ? 각 폴더 의미
+    testfolder = 'eyetracking/testfolder/' # ? 10초마다 아이트래킹 위해 저장되는 파일 저장하는 폴더, 나중에 삭제해야하는 정보
+    capture_folder = "capture/" # ?
+    highlight_folder = "highlight/" # 감정맥스 하이라이트 장면 저장 폴더
 
     img = id + '_'+title+'_'+str(highlight_time)+'.jpg'
 
@@ -62,7 +64,7 @@ def get_all_keys(**args):
     keys = []
 
     # 1000 개씩 반환되는 list_objects_v2의 결과 paging 처리를 위한 paginator 선언
-    page_iterator = s3.get_paginator("list_objects_v2")
+    page_iterator = s3.get_paginator("list_objects_v2") # ? list_objects_v2가 무엇
 
     for page in page_iterator.paginate(**args):
         try:
@@ -77,7 +79,7 @@ def get_all_keys(**args):
 
 def makeManifest(mypath, id, title):
     # s3_bucket_name 버켓의 특정 폴더(mypath)하의 파일들만 가져옴
-    entries = get_all_keys(Bucket= bucket, Prefix=mypath)
+    entries = get_all_keys(Bucket= bucket, Prefix=mypath) # ?
 
     for entry in entries:
         #이미지만
@@ -92,6 +94,7 @@ def makeManifest(mypath, id, title):
 
 if __name__ == "__main__":
     preprocess()
+    # ? 
     time = sys.argv[1] # 하이라이트 초
     id = sys.argv[2] # userId
     title = sys.argv[3]

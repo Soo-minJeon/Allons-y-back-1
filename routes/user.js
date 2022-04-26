@@ -537,7 +537,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   }
 };
 
-// 사용자 집중도-감정 분석
+// 사용자 집중도/감정 분석
 var watchImageCaptureEyetrack = async function(req, res){
   console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨.');
 
@@ -567,7 +567,7 @@ var watchImageCaptureEyetrack = async function(req, res){
     if(result.status !== 0){
       process.stderr.write(result.stderr)
       process.exit(result.status);
-    } else{
+    } else {
       process.stdout.write(result.stdout);
       process.stderr.write(result.stderr);
       getpython = result.stdout.toString();
@@ -673,6 +673,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 };
 
 // 감상 끝 - 혼자보기
+// 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
@@ -686,7 +687,8 @@ var watchAloneEnd = function(req, res){
   var ConcentrationPreScopeAverage // 범위 변환 전 집중도 평균 (0~100)
   var count_eyetracking // 10초간격으로 집중도 측정한 횟수
 
-  async function getWatchResult(userId, movieTitle){ // 감상결과 기록을 찾는 함수. / 하이라이트 계산 배열 찾아옴.
+  // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
+  async function getWatchResult(userId, movieTitle){ 
 
     var existing_watch = await database.WatchModel.find({
       userId : userId, movieTitle : movieTitle
@@ -694,7 +696,7 @@ var watchAloneEnd = function(req, res){
 
     if (existing_watch.length>0){
       console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
-      tmp_highlight_array = existing_watch[0].highlight_array
+      tmp_highlight_array = existing_watch[0].highlight_array // ? 0번째 배열인 이유
       concentration_sum = existing_watch[0].concentration
     }
     else {
@@ -703,6 +705,7 @@ var watchAloneEnd = function(req, res){
     }
   }
 
+  // ?
   async function HighlightImageTrans_ToFolder(highlightT, id, title){
     // param으로 계산완료한 하이라이트 시간 전달받고
     // time.jpg 형식으로된 이미지 파일 삭제 ==> 이미지명은 나중에 수정 필요
@@ -715,8 +718,8 @@ var watchAloneEnd = function(req, res){
       const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
       var getpython = "";
   
-      // (param) 이미지 경로 재설정 필요
-      const result = spawnSync("python", ["bucket_imgDelete.py", time, id, title]);
+      // (param) 이미지 경로 재설정 필요 ? 왜 재설정함?
+      const result = spawnSync("python", ["bucket_imgDelete.py", time, id, title]); // ? time, id, title 순서 다른데 보내짐? 매개변수아닌가
   
       if (result.status !== 0) {
         process.stderr.write(result.stderr);
@@ -732,15 +735,16 @@ var watchAloneEnd = function(req, res){
     deleteImg_from_python(highlightT, id, title)
   }
 
-  async function getMovieInfo(movieTitle){ // 영화 정보 찾기 -> 집중도 평균치 계산위해
-    var existing_movie = await database.MovieModel.find({
+  // 영화 정보 찾기 -> 집중도 평균치 계산위해
+  async function getMovieInfo(movieTitle){ 
+    var existing_movie = await database.MovieModel.find({ // 영화 정보 데베에서 추출
       movieTitle : movieTitle
     }).clone()
 
     if (existing_watch.length>0){
       console.log('해당 영화의 감상 기록 찾음.')
       movie_running_time = existing_movie[0].runningTime
-      count_eyetracking = parseInt(movie_running_time / 10) // 집중도 계산한 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
+      count_eyetracking = parseInt(movie_running_time / 10) // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
       ConcentrationPreScopeAverage = concentration_sum / count_eyetracking // 집중도 평균 계산
     }
     else {
@@ -749,10 +753,21 @@ var watchAloneEnd = function(req, res){
     }
 
   }
-
+  /*
+  // 감정 부합 확인 .. 작성중
+  async function emotionCorrectTest() {
+    // string으로 처리되어있어서 배열로 바꿔주어야함. 
+    var movieEmotion_array = await database.likeSchema.find({
+      correctModel : correctModel
+    })
+    var userEmotion_array = await database.WatchSchema.find({
+      highlight_array : highlight_array
+    })
+  }
+  */
   async function main(){
 
-    ////////////////////////// 하이라이트 정규화 //////////////////////////
+    ////////////////////////// 하이라이트 정규화 ////////////////////////// ? 정규화가 어떻게 진행되는 건지 모르겠음
     await getWatchResult(paramId, parammovieTitle);
     await normalization(tmp_highlight_array, function(result){
       normalization_array = result

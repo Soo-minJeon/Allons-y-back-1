@@ -1,4 +1,3 @@
-# only for s3 bucket test
 import io
 import os
 
@@ -24,6 +23,11 @@ import mediapipe as mp
 import boto3
 import csv
 
+# 수정할 사항 - testfolder 경로명 수정해야 함(현재는 수민 노트북 로컬로 되어 있음)
+# 수정할 사항 - predictor 경로명 수정해야 함(현재는 수민 노트북 로컬로 되어 있음)
+
+
+# 변수들 모임
 mp_face_mesh = 0
 LEFT_EYE = 0
 RIGHT_EYE = 0
@@ -47,10 +51,10 @@ warning = 0
 s3 = 0
 bucket = 0
 photo_list = []
-directory_name = []
 testfolder = ''
 
 
+# 전처리
 def preprocessing(id, title, path):
     global mp_face_mesh
     global LEFT_EYE
@@ -70,7 +74,6 @@ def preprocessing(id, title, path):
     global s3
     global bucket
     global photo_list
-    global directory_name
     global testfolder
 
     # 눈 영역 지정
@@ -92,18 +95,14 @@ def preprocessing(id, title, path):
     LEFT_IRIS = [474, 475, 476, 477]
     RIGHT_IRIS = [469, 470, 471, 472]
 
-    # s3 bucket
+    # s3 bucket 경로 지정 (id_title_time.jpg 형식) 만약10초대라면 9초, 10초, 11초에서 사용자의 모습을 기반으로 집중도를 측정한다.
     photo_list = [
         id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
         id + '_' + title + '_' + str(int(path)) + '.jpg',
         id + '_' + title + '_' + str(int(path) + 1) + '.jpg'
     ]
 
-    directory_name = [
-        "blinking1", "lookother1", "lookother2", "shaking1", "asiangirl1", "sleeping1", "shaking2"
-        , "shaking3", "", "man1", "asiangirl2", "test"
-    ]
-
+    # aws 계정 정보
     with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv',
               'r') as input:
         next(input)
@@ -111,8 +110,6 @@ def preprocessing(id, title, path):
         for line in reader:
             access_key_id = line[0]
             secret_access_key = line[1]
-
-
     region = 'ap-northeast-2'
     bucket = "allonsybucket1"
 
@@ -125,9 +122,10 @@ def preprocessing(id, title, path):
     mp_face_mesh = mp.solutions.face_mesh
 
     # get image file
-    # 이미지 셋 선택
+    # 이미지 셋 선택 # 
     testfolder = '/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/eyetracking/testfolder/'
 
+    # aws s3 bucket 폴더 지정
     for i in range(3):
         down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
@@ -145,7 +143,7 @@ def preprocessing(id, title, path):
     standard_center_l = 0
     standard_center_r = 0
 
-
+# 집중도 기준 설정
 def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준
     global blink_mp
     global blink_cv
@@ -172,7 +170,7 @@ def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준
     # 집중도 분석 결과 ( 범위 : 0~5)
     concentration = 100
 
-
+# 집중도 측정
 def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
     global warning
     global blink_mp
@@ -335,7 +333,7 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                 if (flag == 0):
                     flag = flag + 1
 
-                    color = (255, 0, 0)
+                    # color = (255, 0, 0)
                     a = abs(center_left[0] - mesh_points[LEFT_EYEBROW[4]][0])  # 선 a의 길이
                     b = abs(center_left[1] - mesh_points[LEFT_EYEBROW[4]][1])  # 선 b의 길이
                     radious = math.sqrt((a * a) + (b * b))
@@ -343,8 +341,8 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                     standard_center_l = center_left
                     standard_center_r = center_right
 
-                    cv2.circle(canvas, standard_center_l, int(radious), (255, 0, 0), 1, cv2.LINE_AA)
-                    cv2.circle(canvas, standard_center_r, int(radious), (255, 0, 0), 1, cv2.LINE_AA)
+                    # cv2.circle(canvas, standard_center_l, int(radious), (255, 0, 0), 1, cv2.LINE_AA)
+                    # cv2.circle(canvas, standard_center_r, int(radious), (255, 0, 0), 1, cv2.LINE_AA)
 
                 else:
                     if (flag == 1): color = (0, 255, 0)
@@ -368,17 +366,17 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
 
                         warning = (distance_sum / (radious * 2)) * 50
 
-                cv2.circle(frame, center_left, int(l_radious), color, 1, cv2.LINE_AA)
-                cv2.circle(frame, center_right, int(r_radious), color, 1, cv2.LINE_AA)
+                # cv2.circle(frame, center_left, int(l_radious), color, 1, cv2.LINE_AA)
+                # cv2.circle(frame, center_right, int(r_radious), color, 1, cv2.LINE_AA)
 
-                cv2.circle(canvas, center_left, int(l_radious), color, -1, cv2.LINE_AA)
-                cv2.circle(canvas, center_right, int(r_radious), color, -1, cv2.LINE_AA)
+                # cv2.circle(canvas, center_left, int(l_radious), color, -1, cv2.LINE_AA)
+                # cv2.circle(canvas, center_right, int(r_radious), color, -1, cv2.LINE_AA)
 
-                cv2.polylines(frame, [mesh_points[LEFT_EYE]], True, color, 1, cv2.LINE_AA)
-                cv2.polylines(frame, [mesh_points[RIGHT_EYE]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[LEFT_EYE]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[RIGHT_EYE]], True, color, 1, cv2.LINE_AA)
 
-                cv2.circle(frame, standard_center_l, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
-                cv2.circle(frame, standard_center_r, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
+                # cv2.circle(frame, standard_center_l, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
+                # cv2.circle(frame, standard_center_r, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
 
                 LEFT_SUB = mesh_points[LEFT_EYE[4]][1] - mesh_points[LEFT_EYE[12]][1]
                 RIGHT_SUB = mesh_points[RIGHT_EYE[4]][1] - mesh_points[RIGHT_EYE[12]][1]
@@ -395,12 +393,11 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                     blink_mp += 15
 
                 # 얼굴 범위 확인
-                cv2.polylines(frame, [mesh_points[FACE_OVAL]], True, color, 1, cv2.LINE_AA)
-                cv2.polylines(frame, [mesh_points[vertical]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[FACE_OVAL]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[vertical]], True, color, 1, cv2.LINE_AA)
 
             else:
                 none += 1
-
 
 def main():
     global blink_mp
@@ -434,8 +431,7 @@ def main():
     if (concentration < 0):
         concentration = 0
 
-
-
+# 후처리
 def afterprocessing():
 
     # 로컬 저장소 삭제
@@ -445,7 +441,7 @@ def afterprocessing():
 
 
 if __name__ == "__main__":
-    # 7번은 인식 못함...
+
     times = sys.argv[1]
     id = sys.argv[2]
     title = sys.argv[3]
@@ -456,4 +452,5 @@ if __name__ == "__main__":
     main()
     afterprocessing()
 
+    # 집중도 출력
     print(concentration)

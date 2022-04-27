@@ -13,7 +13,7 @@ def process(id):
 
     ### 필요한 함수와 알고리즘 구현부
     ratings = pd.read_csv(
-        'recommend/ratings_small.csv',
+        '/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/recommend/ratings_small.csv',
         low_memory=False)
     movies = pd.read_csv(
         '/Users/jeonsumin/PycharmProjects/allonsy-recommend/madeBySooMin#1_similarUser/movie_info.csv',
@@ -64,5 +64,6 @@ def process(id):
     print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
-    process(sys.argv[1])
+    process(671)
+    # process(sys.argv[1])
 

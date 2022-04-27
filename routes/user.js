@@ -45,7 +45,7 @@ var signup = function(req, res) {
     }
 };
 
-// 로그인 라우팅 함수
+// 로그인 라우팅 함수 // reco1 도 추가해서 프론트로 넘겨줘야 함.
 var login = function(req, res){
   console.log('/login 라우팅 함수 호출됨');
 
@@ -55,12 +55,18 @@ var login = function(req, res){
   var database = req.app.get('database');
 
   if(database) {
-      authUser(database, paramId, paramPassword, function(err, docs) {
+    var recoID 
+    var objToSend
+    var final_objToSend
 
+    async function auth() {
+      authUser(database, paramId, paramPassword, function (err, docs) {
         if (err) {
-          console.log('***ERROR!! 로그인 에러 발생 : ', err);
+          console.log("***ERROR!! 로그인 에러 발생 : ", err);
           res.status(404).send();
-          console.log('----------------------------------------------------------------------------')
+          console.log(
+            "----------------------------------------------------------------------------"
+          );
         }
 
         if (docs) {
@@ -68,40 +74,76 @@ var login = function(req, res){
           checkRecord(database, paramId, function (err, doc) {
             if (doc) {
               // 찾은 결과 전송
-              var objToSend = {
+              objToSend = {
                 id: docs[0].id,
                 name: docs[0].name,
-                record: true
+                record: true,
               };
-              console.log("감상기록 ㅣ 있음");
-            }
-            else if (err){
-              console.log('***ERROR!! 로그인 에러 발생 : ', err);
+              recoID = docs[0].reco2_id
+              console.log("감상기록 ㅣ 있음 | recoID = ", recoID);
+              reco2(recoID)
+            } else if (err) {
+              console.log("***ERROR!! 로그인 에러 발생 : ", err);
               res.status(404).send();
-              console.log('----------------------------------------------------------------------------')
-            }
-            else {
+              console.log(
+                "----------------------------------------------------------------------------"
+              );
+            } else {
               // 찾은 결과 전송
-              var objToSend = {
+              objToSend = {
                 id: docs[0].id,
                 name: docs[0].name,
-                record: false
+                record: false,
               };
-              console.log("감상기록 | 없음");
+              recoID = docs[0].reco2_id
+              console.log("감상기록 | 없음 | recoID = ", recoID);
+              reco2(recoID)
             }
-            // 정상 코드 전송
-            res.status(200).send(JSON.stringify(objToSend));
-            console.log('----------------------------------------------------------------------------')
-          });  
-        }
-
+          });
+        } 
+        
         else {
-          console.log('***ERROR!! 로그인 에러 발생...');
+          console.log("***ERROR!! 로그인 에러 발생...");
           res.status(404).send();
-          console.log('----------------------------------------------------------------------------')
+          console.log(
+            "----------------------------------------------------------------------------"
+          );
         }
+      })
+    }
+    async function reco2(reco_id){
+      recommend2(reco_id, function(err, result){
+        if (result){
+          
+          res.status(200).send(JSON.stringify(final_objToSend = {
+            id: objToSend.id,
+            name: objToSend.name,
+            record: objToSend.record,
+            reco2_1: result[0],
+            reco2_2 : result[1],
+            reco2_3 : result[2],
+            reco2_4 : result[3],
+            reco2_5 : result[4]
+              
+          }));
 
-      });
+          console.log('final = ')
+          console.log(final_objToSend)
+          console.log("----------------------------------------------------------------------------");
+
+        }else{
+          console.dir(err)
+          res.status(404).send();
+          console.log("----------------------------------------------------------------------------");
+        }
+      })
+    }
+
+    async function main(){
+        await auth()
+    }
+    main()
+
   } else {
     console.log('***ERROR!! 데이터베이스가 정의되지 않음...');
     res.status(400).send();
@@ -322,58 +364,47 @@ var recommend1 = function(req, res){
 };
 
 // 추천2 - 유사 사용자
-var recommend2 = function(req, res){
-  console.log('/recommend2 (사용자 추천) 라우팅 함수 호출');
+var recommend2 = function (id, callback) {
+  console.log("/recommend2 (사용자 추천) 함수 호출");
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var database = req.app.get('database');
-  if (database){
+  var paramId = id; // 사용자 아이디 받아오기
 
-    //파이썬 코드 실행 (유사 사용자 추천)
-    const spawnSync= require('child_process').spawnSync; // child-process 모듈의 spawn 획득
-    var getpython = ''
+  //파이썬 코드 실행 (유사 사용자 추천)
+  const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+  var getpython = "";
 
-    //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-    const result = spawnSync('python', ['recommend/main.py', paramId]);
-    console.log('중간점검')
+  //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+  const result = spawnSync("python", ["recommend/main.py", paramId]);
+  console.log("중간점검");
 
-    if(result.status !== 0){
-      process.stderr.write(result.stderr)
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr);
 
-      process.exit(result.status);
-    } else{
-      process.stdout.write(result.stdout);
-      process.stderr.write(result.stderr);
-      getpython = result.stdout.toString();
-      console.log('python 결과 형식 : ', typeof(getpython))
-    }
-
-    getRecommendUserList(getpython, function(err, result){
-
-      console.dir(result);
-
-      if(err){
-        console.log('추천 사용자 목록 가져오는 중에 에러 발생 ...');
-        console.dir(err);
-        res.status(400).send();
-      }
-
-      else if(result.length > 0){
-        console.log('추천 사용자 목록 가져오기 성공');
-        
-        res.status(200).send(result);
-      }  
-      else {
-        res.status(400).send()
-        console.log('추천 사용자 목록 없음.');
-        console.log('\n\n');
-      }
-    });
-    
+    process.exit(result.status);
   } else {
-    console.log("데이터베이스가 정의되지 않음...");
-    res.status(400).send()
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    getpython = result.stdout.toString();
+    console.log("python 결과 형식 : ", typeof getpython);
   }
+
+  getRecommendUserList(getpython, function (err, result) {
+    console.dir(result);
+
+    if (err) {
+      console.log("추천 사용자 목록 가져오는 중에 에러 발생 ...");
+      console.dir(err);
+      callback(err, null)
+    } else if (result.length > 0) {
+      console.log("추천 사용자 목록 가져오기 성공");
+      callback(null, result)
+      
+    } else {
+      console.log("추천 사용자 목록 없음.");
+      console.log("\n\n");
+      callback(null, null)
+    }
+  });
 
   // async function searchMovieInfo(){ - movie_info.csv 에서 정보 찾는 코드 (후에 필요할까봐 주석처리해서 남겨둠)
   //   //파이썬 코드 실행 (영화데이터 존재 유무 확인)
@@ -445,6 +476,9 @@ var getAllMovieList = function(req, res){
   console.log('/getAllMovieList ( 영화 검색 화면을 위한 영화정보 전달 ) 라우팅 함수 호출');
 
   if (database){
+    var resultTitleArray = []
+    var resultPosterArray = []
+
     async function searchMovieInfo(){
       const existing = await database.MovieModel.find({}).clone() // 영화 스키마의 모든 정보를 찾고
       
@@ -452,12 +486,24 @@ var getAllMovieList = function(req, res){
         if (existing.length > 0) {
           // 형식 알려주면 형식에 맞춰서 구성 json구성 후
           // 프론트로 전달
+
+          for (let i = 0; i<existing.length; i++){
+            resultTitleArray[i] = existing[i].title;
+            resultPosterArray[i] = existing[i].poster;
+          }
         }
       }
       await getInfo()
     }
     async function main() {
       await searchMovieInfo()
+      var objToSend = {
+        title : resultTitleArray,
+        poster : resultPosterArray
+      }
+      console.log('test\n', objToSend)
+      res.status(200).send(JSON.stringify(objToSend))
+      console.log('----------------------------------------------------------------------------')
     }
   }
   else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
@@ -475,13 +521,16 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // -테스트용
   var parammovieTitle = "toy story"
 
   if (database){
 
     var posterurl
     var genres 
+    var runningTime
     var newWatch
+    var every_emotion_array
 
     async function searchMovieInfo(){
       const existing = await database.MovieModel.find(
@@ -492,6 +541,13 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   
           posterurl = existing[0].poster
           genres = existing[0].genres
+          runningTime = existing[0].runningTime
+          emotion_check_count = Math.floor(runningTime / 10) + 1
+          every_emotion_array = new array(emotion_check_count)
+          
+          for (let i = 0; i<emotion_check_count; i++){
+            every_emotion_array[i] = '-'
+          }
         }
       }
       await getInfo()
@@ -504,7 +560,8 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'genres': genres,
         'concentration': 0,
         'highlight_time': NaN,
-        'emotion_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
+        'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
+        'every_emotion_array' : every_emotion_array,
         'highlight_array' : {},
         'rating': 0,
         'comment': NaN,
@@ -550,6 +607,7 @@ var watchImageCaptureEyetrack = async function(req, res){
   var paramTime = req.body.time || req.query.time;
   var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
 
+  var count = 0 // 러닝타임 나누기 10 + 1 (러닝타임이 30초라면, 0초 10초 20초 30초 측정)
   var sleepCount = 0
   var checkLimit = 0
   var concentration_scene = 0
@@ -602,7 +660,8 @@ var watchImageCaptureEyetrack = async function(req, res){
         await database.MovieModel.findByTitle(parammovieTitle, async function(err, result){
           if (result.length > 0){
             // console.dir(result[0])
-            checkLimit = result[0].runningTime / 10 / 2
+            count = Math.floor(result[0].runningTime / 10 ) + 1
+            checkLimit = count / 2
             console.log('러닝타임 : ', result[0].runningTime)
             console.log('용인 한계 : ', checkLimit)
             console.log('현재 : ', sleepCount, "\n")
@@ -651,7 +710,7 @@ var watchImageCaptureEyetrack = async function(req, res){
         path = '' // path - 수정필요
   
         // 감정분석 시작 - 수정 필요
-        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, function(err, result){
+        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, count, paramTime, function(err, result){
           if (result){
             console.log('집중도 | 감정데이터 분석 및 정보 추가 완료');
             res.status(200).send()
@@ -764,6 +823,7 @@ var watchAloneEnd = function(req, res){
     }).clone()
   }
   */
+
   async function main(){
 
     ////////////////////////// 하이라이트 정규화 ////////////////////////// 

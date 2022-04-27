@@ -14,8 +14,9 @@ Schema.createSchema = function (mongoose) {
         genres: { type: String, required: true },
         concentration: { type: Number, required: false, 'default': 0 },
         highlight_time : { type: String, required: true, 'default': '' },
-        emotion_array: { type: Array, required: true, 
+        emotion_count_array: { type: Array, required: true, 
             'default': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0,}},
+        every_emotion_array : { type: Array, required: true }, // 감정부합도 처리용
         highlight_array : { type: Array, required: true, 'default': { "time" : 0, "emotion" : '', "emotion_diff" : 0}}, // 맥스 감정 후보 - 캄 두번 반복 후 감정
         rating : { type: Number, required: true , 'default': 0},
         comment : { type: String, required: false , 'default': ''},

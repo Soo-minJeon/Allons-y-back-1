@@ -6,7 +6,7 @@ Schema.createSchema = function (mongoose) {
 
     // 스키마 정의 - 몽구스는 각각 다른 스키마를 다루기 가능 (관계db와 차이점)
     // 스키마 정의 (속성: type, required, unique)
-   var RekognitionSchema = mongoose.Schema({
+   var RekognitionSchema = mongoose.Schema({ // array - firstEmotion만 넣은 배열 - 시간순서대로
         userId: { type: String, require: true, unique: false, 'default': '' },
         movieTitle: { type: String, require: true, unique: false, 'default': '' },
         time: { type: String, require: true, unique: true, 'default': '' },

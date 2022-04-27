@@ -199,12 +199,13 @@ var getRecommendUserList = function(result, callback){
 
   ids = splitResult[0];
   ids = ids.split(", ")
+  ids[0] = ids[0].replace("[", '')
 
   titles = splitResult[1];
-  titles = titles.split("', '")
+  titles = titles.replace('"', "'").replace('",', "',").split("', '")
 
   posters = splitResult[2];
-  posters = posters.split("', '")
+  posters = posters.replace('nan', "'nan'").split("', '")
 
   resultArray = []
 
@@ -232,7 +233,6 @@ var getRecommendUserList = function(result, callback){
   console.log('===================\n결과 갯수 : ', count)
 
   console.log("============================ 처리 결과 ============================\n", resultArray, "\n============================ 처리 결과 ============================\n");
-
 
   callback(null, resultArray)
 };
@@ -339,7 +339,8 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
 };
 
 // 사용자 감정분석
-var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callback) {
+var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time, callback) {
+  // param : time (감정부합도에서 빈 배열에 대해서 처리)
 
   console.log('rekognition 함수 호출')
 
@@ -398,6 +399,9 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
   // watch모델에 기록된 감상결과
   var tmp_emotion_array = []
 
+  // watch모델에 기록된 감정부합도용 배열
+  var tmp_every_emotion_array = []
+
   // 수정된 감상결과
   var edit_emotionArray = []
 
@@ -433,6 +437,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
     if (existing_watch.length>0){
       console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
       tmp_emotion_array = existing_watch[0].emotion_array
+      tmp_every_emotion_array = existing_watch[0].every_emotion_array
       return true;
     }
     else {
@@ -496,32 +501,40 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
   }
 
   async function edit_emotion_array(first){
+
     if (first == 'HAPPY') {
       edit_emotionArray[0].HAPPY += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'SAD') {
       edit_emotionArray[0].SAD += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'ANGRY') {
       edit_emotionArray[0].ANGRY += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'CONFUSED') {
       edit_emotionArray[0].CONFUSED += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'DISGUSTED') {
       edit_emotionArray[0].DISGUSTED += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'SURPRISED') {
       edit_emotionArray[0].SURPRISED += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'FEAR') {
       edit_emotionArray[0].FEAR += 1
+      tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'CALM') {
@@ -556,7 +569,8 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
     if (highlight_emotion_time == 0){
       await db.WatchModel.updateOne({ // 감상목록 emotion_array 수정 //
         userId: userId,
-        movieTitle: movieTitle
+        movieTitle: movieTitle,
+        every_emotion_array : tmp_every_emotion_array
       }, {
         $set: {
           emotion_array: edit_emotionArray,
@@ -581,7 +595,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, callb
     }
     console.log('====================다섯번째 완료====================')
 
-    // 감정분석 기록 추가 //
+    // 감정분석 기록 추가 // - 수정필요
     var newRekognition = await new db.RekognitionModel({
       'userId': userId, 'movieTitle': movieTitle, 'time': time,
       'firstEmotion': result_total[0],

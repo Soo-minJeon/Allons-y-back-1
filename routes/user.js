@@ -762,6 +762,7 @@ var watchAloneEnd = function(req, res){
     }
   }
 
+  // 하이라이트 이미지를 버킷에 넣고 나머지 사진 삭제하는 함수
   async function HighlightImageTrans_ToFolder(highlightT, id, title){
     // param으로 계산완료한 하이라이트 시간 전달받고
     // time.jpg 형식으로된 이미지 파일 삭제 ==> 이미지명은 나중에 수정 필요
@@ -807,6 +808,18 @@ var watchAloneEnd = function(req, res){
     }
 
   }
+  /*
+  // 감정 부합 확인 .. 작성중
+  async function emotionCorrectTest() {
+    // string으로 처리되어있어서 배열로 바꿔주어야함. 
+    var movieEmotion_array = await database.likeSchema.find({
+      correctModel : correctModel
+    }).clone()
+    var userEmotion_array = await database.WatchSchema.find({
+      highlight_array : highlight_array
+    }).clone()
+  }
+  */
 
   async function main(){
 

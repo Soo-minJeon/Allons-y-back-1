@@ -8,6 +8,8 @@ from surprise import BaselineOnly, SVDpp, NMF, SlopeOne, CoClustering # 분석�
 # 무시
 pd.set_option('mode.chained_assignment',  None) # <==== 경고를 끈다
 
+movie_info = pd.read_csv('recommend/movie_info.csv', low_memory=False)
+movie_info = movie_info[['original_title','poster_path']]
 ratings = pd.read_csv('recommend/ratings_small.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
 ratings = ratings[['userId', 'movieId', 'rating']] # 사용자 아이디, 영화 아이디, 평가
 ratings.head()
@@ -66,6 +68,35 @@ bsl_options = {'method':'als',
                'reg_i':5
                }
 als = BaselineOnly(bsl_options)
+
+def process(title):
+
+        # 생략없이 출력
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 300)
+
+        # csv 파일 불러오기
+        movies = pd.read_csv(
+                '/recommend/movie_info.csv',
+                low_memory=False)
+        movies.columns = ['id', 'original_title', 'poster_path']
+
+        # 제목으로 정보 찾기
+        find_row = movies.index[(movies['original_title'] == title)]
+
+        # 장르 문자열 처리
+        genres = movies.loc[find_row[0]]['genres']
+        genres = genres.replace('[', '').replace(']', '').split('}, {')
+        genres_after = []
+
+        for i in range(len(genres)):
+                genre = genres[i].split(', ')[1].split(': ')[1].replace("'", '').replace("}", '')
+                genres_after.append(genre)
+
+        return (movies.loc[find_row[0]]['original_title'],'|',  genres_after, '|', movies.loc[find_row[0]]['poster_path'])
+
+
 
 # 변수에 대한 가중치
 def user_release_ratio(df, usernumber):
@@ -202,10 +233,10 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo
 
     user_df_sum = Estimate_Score_sum1(user_df, user_release_ratio_list)
     #user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
-    user_df_sum_relase = user_df_sum.sort_values('Estimate_Score', ascending=False)
-    print("개봉일 별 가중치 반영하여 영화 추천 : ")
-    print(user_df_sum_relase['original_title'].head(10))
-
+    user_df_sum_relase = pd.merge(movie_info, user_df_sum, on='original_title', how='left')
+    user_df_sum_relase = user_df_sum_relase.sort_values('Estimate_Score', ascending=False)
+    user_df_sum_relase = user_df_sum_relase[['original_title','poster_path']]
+    print(user_df_sum_relase.head(10))
     return user_df_sum_relase
 
 user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)

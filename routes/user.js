@@ -321,7 +321,11 @@ var sceneAnalyze = function(req, res) {
 
 // 추천1 - 컨텐츠 기반
 var recommend1 = function(req, res){
+    console.log('/recommend1 라우팅 함수 호출');
     var database = req.app.get('database');
+    var titleArray = []
+    var posterArray = []
+    var re =''
     if(database) {
 
     // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
@@ -335,24 +339,22 @@ var recommend1 = function(req, res){
         const stringResult = data.toString();
   
         var array = stringResult.split('\n');
-        for(var i=0;i<array.length-2;i++) {
-           array[i]=array[i].replace(/[0-9]/g, '');
-           array[i]=array[i].trim();
-           console.log(array[i]);
+        for(var i=1;i<array.length;i++) {
+           array[i-1]=array[i].slice(6).trim();
+           //console.log(array[i-1])
         }
-        res.status(200).send(JSON.stringify(array));
-      });
-  
-      // 4. 에러 발생 시, stderr의 'data'이벤트리스너로 실행결과를 받는다.
-      result.stderr.on('data', function(data) {
-        const stringResult = data.toString();
-  
-        var array = stringResult.split('\n');
-        for(var i=0;i<array.length;i++) {
-           array[i]=array[i].replace(/[0-9]/g, '');
-           array[i]=array[i].trim();
-           console.log(array[i]);
+        array.pop()
+        console.log('---------')
+        for(var i=0;i<array.length-1;i++) {
+            var test_ = array[i].split('/')
+            //console.log(array[i])
+            titleArray[i] = test_[0]
+            //console.log('titleArray : '+titleArray[i])
+            posterArray[i] = '/'+String(test_[1])
+            //console.log('posterArray : '+posterArray[i])
         }
+        re = '['+String(titleArray)+'],[' + String(posterArray)+']'
+        res.status(200).send(JSON.stringify(re));
       });
     }
     else{

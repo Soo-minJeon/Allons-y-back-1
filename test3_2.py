@@ -1,8 +1,12 @@
-# 추천 1 코드, 컨텐츠 기반 필터링 영화 추천 시스템
+# 추천1, 컨텐츠 기반 필터링 추천 시스템. 영화 10개를 추천한다.
+
 # -*- coding: utf-8 -*-
 import pandas as pd
 from surprise import Reader, Dataset, SVD, NormalPredictor, KNNBasic # 알고리즘이 들어간다.
 from surprise import BaselineOnly, SVDpp, NMF, SlopeOne, CoClustering # 분석툴
+
+# 무시
+pd.set_option('mode.chained_assignment',  None) # <==== 경고를 끈다
 
 ratings = pd.read_csv('recommend/ratings_small.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
 ratings = ratings[['userId', 'movieId', 'rating']] # 사용자 아이디, 영화 아이디, 평가
@@ -207,5 +211,3 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo
 user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
 
 #user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
-
-#user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, nmf)

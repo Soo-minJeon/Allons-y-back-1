@@ -16,7 +16,7 @@ def process(id):
         '/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/recommend/ratings_small.csv',
         low_memory=False)
     movies = pd.read_csv(
-        '/Users/jeonsumin/PycharmProjects/allonsy-recommend/madeBySooMin#1_similarUser/movie_info.csv',
+        '/Users/jeonsumin/PycharmProjects/allonsy-recommend/madeBySooMin#1_similarUser/movie_info2.csv',
         low_memory=False)
     movies.columns = ['movieId','original_title','genres','runtime','release_date','actor','poster_path']
 
@@ -64,6 +64,6 @@ def process(id):
     print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
-    process(671)
-    # process(sys.argv[1])
+    # process(671)
+    process(sys.argv[1])
 

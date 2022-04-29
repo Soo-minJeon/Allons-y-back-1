@@ -347,8 +347,7 @@ var recommend1 = function(db, id, callback){
       console.log('데이터베이스가 정의되지 않음...');
       callback(null, null)
       console.log("\n\n");
-  }
-
+  }  
 };
 
 // 추천2 - 유사 사용자

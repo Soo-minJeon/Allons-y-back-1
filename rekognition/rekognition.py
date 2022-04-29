@@ -2,7 +2,6 @@ import csv
 import boto3
 import sys
 
-
 def process(path):
     # def process():
     with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv', 'r') as input:

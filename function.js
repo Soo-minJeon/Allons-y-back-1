@@ -42,7 +42,7 @@ var getWatchResult = function(db, userid, movieTitle, callback){
 var authUser = function(db, id, password, callback) {
   console.log('authUser(로그인)함수 호출됨');
 
-  // 아이디를 사용해 검색
+  // 아이디를 사용해 검색 - userSchema에서
   db.UserModel.findById(id, function(err, results_id){
 
       if (err) {
@@ -57,12 +57,18 @@ var authUser = function(db, id, password, callback) {
           // 존재하는 데이터의 비밀번호 확인
           db.UserModel.authenticate(password, function(err, results){
             if(err){
-                callback(err, null)
+                callback(err, null) 
                 return;
             }
             if(results.length > 0){
                 console.log('비밀번호 일치');
-                callback(null, results_id);
+                console.log(results)
+                // objToSend = {
+                //   id : results[0].id,
+                //   name : results[0].name,
+                //   record : 
+                // }
+                callback(null, results);
             }
             else{
                 callback(null, null);
@@ -76,30 +82,30 @@ var authUser = function(db, id, password, callback) {
   });
 };
 
-// 사용자 로그인 : 감상기록 유무 확인
-var checkRecord = function(db, id, callback){
+// // 사용자 로그인 : 감상기록 유무 확인
+// var checkRecord = function(db, id, callback){
 
-  console.log('checkRecord(감상기록 존재 유무 확인)함수 호출됨 ');
+//   console.log('checkRecord(감상기록 존재 유무 확인)함수 호출됨 ');
 
-  // 아이디를 사용해 검색
-  db.WatchModel.findById(id, function(err, results){
+//   // 아이디를 사용해 검색
+//   db.WatchModel.findById(id, function(err, results){
 
-      if (err) {
-          callback(err, null);
-          return;
-      }
+//       if (err) {
+//           callback(err, null);
+//           return;
+//       }
 
-      console.log('아이디 %s로 검색됨',id);
+//       console.log('아이디 %s로 검색됨',id);
 
-      if (results.length > 0) { // 감상기록 있음
-          callback(null, results);
-      }
-      else { // 감상기록 없음
-          callback(null, null);
-      }
-  });
+//       if (results.length > 0) { // 감상기록 있음
+//           callback(null, results);
+//       }
+//       else { // 감상기록 없음
+//           callback(null, null);
+//       }
+//   });
 
-};
+// };
 
 // 사용자 회원가입
 var signUp = function(db, id, password, name, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
@@ -198,14 +204,22 @@ var getRecommendUserList = function(result, callback){
   splitResult = result.split('] [')
 
   ids = splitResult[0];
+  console.log('ids : ', ids)
   ids = ids.split(", ")
   ids[0] = ids[0].replace("[", '')
 
   titles = splitResult[1];
-  titles = titles.replace('"', "'").replace('",', "',").split("', '")
+  console.log('titles : ', titles)
+  // titles = titles.replace('"', "'").replace('",', "',").split("', '")
+  titles = titles.split(",")
 
   posters = splitResult[2];
-  posters = posters.replace('nan', "'nan'").split("', '")
+  console.log('posters : ', posters)
+  posters = posters.split(',')
+  // posters = posters.replace('nan', "'nan'").split("', '")
+  // for(let i = 0; i<posters.length; i++){
+  //   posters[i].replace("'", "")
+  // }
 
   resultArray = []
 
@@ -217,8 +231,8 @@ var getRecommendUserList = function(result, callback){
     var resultPosterArray = []
 
     for (let j = s; j < e; j++){
-      resultTitleArray[c] = titles[j]
-      resultPosterArray[c] = posters[j]
+      resultTitleArray[c] = titles[j].replace(/'/g, '').replace(/\s/gi, "");  
+      resultPosterArray[c] = posters[j].replace(/'/g, '').replace(/\s/gi, "");  
       c = c+1
     }
     var obj = {
@@ -246,7 +260,7 @@ var makeroom = function (db, roomcode, callback) {
     }
 
     else if(result.length > 0){
-      console.log('입력된 코드에 해당하는 같이보기 방 찾음.생성불가');
+      console.log('입력된 코드에 해당하는 같이보기 방 찾음. 생성불가');
 
       callback(null, result);
     }
@@ -671,7 +685,7 @@ var normalization = async function (highlight_array, callback) {
 // 모듈화 연결
 module.exports.getWatchResult = getWatchResult;
 module.exports.authUser = authUser;
-module.exports.checkRecord = checkRecord;
+// module.exports.checkRecord = checkRecord;
 module.exports.signUp = signUp;
 module.exports.enterRoom = enterRoom;
 module.exports.getRecommendUserList = getRecommendUserList;

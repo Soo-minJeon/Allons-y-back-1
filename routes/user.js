@@ -84,10 +84,12 @@ var login = function(req, res){
     }
 
     async function reco2(reco_id){
+      console.log('추천 함수 호출')
         recommend1(database, reco_id, function(err, result1){
         if (result1){
           recommend2(reco_id, function(err, result2){
             if (result2){
+
               res.status(200).send(JSON.stringify(final_objToSend = {
                 id: objToSend.id,
                 name: objToSend.name,
@@ -458,6 +460,7 @@ var enterroom = function(req, res){
     }
   
 };
+
 
 // 영화검색 페이지에 영화 정보 전달하기
 var getAllMovieList = function(req, res){

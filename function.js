@@ -260,8 +260,7 @@ var makeroom = function (db, roomcode, callback) {
     }
 
     else if(result.length > 0){
-      console.log('입력된 코드에 해당하는 같이보기 방 찾음. 생성불가');
-
+      console.log('입력된 코드에 해당하는 같이보기 방 찾음. 중복된 룸코드');
       callback(null, result);
     }
 

@@ -1,4 +1,6 @@
 var functionUser = require('../function');
+var request = require("request");
+const { RtcTokenBuilder, RtcRole } = require("agora-access-token");
 
 // 수정할 사항 : watchAloneStart - parammovieTitle (현재 toy story로 받게끔 코드 작성해놓은 상태)
 
@@ -461,7 +463,6 @@ var enterroom = function(req, res){
   
 };
 
-
 // 영화검색 페이지에 영화 정보 전달하기
 var getAllMovieList = function(req, res){
   console.log('/getAllMovieList ( 영화 검색 화면을 위한 영화정보 전달 ) 라우팅 함수 호출');
@@ -911,184 +912,163 @@ var email = function(req, res){
 };
 
 // 같이보기 방 생성
-var makeRoom = function(req, res) {
-    console.log('/makeRoom 라우팅 함수 호출됨');
-    var database = req.app.get('database');
-    // var RoomCode
-    
-    // async function getToken(){
-    //   // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
+var makeRoom = function (req, res) {
+  console.log("/makeRoom 라우팅 함수 호출됨");
+  var database = req.app.get("database");
+  var RoomCode;
 
-    //       // express 및 agora-access-token 에 대한 참조 추출
-    //       // const express = require("express");
-    //       const express = req.app.get('express');
+  async function getToken() {
+    // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
 
-    //       // 환경 변수에 대한 패키지 사용
-    //       // const dotenv = require('dotenv');
+    // express 및 agora-access-token 에 대한 참조 추출
+    // const express = require("express");
+    const app = req.app;
 
-    //       // 자격 증명과 요청 수신하는 데 사용할 포트 추가
-    //       const PORT = 8080;
-    //       const APP_ID = "149820d0e0624e85971c69d50bff41bb";
-    //       const APP_CERTIFICATE = "658b34d7a2f54d1aa19af366b81b6c40";
+    // 자격 증명과 요청 수신하는 데 사용할 포트 추가
+    const PORT = 3001;
+    const APP_ID = "149820d0e0624e85971c69d50bff41bb";
+    const APP_CERTIFICATE = "658b34d7a2f54d1aa19af366b81b6c40";
 
-    //       // .env 파일에서 상수 생성 >> 연결 안 됨
-    //       // const APP_ID = process.env.APP_ID;
-    //       // const APP_CERTIFICATE = process.env.APP_CERTIFICATE;
+    // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
+    const nocache = (req, res, next) => {
+      res.header("Cache-Control", "private, no-store", "must-revalidate");
+      res.header("Expires", "-1");
+      res.header("Pragma", "no-cache");
+      next(); // 첫번째 미들웨어 함수 > 다음 함수 계속
+    };
 
-    //       const app = express(); // 서버 객체화 및 설정
+    // 두 번째 함수: 요청 처리 및 JSON 응답 반환
+    // Agora RTC Token 생성
+    const generateRTCToken = (req, res) => {
+      // 응답 헤더 설정 - set response header
+      res.header("Access-Control-Allow-Origin", "*");
 
-    //       // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
-    //       const nocache = (req, res, next) => {
-    //         res.header("Cache-Control", "private, no-store", "must-revalidate");
-    //         res.header("Expires", "-1");
-    //         res.header("Pragma", "no-cache");
-    //         next(); // 첫번째 미들웨어 함수 > 다음 함수 계속
-    //       };
-
-    //       // 두 번째 함수: 요청 처리 및 JSON 응답 반환
-    //       // Agora RTC Token 생성
-    //       const generateRTCToken = (req, res) => {
-    //         // 응답 헤더 설정 - set response header
-    //         res.header("Access-Control-Allow-Origin", "*");
-
-    //         // 요청 매개변수 가져오기 - get channel name
-    //         const channelName = req.params.channel; //req.query.channelName;
-    //         if (!channelName) {
-    //           return res.status(500).json({ error: "channel is required" });
-    //         }
-
-    //         // get uid
-    //         let uid = req.params.uid; // req.query.uid;
-    //         if (!uid || uid === "") {
-    //           uid = 0;
-    //           return res.status(500).json({ error: "uid is required" });
-    //         }
-
-    //         // get role
-    //         let role = RtcRole.SUBSCRIBER;
-    //         //if (req.query.role == 'publisher') {
-    //         if (req.params.role === "publisher") {
-    //           role = RtcRole.PUBLISHER;
-    //         }
-
-    //         // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
-    //         // let expireTime = req.query.expireTime;
-    //         let expireTime = req.query.expiry;
-    //         if (!expireTime || expireTime == "") {
-    //           expireTime = 300; // 5분 - 확실하진 않음
-    //         } else {
-    //           expireTime = parseInt(expireTime, 10);
-    //         }
-
-    //         // 만료 시간 계산 - calculate privilege expire time
-    //         const currentTime = Math.floor(Date.now() / 1000);
-    //         const privilegeExpireTime = currentTime + expireTime;
-
-    //         // 토큰 구축 - build the token
-    //         // const token = RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channelName, uid, role, privilegeExpireTime);
-    //         let token;
-    //         if (req.params.tokentype === "userAccount") {
-    //           token = RtcTokenBuilder.buildTokenWithAccount(
-    //             APP_ID,
-    //             APP_CERTIFICATE,
-    //             channelName,
-    //             uid,
-    //             role,
-    //             privilegeExpireTime
-    //           );
-    //         } else if (req.params.tokentype === "uid") {
-    //           token = RtcTokenBuilder.buildTokenWithUid(
-    //             APP_ID,
-    //             APP_CERTIFICATE,
-    //             channelName,
-    //             uid,
-    //             role,
-    //             privilegeExpireTime
-    //           );
-    //         } else {
-    //           return res.status(500).json({ error: "token type is invalid" });
-    //         }
-
-    //         // 응답 반환 - return the token
-    //         console.log("token : ", token);
-    //         RoomCode = token
-    //         vaildToken(RoomCode)
-    //       };
-
-    //       // GET 방식 - 경로
-    //       // app.get('/access_token', nocache, generateAccessToken);
-    //       app.get(
-    //         "/rtc/:channel/:role/:tokentype/:uid",
-    //         nocache,
-    //         generateRTCToken
-    //       );
-
-    //       // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
-    //       app.listen(PORT, () => {
-    //         console.log(`Listening on port: ${PORT}`);
-    //       });
-    // }
-
-    // async function vaildToken(RoomCode){
-    //   makeroom(database, RoomCode, function (err, result) {
-    //     if (err) {
-    //       console.log("방 생성 중 에러 발생");
-    //       console.dir(err);
-    //       return;
-    //     }
-
-    //     if (result.length > 0) {
-    //       console.log("초대 코드 중복, 다시 생성..");
-
-    //       getToken()
-
-    //       // 방을 새로 생성합니다.
-    //       var room = new database.RoomModel({ roomCode: RoomCode });
-    //       console.log("RoomCode : " + RoomCode);
-
-    //       // save()로 저장
-    //       room.save(function (err) {
-    //         if (err) {
-    //           return;
-    //         }
-    //         console.log("새로운 방 등록");
-    //         // 찾은 결과 전송
-    //         var objToSend = {
-    //           roomCode: RoomCode,
-    //         };
-    //         res.status(200).send(JSON.stringify(objToSend));
-    //       })
-    //     }
-    //     else {
-    //       // save()로 저장
-    //       room.save(function (err) {
-    //         if (err) {
-    //           return;
-    //         }
-    //         console.log("새로운 방 등록");
-    //         // 찾은 결과 전송
-    //         var objToSend = {
-    //           roomCode: RoomCode,
-    //         };
-    //         res.status(200).send(JSON.stringify(objToSend));
-    //       })
-          
-    //     }
-    //   });
-    // }
-
-    if (database) {
-
-      async function main(){
-        await getToken().clone()
+      // 요청 매개변수 가져오기 - get channel name
+      const channelName = req.params.channel; //req.query.channelName;
+      if (!channelName) {
+        return res.status(500).json({ error: "channel is required" });
       }
-      main()
 
-    } else {
-      console.log("데이터베이스가 정의되지 않음...");
-      res.status(400).send();
-      console.log("\n\n");
+      // get uid
+      let uid = req.params.uid; // req.query.uid;
+      if (!uid || uid === "") {
+        uid = 0;
+        return res.status(500).json({ error: "uid is required" });
+      }
+
+      // get role
+      let role = RtcRole.SUBSCRIBER;
+      //if (req.query.role == 'publisher') {
+      if (req.params.role === "publisher") {
+        role = RtcRole.PUBLISHER;
+      }
+
+      // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
+      // let expireTime = req.query.expireTime;
+      let expireTime = req.query.expiry;
+      if (!expireTime || expireTime == "") {
+        expireTime = 300; // 5분 - 확실하진 않음
+      } else {
+        expireTime = parseInt(expireTime, 10);
+      }
+
+      // 만료 시간 계산 - calculate privilege expire time
+      const currentTime = Math.floor(Date.now() / 1000);
+      const privilegeExpireTime = currentTime + expireTime;
+
+      // 토큰 구축 - build the token
+      // const token = RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channelName, uid, role, privilegeExpireTime);
+      let token;
+      if (req.params.tokentype === "userAccount") {
+        token = RtcTokenBuilder.buildTokenWithAccount(
+          APP_ID,
+          APP_CERTIFICATE,
+          channelName,
+          uid,
+          role,
+          privilegeExpireTime
+        );
+      } else if (req.params.tokentype === "uid") {
+        token = RtcTokenBuilder.buildTokenWithUid(
+          APP_ID,
+          APP_CERTIFICATE,
+          channelName,
+          uid,
+          role,
+          privilegeExpireTime
+        );
+      } else {
+        return res.status(500).json({ error: "token type is invalid" });
+      }
+
+      // 응답 반환 - return the token
+      return res.json({ token: token });
+    };
+
+    // GET 방식 - 경로
+    // app.get('/access_token', nocache, generateAccessToken);
+    app.get("/rtc/:channel/:role/:tokentype/:uid", nocache, generateRTCToken);
+
+    // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
+    app.listen(PORT, () => {
+      console.log(`Listening on port: ${PORT}`);
+    });
+
+    var url = "http://127.0.0.1:3001/rtc/test/publisher/uid/1";
+    request(url, function (error, response, html) {
+      if (error) {
+        throw error;
+      }
+
+      html = html.toString().split('":"')
+      result = html[1].replace('"}','')
+      RoomCode = result
+      vaildToken(RoomCode)
+    });
+  }
+
+  async function vaildToken(RoomCode) {
+    makeroom(database, RoomCode, function (err, result) {
+      if (err) {
+        console.log("방 생성 중 에러 발생");
+        console.dir(err);
+        return;
+      }
+
+      if (result.length > 0) {
+        console.log("초대 코드 중복, 다시 생성..");
+
+        getToken();
+      } else {
+        var room = new database.RoomModel({ roomCode: RoomCode });
+        console.log("RoomCode : " + RoomCode);
+
+        // save()로 저장
+        room.save(function (err) {
+          if (err) {
+            return;
+          }
+          console.log("새로운 방 등록");
+          // 찾은 결과 전송
+          var objToSend = {
+            roomCode: RoomCode,
+          };
+          res.status(200).send(JSON.stringify(objToSend));
+        });
+      }
+    });
+  }
+
+  if (database) {
+    async function main() {
+      await getToken()
     }
+    main();
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send();
+    console.log("\n\n");
+  }
 };
 
 // 로그아웃

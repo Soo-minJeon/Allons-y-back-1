@@ -463,6 +463,8 @@ var enterroom = function(req, res){
 var getAllMovieList = function(req, res){
   console.log('/getAllMovieList ( 영화 검색 화면을 위한 영화정보 전달 ) 라우팅 함수 호출');
 
+  var database = req.app.get('database');
+
   if (database){
     var resultTitleArray = []
     var resultPosterArray = []
@@ -493,6 +495,7 @@ var getAllMovieList = function(req, res){
       res.status(200).send(JSON.stringify(objToSend))
       console.log('----------------------------------------------------------------------------')
     }
+    main()
   }
   else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
     console.log('***ERROR!! 데이터 베이스 에러 ... : ', err);
@@ -500,6 +503,7 @@ var getAllMovieList = function(req, res){
     console.log('----------------------------------------------------------------------------')
   }
 }
+
 
 // 감상 시작 - 혼자보기
 var watchAloneStart = function(req, res){ // watch스키마 생성

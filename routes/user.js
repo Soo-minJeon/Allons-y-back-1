@@ -327,8 +327,7 @@ var recommend1 = function(req, res){
     var posterArray = []
     var re =''
     if(database) {
-
-    // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
+      // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
       // 1. child-process모듈의 spawn 취득
       const spawn = require('child_process').spawn;
       // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
@@ -354,6 +353,7 @@ var recommend1 = function(req, res){
             //console.log('posterArray : '+posterArray[i])
         }
         re = '['+String(titleArray)+'],[' + String(posterArray)+']'
+        console.log(re)
         res.status(200).send(JSON.stringify(re));
       });
     }
@@ -813,20 +813,49 @@ var watchAloneEnd = function(req, res){
     }
 
   }
-  /*
+
   // 감정 부합 확인 .. 작성중
   async function emotionCorrectTest() {
-    // string으로 처리되어있어서 배열로 바꿔주어야함. 
-    var movieEmotion_array = await database.likeSchema.find({
-      correctModel : correctModel
-    }).clone()
-    var userEmotion_array = await database.WatchSchema.find({
-      highlight_array : highlight_array
-    }).clone()
-  }
-  */
+    var movieEmotion_array =
+     await database.likeModel.findById('pbkdpwls', function(err, result1){
+        if (err) {
+          callback(err, null);
+          return;
+      }
 
+      if (result1.length > 0) {
+         console.log('movieEmotion')
+         console.log(result1[0].correctModel)
+         array_test = result1[0].correctModel.split(',')
+         array_test.pop()
+         console.log(array_test.length)
+      }
+    }).clone()
+
+    var userEmotion_array = await database.WatchModel.findById('pbkdpwls', function(err, result2){
+      if (err) {
+        callback(err, null);
+        return;
+      }
+
+      if (result2.length > 0) {
+         console.log('userEmotion')
+         var emotionArray = result2[0].every_emotion_array
+         var len_test = result2[0].every_emotion_array.length
+
+         var count_test=0;
+         for(i=0;i<len_test;i++) {
+            if (array_test[i]==emotionArray[i]){
+                count_test+=1
+            }
+         }
+         console.log("횟수 : ")
+         console.log(count_test)
+      }
+     }).clone()
+  }
   async function main(){
+    //await emotionCorrectTest()
 
     ////////////////////////// 하이라이트 정규화 ////////////////////////// 
     await getWatchResult(paramId, parammovieTitle);
@@ -850,6 +879,7 @@ var watchAloneEnd = function(req, res){
     })
 
     await HighlightImageTrans_ToFolder(highlight_time, paramId, parammovieTitle);
+
   }
   main()  
 };

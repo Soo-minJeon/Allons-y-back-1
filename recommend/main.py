@@ -64,6 +64,6 @@ def process(id):
     print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
-    process(671)
-    # process(sys.argv[1])
+    # process(671)
+    process(sys.argv[1])
 

@@ -1,4 +1,6 @@
 var functionUser = require('../function');
+var request = require("request");
+const { RtcTokenBuilder, RtcRole } = require("agora-access-token");
 
 // 수정할 사항 : watchAloneStart - parammovieTitle (현재 toy story로 받게끔 코드 작성해놓은 상태)
 
@@ -59,84 +61,67 @@ var login = function(req, res){
     var objToSend
     var final_objToSend
 
+    // 로그인 - 사용자 정보 찾기
     async function auth() {
       authUser(database, paramId, paramPassword, function (err, docs) {
         if (err) {
           console.log("***ERROR!! 로그인 에러 발생 : ", err);
           res.status(404).send();
-          console.log(
-            "----------------------------------------------------------------------------"
-          );
+          console.log("----------------------------------------------------------------------------");
         }
-
         if (docs) {
-          // 감상기록 존재 유무 확인
-          checkRecord(database, paramId, function (err, doc) {
-            if (doc) {
-              // 찾은 결과 전송
-              objToSend = {
-                id: docs[0].id,
-                name: docs[0].name,
-                record: true,
-              };
-              recoID = docs[0].reco2_id
-              console.log("감상기록 ㅣ 있음 | recoID = ", recoID);
-              reco2(recoID)
-            } else if (err) {
-              console.log("***ERROR!! 로그인 에러 발생 : ", err);
-              res.status(404).send();
-              console.log(
-                "----------------------------------------------------------------------------"
-              );
-            } else {
-              // 찾은 결과 전송
-              objToSend = {
-                id: docs[0].id,
-                name: docs[0].name,
-                record: false,
-              };
-              recoID = docs[0].reco2_id
-              console.log("감상기록 | 없음 | recoID = ", recoID);
-              reco2(recoID)
-            }
-          });
+          // recoID = docs[0].reco2_id
+          objToSend = {
+            id: docs[0].id,
+            name: docs[0].name,
+          };
+          reco2(recoID = docs[0].reco2_id)
         } 
-        
         else {
           console.log("***ERROR!! 로그인 에러 발생...");
           res.status(404).send();
-          console.log(
-            "----------------------------------------------------------------------------"
-          );
+          console.log("----------------------------------------------------------------------------");
         }
       })
     }
+
     async function reco2(reco_id){
-      recommend2(reco_id, function(err, result){
-        if (result){
-          
-          res.status(200).send(JSON.stringify(final_objToSend = {
-            id: objToSend.id,
-            name: objToSend.name,
-            record: objToSend.record,
-            reco2_1: result[0],
-            reco2_2 : result[1],
-            reco2_3 : result[2],
-            reco2_4 : result[3],
-            reco2_5 : result[4]
-              
-          }));
+      console.log('추천 함수 호출')
+        recommend1(database, reco_id, function(err, result1){
+        if (result1){
+          recommend2(reco_id, function(err, result2){
+            if (result2){
 
-          console.log('final = ')
-          console.log(final_objToSend)
-          console.log("----------------------------------------------------------------------------");
-
-        }else{
-          console.dir(err)
+              res.status(200).send(JSON.stringify(final_objToSend = {
+                id: objToSend.id,
+                name: objToSend.name,
+                reco1: result1,
+                reco2_1: result2[0],
+                reco2_2 : result2[1],
+                reco2_3 : result2[2],
+                reco2_4 : result2[3],
+                reco2_5 : result2[4]
+                  
+              }));
+    
+              console.log('final = ')
+              console.log(final_objToSend)
+              console.log("----------------------------------------------------------------------------");
+    
+            }
+            else{
+              console.dir(err)
+              res.status(404).send();
+              console.log("----------------------------------------------------------------------------");
+            }
+          })
+        }
+        else {
           res.status(404).send();
           console.log("----------------------------------------------------------------------------");
         }
       })
+      
     }
 
     async function main(){
@@ -151,7 +136,7 @@ var login = function(req, res){
   }
 };
 
-// 감상결과 목록
+// 감상결과
 var watchlist = function(req, res) {
     console.log('/watchlist(감상결과 목록 처리) 라우팅 함수 호출');
   
@@ -211,11 +196,15 @@ var watchresult = function(req, res) {
         else if (results.length > 0) {
   
           var objToSend = {
-            title: results[0].title,
+            title: results[0].movieTitle,
             poster: results[0].poster,
             genres: results[0].genres,
-            emotion: results[0].emotion,
-            highlight: results[0].highlight
+            concentration: results[0].concentration,
+            highlight_time: results[0].highlight_time, // 감정폭 가장 큰 시간
+            emotion_count_array : results[0].emotion_count_array, // 감정들 count 
+            highlight_array : results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
+            comment : results[0].comment, // 감상평
+            sleepingCount : results[0].sleepingCount
           };
   
           res.status(200).send(JSON.stringify(objToSend));
@@ -320,56 +309,61 @@ var sceneAnalyze = function(req, res) {
 }
 
 // 추천1 - 컨텐츠 기반
-var recommend1 = function(req, res){
-    console.log('/recommend1 라우팅 함수 호출');
-    var database = req.app.get('database');
-    var titleArray = []
-    var posterArray = []
-    var re =''
-    if(database) {
-      // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
-      // 1. child-process모듈의 spawn 취득
-      const spawn = require('child_process').spawn;
-      // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-      const result = spawn('python', ['test3_2.py']);
-  
-      // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-      result.stdout.on('data', function(data) {
-        const stringResult = data.toString();
-  
-        var array = stringResult.split('\n');
-        for(var i=1;i<array.length;i++) {
-           array[i-1]=array[i].slice(6).trim();
-           //console.log(array[i-1])
-        }
-        array.pop()
-        console.log('---------')
-        for(var i=0;i<array.length-1;i++) {
-            var test_ = array[i].split('/')
-            //console.log(array[i])
-            titleArray[i] = test_[0]
-            //console.log('titleArray : '+titleArray[i])
-            posterArray[i] = '/'+String(test_[1])
-            //console.log('posterArray : '+posterArray[i])
-        }
-        re = '['+String(titleArray)+'],[' + String(posterArray)+']'
-        console.log(re)
-        res.status(200).send(JSON.stringify(re));
-      });
-    }
-    else{
-        console.log('데이터베이스가 정의되지 않음...');
-        res.status(400).send();
-        console.log("\n\n");
-    }
-  
+var recommend1 = function(db, id, callback){
+  console.log('/recommend1 라우팅 함수 호출');
+  var database = db
+  // var paramId = id;
+  var paramId = 665; // 사용자 아이디 임의로 설정해놓음
+  var titleArray = []
+  var posterArray = []
+
+  if(database) {
+
+  // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
+    // 1. child-process모듈의 spawn 취득
+    const spawn = require('child_process').spawn;
+    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+    const result = spawn('python', ['test3_2.py', paramId]);
+
+    // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+    result.stdout.on('data', function(data) {
+      const stringResult = data.toString();
+
+      var array = stringResult.split('\n');
+      for(var i=1;i<array.length;i++) {
+         array[i-1]=array[i].slice(6).trim();
+         //console.log(array[i-1])
+      }
+      array.pop()
+      console.log('---------')
+      for(var i=0;i<array.length-1;i++) {
+          var test_ = array[i].split('/')
+          // console.log(array[i])
+          titleArray[i] = test_[0]
+          // console.log('titleArray : '+titleArray[i])
+          posterArray[i] = '/'+String(test_[1])
+          // console.log('posterArray : '+posterArray[i])
+      }
+      var objToSend = {
+        titleArray : titleArray,
+        posterArray : posterArray
+      }
+      callback(null, objToSend)
+    });
+  }
+  else{
+      console.log('데이터베이스가 정의되지 않음...');
+      callback(null, null)
+      console.log("\n\n");
+  }
 };
 
 // 추천2 - 유사 사용자
 var recommend2 = function (id, callback) {
   console.log("/recommend2 (사용자 추천) 함수 호출");
 
-  var paramId = id; // 사용자 아이디 받아오기
+  // var paramId = id; // 사용자 아이디 받아오기
+  var paramId = 671; // 사용자 아이디 받아오기
 
   //파이썬 코드 실행 (유사 사용자 추천)
   const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
@@ -477,6 +471,8 @@ var enterroom = function(req, res){
 var getAllMovieList = function(req, res){
   console.log('/getAllMovieList ( 영화 검색 화면을 위한 영화정보 전달 ) 라우팅 함수 호출');
 
+  var database = req.app.get('database');
+
   if (database){
     var resultTitleArray = []
     var resultPosterArray = []
@@ -507,6 +503,7 @@ var getAllMovieList = function(req, res){
       res.status(200).send(JSON.stringify(objToSend))
       console.log('----------------------------------------------------------------------------')
     }
+    main()
   }
   else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
     console.log('***ERROR!! 데이터 베이스 에러 ... : ', err);
@@ -535,6 +532,9 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var every_emotion_array
 
     async function searchMovieInfo(){
+      console.log('req.body정보')
+      console.dir(req.body)
+      // console.log('req.body 정보 : {Id : ', paramId, " / movieTitle : ", parammovieTitle, " }")
       const existing = await database.MovieModel.find(
         { title : parammovieTitle }).clone()
       
@@ -545,7 +545,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           genres = existing[0].genres
           runningTime = existing[0].runningTime
           emotion_check_count = Math.floor(runningTime / 10) + 1
-          every_emotion_array = new array(emotion_check_count)
+          every_emotion_array = new Array(emotion_check_count)
           
           for (let i = 0; i<emotion_check_count; i++){
             every_emotion_array[i] = '-'
@@ -604,8 +604,10 @@ var watchImageCaptureEyetrack = async function(req, res){
 
   // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  var paramId = 'smj8554'; // 테스트데이터
+  var parammovieTitle = 'toy story'; // 테스트데이터
   var paramTime = req.body.time || req.query.time;
   var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
 
@@ -733,13 +735,15 @@ var watchImageCaptureEyetrack = async function(req, res){
   }
 };
 
-// 감상 끝 - 혼자보기
+// 감상 끝 - 혼자보기 -- 수정필요(현재 테스트데이터 넣어놓음- pramID, paramTitle)
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var paramId = "smj8554"; // 사용자 아이디 받아오기
+  var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
   var tmp_highlight_array // 정규화 전 배열
   var normalization_array // 정규화 후 배열
   var highlight_time // 감정의 폭이 큰 시간
@@ -755,8 +759,9 @@ var watchAloneEnd = function(req, res){
       userId : userId, movieTitle : movieTitle
     }).clone()
 
-    if (existing_watch.length>0){
+    if (existing_watch){
       console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
+      console.dir(existing_watch)
       tmp_highlight_array = existing_watch[0].highlight_array 
       concentration_sum = existing_watch[0].concentration
     }
@@ -801,7 +806,7 @@ var watchAloneEnd = function(req, res){
       movieTitle : movieTitle
     }).clone()
 
-    if (existing_watch.length>0){
+    if (existing_movie.length>0){
       console.log('해당 영화의 감상 기록 찾음.')
       movie_running_time = existing_movie[0].runningTime
       count_eyetracking = parseInt(movie_running_time / 10) // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
@@ -945,66 +950,163 @@ var email = function(req, res){
 };
 
 // 같이보기 방 생성
-var makeRoom = function(req, res) {
-    console.log('/makeRoom 라우팅 함수 호출됨');
-    var database = req.app.get('database');
-    
-    var RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+var makeRoom = function (req, res) {
+  console.log("/makeRoom 라우팅 함수 호출됨");
+  var database = req.app.get("database");
+  var RoomCode;
 
-    if(database) {
-      makeroom(database,RoomCode, function(err, result){
-        if (err) {
-          console.log('회원가입 중 에러 발생');
-          console.dir(err);
-          return;
-        }
-  
-        if(result.length > 0) {
-          console.log('초대 코드 중복, 다시 생성..');
-          const Checking2 = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
-  
-          // 방을 새로 생성합니다.
-          var room = new database.RoomModel({'roomCode': Checking2});
-          console.log('RoomCode : ' + RoomCode);
-  
-          // save()로 저장
-          room.save(function(err) {
-            if(err) {
-              return;
-            }
-            console.log('새로운 방 등록');
-            // 찾은 결과 전송
-            var objToSend = {
-              roomCode: result[0].roomCode
-            };
-            res.status(200).send(JSON.stringify(objToSend));
-          });
-        }
-  
-        else {
-          // 방을 새로 생성합니다.
-          var room = new database.RoomModel({'roomCode': RoomCode});
-          console.log('RoomCode : ' + RoomCode);
-          // save()로 저장
-          room.save(function(err) {
-            if(err) {
-              return;
-            }
-            console.log('새로운 방 등록');
-            // 찾은 결과 전송
-            var objToSend = {
-              roomCode: RoomCode
-            };
-            res.status(200).send(JSON.stringify(objToSend));
-          });
-        }
-      });
+  async function getToken() {
+    // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
+
+    // express 및 agora-access-token 에 대한 참조 추출
+    // const express = require("express");
+    const app = req.app;
+
+    // 자격 증명과 요청 수신하는 데 사용할 포트 추가
+    const PORT = 3001;
+    const APP_ID = "디코참고";
+    const APP_CERTIFICATE = "디코참고";
+
+    // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
+    const nocache = (req, res, next) => {
+      res.header("Cache-Control", "private, no-store", "must-revalidate");
+      res.header("Expires", "-1");
+      res.header("Pragma", "no-cache");
+      next(); // 첫번째 미들웨어 함수 > 다음 함수 계속
+    };
+
+    // 두 번째 함수: 요청 처리 및 JSON 응답 반환
+    // Agora RTC Token 생성
+    const generateRTCToken = (req, res) => {
+      // 응답 헤더 설정 - set response header
+      res.header("Access-Control-Allow-Origin", "*");
+
+      // 요청 매개변수 가져오기 - get channel name
+      const channelName = req.params.channel; //req.query.channelName;
+      if (!channelName) {
+        return res.status(500).json({ error: "channel is required" });
+      }
+
+      // get uid
+      let uid = req.params.uid; // req.query.uid;
+      if (!uid || uid === "") {
+        uid = 0;
+        return res.status(500).json({ error: "uid is required" });
+      }
+
+      // get role
+      let role = RtcRole.SUBSCRIBER;
+      //if (req.query.role == 'publisher') {
+      if (req.params.role === "publisher") {
+        role = RtcRole.PUBLISHER;
+      }
+
+      // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
+      // let expireTime = req.query.expireTime;
+      let expireTime = req.query.expiry;
+      if (!expireTime || expireTime == "") {
+        expireTime = 300; // 5분 - 확실하진 않음
+      } else {
+        expireTime = parseInt(expireTime, 10);
+      }
+
+      // 만료 시간 계산 - calculate privilege expire time
+      const currentTime = Math.floor(Date.now() / 1000);
+      const privilegeExpireTime = currentTime + expireTime;
+
+      // 토큰 구축 - build the token
+      // const token = RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channelName, uid, role, privilegeExpireTime);
+      let token;
+      if (req.params.tokentype === "userAccount") {
+        token = RtcTokenBuilder.buildTokenWithAccount(
+          APP_ID,
+          APP_CERTIFICATE,
+          channelName,
+          uid,
+          role,
+          privilegeExpireTime
+        );
+      } else if (req.params.tokentype === "uid") {
+        token = RtcTokenBuilder.buildTokenWithUid(
+          APP_ID,
+          APP_CERTIFICATE,
+          channelName,
+          uid,
+          role,
+          privilegeExpireTime
+        );
+      } else {
+        return res.status(500).json({ error: "token type is invalid" });
+      }
+
+      // 응답 반환 - return the token
+      return res.json({ token: token });
+    };
+
+    // GET 방식 - 경로
+    // app.get('/access_token', nocache, generateAccessToken);
+    app.get("/rtc/:channel/:role/:tokentype/:uid", nocache, generateRTCToken);
+
+    // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
+    app.listen(PORT, () => {
+      console.log(`Listening on port: ${PORT}`);
+    });
+
+    var url = "http://127.0.0.1:3001/rtc/test/publisher/uid/1";
+    request(url, function (error, response, html) {
+      if (error) {
+        throw error;
+      }
+
+      html = html.toString().split('":"')
+      result = html[1].replace('"}','')
+      RoomCode = result
+      vaildToken(RoomCode)
+    });
+  }
+
+  async function vaildToken(RoomCode) {
+    makeroom(database, RoomCode, function (err, result) {
+      if (err) {
+        console.log("방 생성 중 에러 발생");
+        console.dir(err);
+        return;
+      }
+
+      if (result.length > 0) {
+        console.log("초대 코드 중복, 다시 생성..");
+
+        getToken();
+      } else {
+        var room = new database.RoomModel({ roomCode: RoomCode });
+        console.log("RoomCode : " + RoomCode);
+
+        // save()로 저장
+        room.save(function (err) {
+          if (err) {
+            return;
+          }
+          console.log("새로운 방 등록");
+          // 찾은 결과 전송
+          var objToSend = {
+            roomCode: RoomCode,
+          };
+          res.status(200).send(JSON.stringify(objToSend));
+        });
+      }
+    });
+  }
+
+  if (database) {
+    async function main() {
+      await getToken()
     }
-    else{
-        console.log('데이터베이스가 정의되지 않음...');
-        res.status(400).send();
-        console.log("\n\n");
-    }
+    main();
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send();
+    console.log("\n\n");
+  }
 };
 
 // 로그아웃

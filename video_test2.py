@@ -1,8 +1,16 @@
 # 영화 영상 분석 코드 - 사물인식으로 장르 판별, 유명인사 인식으로 배우 판별, 장면에서 배우 감정 판별
 # python, aws
+import csv
+
 import boto3, json, sys, time
 
 class VideoDetect:
+    with open('/Users/bag-yejin/Documents/credentials.py', 'r') as input:
+        next(input)
+        reader = csv.reader(input)
+        for line in reader:
+            access_key_id = line[0]
+            secret_access_key = line[1]
     jobId = 'null' # 비디오 분석 작업용 ID, 작업 식별자
     access_key_id = ''
     secret_access_key = ''
@@ -10,7 +18,7 @@ class VideoDetect:
     sqs = boto3.client('sqs', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     sns = boto3.client('sns', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
-    roleArn = 'arn:aws:iam::805057381367:role/serviceRekognition'
+    roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybuckets'
     video = 'avengers.mp4'
     startJobId1 = 'null'
@@ -218,7 +226,7 @@ class VideoDetect:
         print(celeblist)
 
 def main():
-    roleArn = 'arn:aws:iam::805057381367:role/serviceRekognition'
+    roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybuckets'
     video = 'avengers.mp4'
 

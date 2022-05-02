@@ -10,7 +10,7 @@ def process(title):
 
         # csv 파일 불러오기
         movies = pd.read_csv(
-                '/Users/jeonsumin/PycharmProjects/allonsy-recommend/madeBySooMin#1_similarUser/movie_info.csv',
+                '/recommend/movie_info.csv',
                 low_memory=False)
         movies.columns = ['id', 'original_title', 'genres','runtime', 'release_date', 'actor', 'poster_path']
 

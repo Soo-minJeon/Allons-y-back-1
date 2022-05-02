@@ -13,10 +13,10 @@ def process(id):
 
     ### 필요한 함수와 알고리즘 구현부
     ratings = pd.read_csv(
-        '/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/recommend/ratings_small.csv',
+        'ratings_small.csv',
         low_memory=False)
     movies = pd.read_csv(
-        '/Users/jeonsumin/PycharmProjects/allonsy-recommend/madeBySooMin#1_similarUser/movie_info.csv',
+        'movie_info.csv',
         low_memory=False)
     movies.columns = ['movieId','original_title','genres','runtime','release_date','actor','poster_path']
 

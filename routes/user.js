@@ -136,7 +136,7 @@ var login = function(req, res){
   }
 };
 
-// 감상결과 목록
+// 감상결과
 var watchlist = function(req, res) {
     console.log('/watchlist(감상결과 목록 처리) 라우팅 함수 호출');
   
@@ -196,11 +196,15 @@ var watchresult = function(req, res) {
         else if (results.length > 0) {
   
           var objToSend = {
-            title: results[0].title,
+            title: results[0].movieTitle,
             poster: results[0].poster,
             genres: results[0].genres,
-            emotion: results[0].emotion,
-            highlight: results[0].highlight
+            concentration: results[0].concentration,
+            highlight_time: results[0].highlight_time, // 감정폭 가장 큰 시간
+            emotion_count_array : results[0].emotion_count_array, // 감정들 count 
+            highlight_array : results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
+            comment : results[0].comment, // 감상평
+            sleepingCount : results[0].sleepingCount
           };
   
           res.status(200).send(JSON.stringify(objToSend));
@@ -508,7 +512,6 @@ var getAllMovieList = function(req, res){
   }
 }
 
-
 // 감상 시작 - 혼자보기
 var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
@@ -529,6 +532,9 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var every_emotion_array
 
     async function searchMovieInfo(){
+      console.log('req.body정보')
+      console.dir(req.body)
+      // console.log('req.body 정보 : {Id : ', paramId, " / movieTitle : ", parammovieTitle, " }")
       const existing = await database.MovieModel.find(
         { title : parammovieTitle }).clone()
       
@@ -598,8 +604,10 @@ var watchImageCaptureEyetrack = async function(req, res){
 
   // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  var paramId = 'smj8554'; // 테스트데이터
+  var parammovieTitle = 'toy story'; // 테스트데이터
   var paramTime = req.body.time || req.query.time;
   var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
 
@@ -926,8 +934,8 @@ var makeRoom = function (req, res) {
 
     // 자격 증명과 요청 수신하는 데 사용할 포트 추가
     const PORT = 3001;
-    const APP_ID = "149820d0e0624e85971c69d50bff41bb";
-    const APP_CERTIFICATE = "658b34d7a2f54d1aa19af366b81b6c40";
+    const APP_ID = "디코참고";
+    const APP_CERTIFICATE = "디코참고";
 
     // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
     const nocache = (req, res, next) => {

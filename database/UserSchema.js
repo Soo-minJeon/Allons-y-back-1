@@ -11,7 +11,7 @@ Schema.createSchema = function (mongoose) {
         reco2_id: { type: Number, required: true, unique: true, 'default': '' }, // 추천2에 쓰일 아이디
         password: { type: String, required: true }, 'default': '', // 비번
         name: { type: String, required: 'hashed', 'default': '' }, // 닉네임
-        favorite: {type: Array, required: true}, // 선호 영화 3가지 배열
+        favorite: {type: String, required: true}, // 선호 영화 3가지 배열
         genre: {type:String, required: true, 'default': 'Comedy'}, // 선호 장르
         created_at: { type: Date, index: { unique: false }, 'default': Date.now } // 가입일
     });

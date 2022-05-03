@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/recommend/user_info.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

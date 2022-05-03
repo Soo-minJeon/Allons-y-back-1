@@ -11,6 +11,8 @@ var signup = function(req, res) {
     var paramId = req.body.id || req.query.id;
     var paramPassword = req.body.password || req.query.password;
     var paramName = req.body.name || req.query.name;
+    var likeMovie = req.body.favorite || req.query.favorite; // 선호 영화 3가지
+    var genre = req.body.genre || req.query.genre; // 선호 장르
   
     console.log('[요청 파라미터] ID : ' + paramId + ', PW : ' + paramPassword + ', NAME : ' + paramName);
   
@@ -18,7 +20,7 @@ var signup = function(req, res) {
 
     // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
     if(database) {
-      signUp(database, paramId, paramPassword, paramName, function(err, result) {
+      signUp(database, paramId, paramPassword, paramName,likeMovie, genre, function(err, result) {
   
         if(err) {
             console.log('***ERROR!! 회원가입 에러 발생... : ', err);
@@ -423,6 +425,36 @@ var recommend2 = function (id, callback) {
   // }}
 };
 
+var recommend3 = function(db, id, callback) { // 수정중
+    console.log("/recommend3 (선호배우 영화 추천) 함수 호출");
+    if(database) {
+        // 1.DB에서 선호 배우 가져오기
+        db.likeSchema.findById(id, function(err, result) {
+            fActor : result[0].actors
+        })
+
+        // 2. 선호 배우 영화 csv 파일에서 찾아오기
+        random_num = []
+
+        result_movie = ''
+        result_poster = ''
+        df = read_csv('movie_info.csv')
+        for(i=0;i<len(df);i++){
+            if (fActor in df['actor'][i]){
+                random_num.append(i)}
+        }
+        //print(random_num)
+        for(i=0;i<len(random_num);i++){
+            result_movie += df['original_title'][random_num[i]] + " "
+            result_poster += df['poster_path'][random_num[i]] + " "
+        }
+        callback(null, result_movie+', '+result_poster)
+    } else{
+      console.log('데이터베이스가 정의되지 않음...');
+      callback(null, null)
+      console.log("\n\n");
+  }
+}
 // 같이보기 방 입장
 var enterroom = function(req, res){
     console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
@@ -1146,6 +1178,7 @@ module.exports.watchlist = watchlist;
 module.exports.watchresult = watchresult;
 module.exports.recommend1 = recommend1;
 module.exports.recommend2 = recommend2;
+module.exports.recommend3 = recommend3;
 module.exports.enterroom = enterroom;
 module.exports.email = email;
 module.exports.makeRoom = makeRoom;

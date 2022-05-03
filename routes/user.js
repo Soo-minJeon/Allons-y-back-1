@@ -354,7 +354,7 @@ var recommend1 = function(db, id, callback){
       console.log('데이터베이스가 정의되지 않음...');
       callback(null, null)
       console.log("\n\n");
-  }  
+  }
 };
 
 // 추천2 - 유사 사용자
@@ -840,7 +840,7 @@ var watchAloneEnd = function(req, res){
     }
 
   }
-  
+
   // 감정 부합 확인 .. 작성중
   async function emotionCorrectTest() {
     var movieEmotion_array =
@@ -906,7 +906,7 @@ var watchAloneEnd = function(req, res){
     })
 
     await HighlightImageTrans_ToFolder(highlight_time, paramId, parammovieTitle);
-    
+
   }
   main()  
 };

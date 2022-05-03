@@ -37,8 +37,8 @@ Schema.createSchema = function (mongoose) {
     });
 
     // 비밀번호 비교
-    UserSchema.static('authenticate', function (password, callback) {
-        return this.find({ password: password }, callback);
+    UserSchema.static('authenticate', function (id, password, callback) {
+        return this.find({ id: id, password: password }, callback);
     });
 
     console.log('Schema 설정을 완료하였습니다.');

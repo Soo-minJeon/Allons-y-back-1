@@ -145,7 +145,7 @@ var watchlist = function(req, res) {
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var database = req.app.get('database');
     if(database) {
-      WatchModel.findById(paramId, function(err, results) {
+      database.WatchModel.findById(paramId, function(err, results) {
           if (err) {
             callback(err, null);
             return;
@@ -320,8 +320,7 @@ var recommend1 = function(db, id, callback){
   var posterArray = []
 
   if(database) {
-
-  // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
+    // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
     // 1. child-process모듈의 spawn 취득
     const spawn = require('child_process').spawn;
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
@@ -551,9 +550,10 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   var database = req.app.get('database');
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   // -테스트용
-  var parammovieTitle = "toy story"
+  // var paramId = "smj8554"
+  // var parammovieTitle = "toy story"
 
   if (database){
 
@@ -630,61 +630,73 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
 // 사용자 집중도/감정 분석
 var watchImageCaptureEyetrack = async function(req, res){
-  console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨.');
+
 
   var database = req.app.get('database');
 
   // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
-  var paramId = 'smj8554'; // 테스트데이터
-  var parammovieTitle = 'toy story'; // 테스트데이터
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
   var paramTime = req.body.time || req.query.time;
   var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
+  // var paramId = 'smj8554'; // 테스트데이터
+  // var parammovieTitle = 'toy story'; // 테스트데이터
+  // var paramTime = "40" // 테스트 데이터
+  // var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
+
+  console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨. // ', paramTime, "초");
 
   var count = 0 // 러닝타임 나누기 10 + 1 (러닝타임이 30초라면, 0초 10초 20초 30초 측정)
   var sleepCount = 0
   var checkLimit = 0
   var concentration_scene = 0
   var tmp_concentration = 0
+  var getpython = "";
 
   if (database){
   
-    //파이썬 코드 실행 
-    const spawnSync= require('child_process').spawnSync; // child-process 모듈의 spawn 획득
-    var getpython = ''
+    async function startEyetrack() {
+      //파이썬 코드 실행
+      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
 
-    //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-    const result = spawnSync('python', ['eyetracking/eyetrack.py', paramTime, paramId, parammovieTitle]);
+      param = paramTime + "/" + paramId + "/" + parammovieTitle
+      //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+      const result = spawnSync("python", [
+        "eyetracking/eyetrack.py",
+        param
+      ]);
 
-    if(result.status !== 0){
-      process.stderr.write(result.stderr)
-      process.exit(result.status);
-    } else {
-      process.stdout.write(result.stdout);
-      process.stderr.write(result.stderr);
-      getpython = result.stdout.toString();
-      // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
-      concentration_scene = Number(getpython)
+      if (result.status !== 0) {
+        process.stderr.write(result.stderr);
+        process.exit(result.status);
+      } else {
+        process.stdout.write(result.stdout);
+        process.stderr.write(result.stderr);
+        getpython = result.stdout.toString();
+        // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
+        concentration_scene = Number(getpython);
+      }
     }
 
     // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기 
     // 영화 러닝타임 알아오기 -> (몇번 잤니?) 가 용인되는 횟수보다 적은가 확인해야 하기때문
     /// ==> 기다려줘야함 1. 
-    const existing = await database.WatchModel.find(
-      {userId : paramId, movieTitle : parammovieTitle}).clone()
+    // const existing = await database.WatchModel.find(
+    //   {userId : paramId, movieTitle : parammovieTitle}).clone()
     
     async function countlimit() {
+      const existing = await database.WatchModel.find({userId : paramId, movieTitle : parammovieTitle})
+
       if (existing.length > 0) {
-        // console.dir(existing)
+        console.dir(existing)
 
         sleepCount = existing[0].sleepingCount 
-        tmp_concentration = existing_watch[0].concentration // 현재까지의 집중도 합을 구해옴.
+        tmp_concentration = existing[0].concentration // 현재까지의 집중도 합을 구해옴.
 
         concentration_scene = tmp_concentration + Number(getpython) // 현재 장면에서의 집중도를 더함.
         
-        await db.WatchModel.updateOne({ // 감상목록 concentration 수정 //
+        await database.WatchModel.updateOne({ // 감상목록 concentration 수정 //
           userId: paramId,
           movieTitle: parammovieTitle
         }, {
@@ -706,10 +718,11 @@ var watchImageCaptureEyetrack = async function(req, res){
       }
       else{
         console.log('WatchModel에 정보 없음요')
+        console.dir(await database.WatchModel.find({userId : paramId, movieTitle : parammovieTitle}))
         res.status(400).send()
       }
     }
-    await countlimit()
+    // await countlimit()
 
     // 자는 중이니?
     /// 2.
@@ -746,7 +759,8 @@ var watchImageCaptureEyetrack = async function(req, res){
         path = '' // path - 수정필요
   
         // 감정분석 시작 - 수정 필요
-        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, count, paramTime, function(err, result){
+        // watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, count, paramTime, function(err, result){
+        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, paramTime, function(err, result){
           if (result){
             console.log('집중도 | 감정데이터 분석 및 정보 추가 완료');
             res.status(200).send()
@@ -759,7 +773,15 @@ var watchImageCaptureEyetrack = async function(req, res){
         }); 
       }
     }
-    await isSleep()
+    // await isSleep()
+
+    async function main(){
+      await startEyetrack()
+      await countlimit()
+      await isSleep()
+    }
+    main()
+
 
   } else {
     console.log("데이터베이스가 정의되지 않음...");
@@ -772,10 +794,10 @@ var watchImageCaptureEyetrack = async function(req, res){
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
-  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-  var paramId = "smj8554"; // 사용자 아이디 받아오기
-  var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // var paramId = "smj8554"; // 사용자 아이디 받아오기
+  // var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
   var tmp_highlight_array // 정규화 전 배열
   var normalization_array // 정규화 후 배열
   var highlight_time // 감정의 폭이 큰 시간

@@ -52,10 +52,10 @@ var authUser = function(db, id, password, callback) {
 
       // 해당 id 를 통해 정보가 존재하는지 확인
       if (results_id.length > 0) {
-          console.log('아이디와 일치하는 사용자 찾음');
+          console.log('아이디와 일치하는 사용자 찾음, 받아온 id : ', id);
 
           // 존재하는 데이터의 비밀번호 확인
-          db.UserModel.authenticate(password, function(err, results){
+          db.UserModel.authenticate(id, password, function(err, results){
             if(err){
                 callback(err, null) 
                 return;
@@ -410,13 +410,13 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 
 
   // watch모델에 기록된 감상결과
-  var tmp_emotion_array = []
+  var tmp_emotion_count_array = []
 
   // watch모델에 기록된 감정부합도용 배열
   var tmp_every_emotion_array = []
 
   // 수정된 감상결과
-  var edit_emotionArray = []
+  //var edit_emotionArray = []
 
   async function getPastRekognition(userId, movieTitle, time){ // 10초 전의 rekognition 기록을 찾는 함수.
 
@@ -430,10 +430,10 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       console.log('10초 전의 rekognition 기록 찾음.', existing_re[0])
 
       tmp_calm_count = existing_re[0].calm_count
-      tmp_calm_sum = existing_re[0].calm_sum
+      tmp_calm_sum = Number(existing_re[0].calm_sum)
       tmp_calm_emotion_count = existing_re[0].calm_emotion_count
-      tmp_calm_emotion_sum = existing_re[0].calm_emotion_sum
-      tmp_calm_emotion_calm_sum = existing_re[0].calm_emotion_calm_sum
+      tmp_calm_emotion_sum = Number(existing_re[0].calm_emotion_sum)
+      tmp_calm_emotion_calm_sum = Number(existing_re[0].calm_emotion_calm_sum)
     }
     else {
       console.log('10초 전의 rekognition 기록 존재하지 않음.')
@@ -442,19 +442,19 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 
 
   async function getWatchResult(userId, movieTitle){ // 감상결과 기록을 찾는 함수.
-
-    var existing_watch = await db.WatchModel.find({
+    existing_watch = await db.WatchModel.find({
       userId : userId, movieTitle : movieTitle
     }).clone()
 
+
     if (existing_watch.length>0){
       console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
-      tmp_emotion_array = existing_watch[0].emotion_array
+      tmp_emotion_count_array = existing_watch[0].emotion_count_array
       tmp_every_emotion_array = existing_watch[0].every_emotion_array
-      return true;
     }
     else {
-      console.log('해당 유저의 해당 영화의 감상 기록 존재하지 않음.')
+      console.log('해당 유저의 해당 영화의 감상 기록 존재하지 않음.', userId, ", ", movieTitle)
+      console.dir(existing_watch)
       callback(null, null); // 감상기록을 찾지 못하면 콜백으로 돌아가버림 - 문제가 있는것.
     }
   }
@@ -495,7 +495,14 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       }
 
       else if (tmp_calm_count == 2){
-        if (calm_emotion_count == 2){
+        if (calm_emotion_count == 1){
+          calm_count = tmp_calm_count;
+          calm_sum = tmp_calm_sum;
+          calm_emotion_count = calm_emotion_count;
+          calm_emotion_sum = calm_emotion_sum;
+          calm_emotion_calm_sum = calm_emotion_calm_sum;
+        }
+        else if (calm_emotion_count == 2){
           // 감정의 폭 계산
           calm_aver = (tmp_calm_sum / 2)
           calm_emotion_calm_aver = (calm_emotion_calm_sum / 2)
@@ -516,43 +523,43 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
   async function edit_emotion_array(first){
 
     if (first == 'HAPPY') {
-      edit_emotionArray[0].HAPPY += 1
+      tmp_emotion_count_array.HAPPY += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'SAD') {
-      edit_emotionArray[0].SAD += 1
+      tmp_emotion_count_array.SAD += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'ANGRY') {
-      edit_emotionArray[0].ANGRY += 1
+      tmp_emotion_count_array.ANGRY += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'CONFUSED') {
-      edit_emotionArray[0].CONFUSED += 1
+      tmp_emotion_count_array.CONFUSED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'DISGUSTED') {
-      edit_emotionArray[0].DISGUSTED += 1
+      tmp_emotion_count_array.DISGUSTED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'SURPRISED') {
-      edit_emotionArray[0].SURPRISED += 1
+      tmp_emotion_count_array.SURPRISED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'FEAR') {
-      edit_emotionArray[0].FEAR += 1
+      tmp_emotion_count_array.FEAR += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'CALM') {
       calm_count = tmp_calm_count + 1
-      calm_sum = tmp_calm_sum + result_total[1]
+      calm_sum = tmp_calm_sum + Number(result_total[1])
 
       if (tmp_calm_emotion_count == 1){
         calm_emotion_count = 0
@@ -561,7 +568,6 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       }
     }
   }
-
 
   async function main(){
 
@@ -572,21 +578,34 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     console.log("====================두번째 완료====================");
 
     // watch model 기록안에 있던 emotion_array를 대입.
-    edit_emotionArray = tmp_emotion_array;
-    console.log("확인필요 ; ", edit_emotionArray[0]);
-    console.log("확인필요 ; ", edit_emotionArray[0].SAD);
+    // edit_emotionArray = tmp_emotion_count_array;
 
     await edit_emotion_array(result_total[0])
     console.log('====================네번째 완료====================')
+    // edit_emotionArray = 
+    //   { "HAPPY" : tmp_emotion_count_array[0].HAPPY, 
+    //   "SAD" : tmp_emotion_count_array[0].SAD, 
+    //   "ANGRY" : tmp_emotion_count_array[0].ANGRY, 
+    //   "CONFUSED" : tmp_emotion_count_array[0].CONFUSED, 
+    //   "DISGUSTED": tmp_emotion_count_array[0].DISGUSTED, 
+    //   "SURPRISED" : tmp_emotion_count_array[0].SURPRISED, 
+    //   "FEAR" : tmp_emotion_count_array[0].FEAR, }
+    
+    // console.log("확인필요 ; ", tmp_emotion_count_array);
+    // 테스트
+    console.log("-----------------------테스트-----------------------")
+    console.dir(tmp_every_emotion_array)
+    console.log("---------------------------------------------------")
 
     if (highlight_emotion_time == 0){
       await db.WatchModel.updateOne({ // 감상목록 emotion_array 수정 //
         userId: userId,
         movieTitle: movieTitle,
-        every_emotion_array : tmp_every_emotion_array
+        // every_emotion_array : tmp_every_emotion_array
       }, {
         $set: {
-          emotion_array: edit_emotionArray,
+          emotion_count_array: tmp_emotion_count_array,
+          every_emotion_array : tmp_every_emotion_array
         },
       })
     }
@@ -596,7 +615,8 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
         movieTitle: movieTitle
       }, {
         $set: {
-          emotion_array: edit_emotionArray,
+          emotion_count_array: tmp_emotion_count_array,
+          every_emotion_array : tmp_every_emotion_array
         },
         $push : {
           highlight_array: {
@@ -626,18 +646,15 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       'calm_emotion_sum' : calm_emotion_sum, // calm 2번 후에 emotion confidence 합
      'calm_emotion_calm_sum' : calm_emotion_calm_sum // calm 2번 후에 emotion 나왔을 때 calm의 합
     });
-    await newRekognition.save(function (err) {
+    await newRekognition.save(function(err) {
       if (err) {
         console.dir(err);
         callback(err, null)
       }
       console.log('감정분석 데이터 추가');
-      callback(null, true)
     })
     console.log('====================여섯번째 완료====================')
-
-
-
+    callback(null, 'true')
   }
   main()
 };

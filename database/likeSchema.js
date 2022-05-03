@@ -2,7 +2,6 @@
 var Schema = {};
 
 Schema.createSchema = function (mongoose) {
-
     console.log('createSchema 호출됨.')
 
     // 스키마 정의 - 몽구스는 각각 다른 스키마를 다루기 가능 (관계db와 차이점)

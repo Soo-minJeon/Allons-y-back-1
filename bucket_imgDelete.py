@@ -4,12 +4,12 @@ import boto3
 import csv
 import glob
 
-global region
-global bucket
-global s3
-global testfolder # local
-global capture_folder
-global highlight_folder # s3 bucket highlight image save folder
+region = ''
+bucket = ''
+s3 = ''
+testfolder  = ''# local
+capture_folder = ''
+highlight_folder = '' # s3 bucket highlight image save folder
 
 def preprocess():
     global region
@@ -17,7 +17,7 @@ def preprocess():
     global s3
 
     # 버킷 접근 위한 기본 설정
-    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv',
+    with open('credentials.csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)
@@ -88,17 +88,20 @@ def makeManifest(mypath, id, title):
             s_title = id + '_' + title
             if (s_title in entry):
                 delete = s3.delete_object(Bucket=bucket, Key=entry)
-                print(entry)
+                #print(entry)
 
 
 
 if __name__ == "__main__":
     preprocess()
     
+    param = str(sys.argv[1]).split("/")
+    #param = "40/smj8554/toy story".split("/")
+
     # 매개변수 3가지
-    time = sys.argv[1] # 하이라이트 초
-    id = sys.argv[2] # userId
-    title = sys.argv[3]
+    time = param[0] # 하이라이트 초
+    id = param[1] # userId
+    title = param[2]
 
     # 하이라이트 장면 시간대(초)를 받아와서, 해당 사진을 다운받고
     main(id, title, time)

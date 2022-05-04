@@ -45,7 +45,7 @@ var authUser = function(db, id, password, callback) {
 };
 
 // 사용자 회원가입
-var signUp = function(db, id, password, name, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
+var signUp = function(db, id, password, name, favorite, genre, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
   console.log('signUp 함수 호출됨');
 
   var getpython = "";
@@ -54,8 +54,8 @@ var signUp = function(db, id, password, name, callback) { // callback 함수는 
     //파이썬 코드 실행 (추천용 아이디 발급)
     const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
 
-    // (param 없음)
-    const result = spawnSync("python", ["recommend/getUserId_reco2.py"]);
+    // 매개변수로 선호 영화 전달
+    const result = spawnSync("python", ["recommend/getUserId_reco2.py", favorite]);
 
     if (result.status !== 0) {
       process.stderr.write(result.stderr);
@@ -85,6 +85,8 @@ var signUp = function(db, id, password, name, callback) { // callback 함수는 
           id: id, 
           password: password, 
           name: name,
+          favorite:favorite,
+          genre:genre,
           reco2_id : getpython});
 
         // save()로 저장

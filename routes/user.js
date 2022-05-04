@@ -178,49 +178,42 @@ var watchlist = function(req, res) {
 var watchresult = function(req, res) {
     console.log('/watchresult(감상결과) 라우팅 함수 호출');
   
-    var paramId = req.body.id || req.query.userid; // 사용자 아이디 받아오기
-    var paramMovie = req.body.movieTitle || req.query.movieTitle; // 영화 아이디 받아오기
+    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+    var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 영화 아이디 받아오기
+
     var database = req.app.get('database');
+
     if(database) {
-  
-      getWatchResult(database, paramId, paramMovie, function(err, results){
-  
-        console.dir(results)
-  
-        if (err){
-          console.log('감상결과 가져오는 중에 에러 발생...');
-          console.dir(err)
-          res.status(400).send();
-        }
-  
-        else if (results.length > 0) {
-  
+
+      async function main() {
+        const results = await database.WatchModel.find({
+          userId: paramId,
+          movieTitle: parammovieTitle,
+        });
+
+        if (results.length > 0) {
+          console.dir(results);
+
           var objToSend = {
             title: results[0].movieTitle,
             poster: results[0].poster,
             genres: results[0].genres,
             concentration: results[0].concentration,
             highlight_time: results[0].highlight_time, // 감정폭 가장 큰 시간
-            emotion_count_array : results[0].emotion_count_array, // 감정들 count 
-            highlight_array : results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
-            comment : results[0].comment, // 감상평
-            sleepingCount : results[0].sleepingCount
+            emotion_count_array: results[0].emotion_count_array, // 감정들 count
+            highlight_array: results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
+            rating: results[0].rating, // 평점
+            comment: results[0].comment, // 감상평
           };
-  
+
           res.status(200).send(JSON.stringify(objToSend));
-          console.log('감상기록 결과 : 데이터베이스 존재 : 기록 존재 : 찾은 결과 전송 성공');
-          console.log('\n\n');
-  
+          console.log(
+            "감상기록 결과 : 데이터베이스 존재 : 기록 존재 : 찾은 결과 전송 성공"
+          );
+          console.log("\n\n");
         }
-  
-        else {
-          res.status(400).send();
-          console.log('감상기록 결과 없음.');
-          console.log('\n\n');
-        };
-  
-      });
-  
+      }
+      main() 
     }
     else{
       console.log('데이터베이스가 정의되지 않음...');
@@ -354,7 +347,7 @@ var recommend1 = function(db, id, callback){
       console.log('데이터베이스가 정의되지 않음...');
       callback(null, null)
       console.log("\n\n");
-  }  
+  }
 };
 
 // 추천2 - 유사 사용자
@@ -517,11 +510,11 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
   var database = req.app.get('database');
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   // -테스트용
-  // var paramId = "smj8554"
-  // var parammovieTitle = "toy story"
+  var paramId = "smj8554"
+  var parammovieTitle = "toy story"
 
   if (database){
 
@@ -564,7 +557,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'highlight_time': NaN,
         'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
         'every_emotion_array' : every_emotion_array,
-        'highlight_array' : {},
+        //'highlight_array' : {},
         'rating': 0,
         'comment': NaN,
         'sleepingCount ' : 0
@@ -604,14 +597,14 @@ var watchImageCaptureEyetrack = async function(req, res){
 
   // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
-  var paramTime = req.body.time || req.query.time;
-  var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
-  // var paramId = 'smj8554'; // 테스트데이터
-  // var parammovieTitle = 'toy story'; // 테스트데이터
-  // var paramTime = "40" // 테스트 데이터
-  // var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  // var paramTime = req.body.time || req.query.time;
+  // var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
+  var paramId = 'smj8554'; // 테스트데이터
+  var parammovieTitle = 'toy story'; // 테스트데이터
+  var paramTime = "40" // 테스트 데이터
+  var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
 
   console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨. // ', paramTime, "초");
 
@@ -762,10 +755,10 @@ var watchImageCaptureEyetrack = async function(req, res){
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-  // var paramId = "smj8554"; // 사용자 아이디 받아오기
-  // var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
+  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var paramId = "smj8554"; // 사용자 아이디 받아오기
+  var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
   var tmp_highlight_array // 정규화 전 배열
   var normalization_array // 정규화 후 배열
   var highlight_time // 감정의 폭이 큰 시간
@@ -774,141 +767,168 @@ var watchAloneEnd = function(req, res){
   var ConcentrationPreScopeAverage // 범위 변환 전 집중도 평균 (0~100)
   var count_eyetracking // 10초간격으로 집중도 측정한 횟수
 
-  // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
-  async function getWatchResult(userId, movieTitle){ 
+  if (database) {
+    // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
+    async function getWatchResult(userId, movieTitle) {
+      var existing_watch = await database.WatchModel.find({
+        userId: userId,
+        movieTitle: movieTitle,
+      }).clone();
 
-    var existing_watch = await database.WatchModel.find({
-      userId : userId, movieTitle : movieTitle
-    }).clone()
+      if (existing_watch) {
+        console.log("해당 유저의 해당 영화의 감상 기록 찾음.");
+        console.dir(existing_watch);
+        tmp_highlight_array = existing_watch[0].highlight_array;
+        console.log("테스트 tmp_highlight_array");
+        console.dir(tmp_highlight_array);
+        concentration_sum = existing_watch[0].concentration;
 
-    if (existing_watch){
-      console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
-      console.dir(existing_watch)
-      tmp_highlight_array = existing_watch[0].highlight_array 
-      concentration_sum = existing_watch[0].concentration
-    }
-    else {
-      console.log('해당 유저의 해당 영화의 감상 기록 존재하지 않음.')
-      res.status(400).send();
-    }
-  }
-
-  // 하이라이트 이미지를 버킷에 넣고 나머지 사진 삭제하는 함수
-  async function HighlightImageTrans_ToFolder(highlightT, id, title){
-    // param으로 계산완료한 하이라이트 시간 전달받고
-    // time.jpg 형식으로된 이미지 파일 삭제 ==> 이미지명은 나중에 수정 필요
-
-    ///필요 코드 : param.jpg만 제외하고 삭제, 
-    ///로직 : param.jpg를 다른 폴더로 옮기고 나머지 파일들은 삭제
-    
-    function deleteImg_from_python(time, id, title) {
-      //파이썬 코드 실행 (사용자 감정 분석)
-      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
-      var getpython = "";
-  
-      const result = spawnSync("python", ["bucket_imgDelete.py", time, id, title]);
-  
-      if (result.status !== 0) {
-        process.stderr.write(result.stderr);
-  
-        process.exit(result.status);
+        // 하이라이트 장면 찾기
+        highlight_time = 0;
+        highlight_diff = 0;
+        for (let i = 0; i < tmp_highlight_array.length; i++) {
+          if (tmp_highlight_array[i].emotion_diff > highlight_time) {
+            highlight_time = tmp_highlight_array[i].time;
+            highlight_diff = tmp_highlight_array[i].emotion_diff;
+          }
+        }
       } else {
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        console.log(time, '.jpg 사진 삭제 완료')
+        console.log("해당 유저의 해당 영화의 감상 기록 존재하지 않음.");
+        res.status(400).send();
       }
-
     }
-    deleteImg_from_python(highlightT, id, title)
-  }
+    // 하이라이트 이미지를 버킷에 넣고 나머지 사진 삭제하는 함수
+    async function HighlightImageTrans_ToFolder(highlightT, id, title) {
+      // param으로 계산완료한 하이라이트 시간 전달받고
+      // time.jpg 형식으로된 이미지 파일 삭제 ==> 이미지명은 나중에 수정 필요
 
-  // 영화 정보 찾기 -> 집중도 평균치 계산위해
-  async function getMovieInfo(movieTitle){ 
-    var existing_movie = await database.MovieModel.find({ // 영화 정보 데베에서 추출
-      movieTitle : movieTitle
-    }).clone()
+      ///필요 코드 : param.jpg만 제외하고 삭제,
+      ///로직 : param.jpg를 다른 폴더로 옮기고 나머지 파일들은 삭제
 
-    if (existing_movie.length>0){
-      console.log('해당 영화의 감상 기록 찾음.')
-      movie_running_time = existing_movie[0].runningTime
-      count_eyetracking = parseInt(movie_running_time / 10) // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
-      ConcentrationPreScopeAverage = concentration_sum / count_eyetracking // 집중도 평균 계산
+      function deleteImg_from_python(time, id, title) {
+        //파이썬 코드 실행 (사용자 감정 분석)
+        const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+        var getpython = "";
+
+        param = time + "/" + id + "/" + title;
+
+        const result = spawnSync("python", ["bucket_imgDelete.py", param]);
+
+        if (result.status !== 0) {
+          process.stderr.write(result.stderr);
+
+          process.exit(result.status);
+        } else {
+          process.stdout.write(result.stdout);
+          process.stderr.write(result.stderr);
+          console.log(time, ".jpg 사진 삭제 완료");
+        }
+      }
+      deleteImg_from_python(highlightT, id, title);
     }
-    else {
-      console.log('해당 영화의 기록 존재하지 않음.')
-      res.status(400).send();
+    // 영화 정보 찾기 -> 집중도 평균치 계산위해
+    async function getMovieInfo(movieTitle) {
+      var existing_movie = await database.MovieModel.find({
+        // 영화 정보 데베에서 추출
+        movieTitle: movieTitle,
+      }).clone();
+
+      if (existing_movie.length > 0) {
+        console.log("해당 영화의 감상 기록 찾음.");
+        movie_running_time = existing_movie[0].runningTime;
+        count_eyetracking = parseInt(movie_running_time / 10); // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
+        ConcentrationPreScopeAverage = concentration_sum / count_eyetracking; // 집중도 평균 계산
+      } else {
+        console.log("해당 영화의 기록 존재하지 않음.");
+        res.status(400).send();
+      }
     }
+    // 감정 부합 확인 .. 작성중
+    async function emotionCorrectTest() {
+      var movieEmotion_array = await database.likeModel
+        .findById("pbkdpwls", function (err, result1) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
 
-  }
-  
-  // 감정 부합 확인 .. 작성중
-  async function emotionCorrectTest() {
-    var movieEmotion_array =
-     await database.likeModel.findById('pbkdpwls', function(err, result1){
-        if (err) {
-          callback(err, null);
-          return;
-      }
+          if (result1.length > 0) {
+            console.log("movieEmotion");
+            console.log(result1[0].correctModel);
+            array_test = result1[0].correctModel.split(",");
+            array_test.pop();
+            console.log(array_test.length);
+          }
+        })
+        .clone();
 
-      if (result1.length > 0) {
-         console.log('movieEmotion')
-         console.log(result1[0].correctModel)
-         array_test = result1[0].correctModel.split(',')
-         array_test.pop()
-         console.log(array_test.length)
-      }
-    }).clone()
+      var userEmotion_array = await database.WatchModel.findById(
+        "pbkdpwls",
+        function (err, result2) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
 
-    var userEmotion_array = await database.WatchModel.findById('pbkdpwls', function(err, result2){
-      if (err) {
-        callback(err, null);
-        return;
-      }
+          if (result2.length > 0) {
+            console.log("userEmotion");
+            var emotionArray = result2[0].every_emotion_array;
+            var len_test = result2[0].every_emotion_array.length;
 
-      if (result2.length > 0) {
-         console.log('userEmotion')
-         var emotionArray = result2[0].every_emotion_array
-         var len_test = result2[0].every_emotion_array.length
-
-         var count_test=0;
-         for(i=0;i<len_test;i++) {
-            if (array_test[i]==emotionArray[i]){
-                count_test+=1
+            var count_test = 0;
+            for (i = 0; i < len_test; i++) {
+              if (array_test[i] == emotionArray[i]) {
+                count_test += 1;
+              }
             }
-         }
-         console.log("횟수 : ")
-         console.log(count_test)
-      }
-     }).clone()
+            console.log("횟수 : ");
+            console.log(count_test);
+          }
+        }
+      ).clone();
+    }
+    async function main() {
+      //await emotionCorrectTest()
+
+      ////////////////////////// 하이라이트 정규화 //////////////////////////
+      await getWatchResult(paramId, parammovieTitle);
+      await normalization(tmp_highlight_array, function (error, result) {
+        normalization_array = result;
+      });
+      /////////////////////////////////////////////////////////////////
+
+      ////////////////////////// 집중도 처리 //////////////////////////
+      await getMovieInfo(parammovieTitle);
+
+      await database.WatchModel.updateOne(
+        {
+          // 감상목록 highlight_array 수정 //
+          userId: paramId,
+          movieTitle: parammovieTitle,
+        },
+        {
+          $set: {
+            highlight_time: highlight_time,
+            highlight_array: normalization_array,
+            concentration: ConcentrationPreScopeAverage / 10, // 0~10 값으로 변환
+          },
+        }
+      );
+
+      await HighlightImageTrans_ToFolder(
+        highlight_time,
+        paramId,
+        parammovieTitle
+      );
+      res.status(200).send();
+    }
+    main();
+  }else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+    console.log('***ERROR!! 데이터 베이스 에러 ... : ', err);
+    res.status(400).send();
+    console.log('----------------------------------------------------------------------------')
   }
-  async function main(){
-    //await emotionCorrectTest()
-
-    ////////////////////////// 하이라이트 정규화 ////////////////////////// 
-    await getWatchResult(paramId, parammovieTitle);
-    await normalization(tmp_highlight_array, function(result){
-      normalization_array = result
-    });
-    /////////////////////////////////////////////////////////////////
-
-    ////////////////////////// 집중도 처리 //////////////////////////
-    await getMovieInfo(parammovieTitle)
-
-    await database.WatchModel.updateOne({ // 감상목록 highlight_array 수정 // 
-      userId: paramId,
-      movieTitle: parammovieTitle
-    }, {  
-      $set: {
-        highlight_time : highlight_time,
-        highlight_array : normalization_array,   
-        concentration : (ConcentrationPreScopeAverage / 10) // 0~10 값으로 변환
-      },
-    })
-
-    await HighlightImageTrans_ToFolder(highlight_time, paramId, parammovieTitle);
-    
-  }
-  main()  
+   
 };
 
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
@@ -1139,11 +1159,7 @@ var logout = function (req, res) {
 
 // 함수 시작
 
-var getWatchResult = functionUser.getWatchResult;
-
 var authUser = functionUser.authUser;
-
-var checkRecord = functionUser.checkRecord;
 
 var signUp = functionUser.signUp;
 

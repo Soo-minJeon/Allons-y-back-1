@@ -104,7 +104,7 @@ def preprocessing(id, title, path):
         , "shaking3", "", "man1", "asiangirl2", "test"
     ]
 
-    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv',
+    with open('credentials.csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)
@@ -126,7 +126,7 @@ def preprocessing(id, title, path):
 
     # get image file
     # 이미지 셋 선택
-    testfolder = '/Users/jeonsumin/PycharmProjects/eyetracking/eyetracking/testfolder/'
+    testfolder = 'eyetracking/testfolder/'
 
     for i in range(3):
         down = s3.download_file(bucket, "capture/" + photo_list[i],
@@ -408,7 +408,7 @@ def main():
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(
-        "/Users/jeonsumin/PycharmProjects/eyetracking/eyetraking_from-image/shape_predictor_68_face_landmarks.dat")
+        "eyetracking/shape_predictor_68_face_landmarks.dat")
 
     for i in range(0, len(ImgArray)):
 
@@ -438,7 +438,7 @@ def afterprocessing():
     # 로컬 저장소 삭제
     [os.remove(f)
      for f in
-     glob.glob('/Users/jeonsumin/Desktop/allonsy-git/Allons-y-back-1/eyetracking/testfolder/*.jpg')]
+     glob.glob('eyetracking/testfolder/*.jpg')]
 
 
 if __name__ == "__main__":

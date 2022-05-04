@@ -4,7 +4,7 @@ import sys
 
 def process(path):
     # def process():
-    with open('/Users/jeonsumin/Downloads/ictmentoring0002_accessKeys (2).csv', 'r') as input:
+    with open('credentials.csv', 'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:

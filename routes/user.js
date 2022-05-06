@@ -1,8 +1,6 @@
 var functionUser = require('../function');
 var request = require("request");
-const { RtcTokenBuilder, RtcRole } = require("agora-access-token");
-
-// 수정할 사항 : watchAloneStart - parammovieTitle (현재 toy story로 받게끔 코드 작성해놓은 상태)
+const { RtcTokenBuilder, RtcRole } = require("agora-access-token"); // 아고라 토큰 발급 위해 필요
 
 // 회원가입 라우팅 함수
 var signup = function(req, res) {
@@ -21,7 +19,7 @@ var signup = function(req, res) {
     // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
     if(database) {
       signUp(database, paramId, paramPassword, paramName,likeMovie, genre, function(err, result) {
-  
+        // 회원가입, 추천용아이디 발급, 선호 정보 추가
         if(err) {
             console.log('***ERROR!! 회원가입 에러 발생... : ', err);
             res.status(400).send();
@@ -542,11 +540,11 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
   var database = req.app.get('database');
 
-  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   // -테스트용
-  var paramId = "smj8554"
-  var parammovieTitle = "toy story"
+  // var paramId = "smj8554"
+  // var parammovieTitle = "toy story"
 
   if (database){
 
@@ -629,14 +627,14 @@ var watchImageCaptureEyetrack = async function(req, res){
 
   // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
-  // var paramTime = req.body.time || req.query.time;
-  // var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
-  var paramId = 'smj8554'; // 테스트데이터
-  var parammovieTitle = 'toy story'; // 테스트데이터
-  var paramTime = "40" // 테스트 데이터
-  var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+  var paramTime = req.body.time || req.query.time;
+  var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
+  // var paramId = 'smj8554'; // 테스트데이터
+  // var parammovieTitle = 'toy story'; // 테스트데이터
+  // var paramTime = "40" // 테스트 데이터
+  // var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
 
   console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨. // ', paramTime, "초");
 
@@ -787,10 +785,10 @@ var watchImageCaptureEyetrack = async function(req, res){
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
 
-  // var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  // var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-  var paramId = "smj8554"; // 사용자 아이디 받아오기
-  var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+  // var paramId = "smj8554"; // 사용자 아이디 받아오기
+  // var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
   var tmp_highlight_array // 정규화 전 배열
   var normalization_array // 정규화 후 배열
   var highlight_time // 감정의 폭이 큰 시간

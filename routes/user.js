@@ -952,6 +952,13 @@ var watchAloneEnd = function(req, res){
         paramId,
         parammovieTitle
       );
+
+      // rekognition안의 시간대별 감정 측정 결과를 기록해놓은 데이터 삭제
+      await database.RekognitionModel.deleteMany({
+        userId : paramId,
+        movieTitle : parammovieTitle
+      });
+
       res.status(200).send();
     }
     main();

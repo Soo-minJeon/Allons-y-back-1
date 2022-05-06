@@ -458,7 +458,6 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
         }
       }
   }
-
   async function edit_emotion_array(first){
 
     if (first == 'HAPPY') {
@@ -567,18 +566,18 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     }
     console.log('====================다섯번째 완료====================')
 
-    // 감정분석 기록 추가 // - 수정필요
+    // 감정분석 기록 추가
     var newRekognition = await new db.RekognitionModel({
       'userId': userId, 'movieTitle': movieTitle, 'time': time,
       'firstEmotion': result_total[0],
       'firstConfidence': result_total[1],
-      'secondtEmotion': result_total[2],
-      'thirdEmotion': result_total[4],
-      'fourthEmotion': result_total[6],
-      'fifthEmotion': result_total[8],
-      'sixthEmotion': result_total[10],
-      'seventhEmotion': result_total[12],
-      'eighthEmotion': result_total[14],
+      // 'secondtEmotion': result_total[2],
+      // 'thirdEmotion': result_total[4],
+      // 'fourthEmotion': result_total[6],
+      // 'fifthEmotion': result_total[8],
+      // 'sixthEmotion': result_total[10],
+      // 'seventhEmotion': result_total[12],
+      // 'eighthEmotion': result_total[14],
       'calm_count': calm_count, // calm 횟수
       'calm_sum' : calm_sum, // calm confidence 합
       'calm_emotion_count' : calm_emotion_count, // calm 2번 후에 emotion 횟수

@@ -13,7 +13,7 @@ def process(id):
 
     ### 필요한 함수와 알고리즘 구현부
     ratings = pd.read_csv(
-        'recommend/ratings_small.csv',
+        'recommend/user_info.csv',
         low_memory=False)
     movies = pd.read_csv(
         'recommend/movie_info.csv',

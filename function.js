@@ -1,43 +1,5 @@
 var nodemailer = require('nodemailer');
 
-// 감상결과 가져오기
-var getWatchResult = function(db, userid, movieTitle, callback){
-  console.log('getWatchResult(감상결과 가져오기) 호출됨. userid : ' + userid + ', movietitle : ' + movieTitle);
-
-  db.WatchModel.findById(userid, function(err, results_id) {
-
-        if (err) {
-          callback(err, null);
-          return;
-        };
-
-        if(results_id.length > 0) {
-
-          console.log(userid + '의 감상결과 발견');
-          db.WatchModel.findByMovieTitle(movieTitle, function(err, results_movie) {
-
-            if(err){
-              callback(err, null);
-            }
-
-            if (results_movie.length > 0) {
-
-              console.log(movieid + ' : 감상 기록 존재');
-              callback(null, results_movie);
-            }
-
-            else {
-              callback(null, null);
-            };
-
-          });
-        }
-        else{
-          callback(null, null);
-        }
-      });
-};
-
 // 사용자 로그인
 var authUser = function(db, id, password, callback) {
   console.log('authUser(로그인)함수 호출됨');
@@ -81,31 +43,6 @@ var authUser = function(db, id, password, callback) {
       }
   });
 };
-
-// // 사용자 로그인 : 감상기록 유무 확인
-// var checkRecord = function(db, id, callback){
-
-//   console.log('checkRecord(감상기록 존재 유무 확인)함수 호출됨 ');
-
-//   // 아이디를 사용해 검색
-//   db.WatchModel.findById(id, function(err, results){
-
-//       if (err) {
-//           callback(err, null);
-//           return;
-//       }
-
-//       console.log('아이디 %s로 검색됨',id);
-
-//       if (results.length > 0) { // 감상기록 있음
-//           callback(null, results);
-//       }
-//       else { // 감상기록 없음
-//           callback(null, null);
-//       }
-//   });
-
-// };
 
 // 사용자 회원가입
 var signUp = function(db, id, password, name, favorite, genre, callback) { // callback 함수는 함수를 호출하는 쪽에 결과 객체를 보내기 위해 쓰임
@@ -521,7 +458,6 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
         }
       }
   }
-
   async function edit_emotion_array(first){
 
     if (first == 'HAPPY') {
@@ -630,18 +566,11 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     }
     console.log('====================다섯번째 완료====================')
 
-    // 감정분석 기록 추가 // - 수정필요
+    // 감정분석 기록 추가
     var newRekognition = await new db.RekognitionModel({
       'userId': userId, 'movieTitle': movieTitle, 'time': time,
       'firstEmotion': result_total[0],
       'firstConfidence': result_total[1],
-      'secondtEmotion': result_total[2],
-      'thirdEmotion': result_total[4],
-      'fourthEmotion': result_total[6],
-      'fifthEmotion': result_total[8],
-      'sixthEmotion': result_total[10],
-      'seventhEmotion': result_total[12],
-      'eighthEmotion': result_total[14],
       'calm_count': calm_count, // calm 횟수
       'calm_sum' : calm_sum, // calm confidence 합
       'calm_emotion_count' : calm_emotion_count, // calm 2번 후에 emotion 횟수
@@ -666,13 +595,15 @@ var normalization = async function (highlight_array, callback) {
 
   var min = 0;
   var max = 0;
-  var normal_array = highlight_array;
+  var temp_array = highlight_array;
+  var diff_array = [];
+  var normal_array = [];
 
   async function getMinMax() {
-    var diff_array = [];
 
-    for (var i = 0; i < highlight_array.length; i++) {
-      diff_array.push(highlight_array[i].emotion_diff);
+
+    for (let i = 0; i < highlight_array.length-1; i++) {
+      diff_array[i] = (highlight_array[i+1].emotion_diff);
     }
 
     diff_array.sort(function (a, b) {
@@ -681,15 +612,33 @@ var normalization = async function (highlight_array, callback) {
       if (a == b) return 0;
     });
 
+    console.log('중간 점검1(temp_array) : ', temp_array)
+
     min = diff_array[0];
+    if (temp_array.length == 2){min = 0}
+
     max = diff_array[diff_array.length - 1];
+
+    console.log("중간 점검 2 : min : ", min, "// max : ", max)
   }
 
   async function normalization() {
-    for (var i = 0; i < normal_array.length; i++) {
-      normal_array[i].emotion_diff =
-        (Number(normal_array[i].emotion_diff) - min) / (max - min);
+
+    for (let i = 1; i<highlight_array.length; i++){
+      normal_tmp = Number(temp_array[i].emotion_diff - min) / (max - min)
+      normal_array[i-1] = {
+        "time" : temp_array[i].time,
+        "emotion_diff" : normal_tmp
+      }
+
+      console.log("중간 점검 3 : ", normal_array[i-1])
     }
+
+    // for (var i = 1; i < highlight_array.length; i++) {
+    //   temp_array[i].emotion_diff =
+    //     (Number(highlight_array[i].emotion_diff) - min) / (max - min);
+    //   console.log("중간 점검 3 : ", temp_array[i])
+    // }
   }
 
   async function main(){
@@ -701,9 +650,7 @@ var normalization = async function (highlight_array, callback) {
 };
 
 // 모듈화 연결
-module.exports.getWatchResult = getWatchResult;
 module.exports.authUser = authUser;
-// module.exports.checkRecord = checkRecord;
 module.exports.signUp = signUp;
 module.exports.enterRoom = enterRoom;
 module.exports.getRecommendUserList = getRecommendUserList;

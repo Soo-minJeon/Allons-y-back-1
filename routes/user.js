@@ -91,31 +91,35 @@ var login = function(req, res){
       console.log('추천 함수 호출')
         recommend1(database, reco_id, function(err, result1){
         if (result1){
-          recommend2(reco_id, function(err, result2){
+        console.log(result1)
+          recommend2(reco_id, function(err, result2) {
             if (result2){
+                recommend3(database,paramId, function(err, result3) {
+                    if(result3) {
+                      console.log("recommend3 결과 얻어옴!")
+                      res.status(200).send(JSON.stringify(final_objToSend = {
+                        id: objToSend.id,
+                        name: objToSend.name,
+                        reco1: result1,
+                        reco2_1: result2[0],
+                        reco2_2 : result2[1],
+                        reco2_3 : result2[2],
+                        reco2_4 : result2[3],
+                        reco2_5 : result2[4],
+                        reco3 : result3,
+                      }));
 
-              res.status(200).send(JSON.stringify(final_objToSend = {
-                id: objToSend.id,
-                name: objToSend.name,
-                reco1: result1,
-                reco2_1: result2[0],
-                reco2_2 : result2[1],
-                reco2_3 : result2[2],
-                reco2_4 : result2[3],
-                reco2_5 : result2[4]
-                  
-              }));
-    
-              console.log('final = ')
-              console.log(final_objToSend)
-              console.log("----------------------------------------------------------------------------");
-    
-            }
-            else{
-              console.dir(err)
-              res.status(404).send();
-              console.log("----------------------------------------------------------------------------");
-            }
+                      console.log('final = ')
+                      console.log(final_objToSend)
+                      console.log("----------------------------------------------------------------------------");
+                    }
+                    else{
+                      console.dir(err)
+                      res.status(404).send();
+                      console.log("----------------------------------------------------------------------------");
+                    }
+                })
+                }
           })
         }
         else {
@@ -123,7 +127,6 @@ var login = function(req, res){
           console.log("----------------------------------------------------------------------------");
         }
       })
-      
     }
 
     async function main(){
@@ -426,34 +429,37 @@ var recommend2 = function (id, callback) {
 
 var recommend3 = function(db, id, callback) { // 수정중
     console.log("/recommend3 (선호배우 영화 추천) 함수 호출");
-    if(database) {
+    if(db){
         // 1.DB에서 선호 배우 가져오기
-        db.likeSchema.findById(id, function(err, result) {
-            fActor : result[0].actors
+        db.likeModel.findById(id, function(err, result) {
+            if(result.length>0){
+                fActor = result[0].actors.toString()
+                console.log('선호배우 : ' + fActor)
+                const spawn = require('child_process').spawn;
+                // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+
+                const results1 = spawn('python', ['recommend3.py',fActor]);
+
+                // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+                results1.stdout.on('data', (data) => {
+                    const stringResult = data.toString()
+                    console.log("선호배우 영화 결과 : ")
+                    console.log(stringResult)
+                    callback(null, stringResult)
+                });
+            }
+            else {
+                console.log("사용자를 찾을 수 없습니다..")
+                callback(null,null)
+            }
         })
-
-        // 2. 선호 배우 영화 csv 파일에서 찾아오기
-        random_num = []
-
-        result_movie = ''
-        result_poster = ''
-        df = read_csv('movie_info.csv')
-        for(i=0;i<len(df);i++){
-            if (fActor in df['actor'][i]){
-                random_num.append(i)}
-        }
-        //print(random_num)
-        for(i=0;i<len(random_num);i++){
-            result_movie += df['original_title'][random_num[i]] + " "
-            result_poster += df['poster_path'][random_num[i]] + " "
-        }
-        callback(null, result_movie+', '+result_poster)
-    } else{
+    } else {
       console.log('데이터베이스가 정의되지 않음...');
       callback(null, null)
       console.log("\n\n");
-  }
+    }
 }
+
 // 같이보기 방 입장
 var enterroom = function(req, res){
     console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
@@ -630,7 +636,6 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
 // 사용자 집중도/감정 분석
 var watchImageCaptureEyetrack = async function(req, res){
-
 
   var database = req.app.get('database');
 
@@ -816,7 +821,7 @@ var watchAloneEnd = function(req, res){
     if (existing_watch){
       console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
       console.dir(existing_watch)
-      tmp_highlight_array = existing_watch[0].highlight_array 
+      tmp_highlight_array = existing_watch[0].every_emotion_array
       concentration_sum = existing_watch[0].concentration
     }
     else {
@@ -876,7 +881,7 @@ var watchAloneEnd = function(req, res){
   // 감정 부합 확인 .. 작성중
   async function emotionCorrectTest() {
     var movieEmotion_array =
-     await database.likeModel.findById('pbkdpwls', function(err, result1){
+     await database.likeModel.findById(paramId, function(err, result1){
         if (err) {
           callback(err, null);
           return;
@@ -884,14 +889,14 @@ var watchAloneEnd = function(req, res){
 
       if (result1.length > 0) {
          console.log('movieEmotion')
-         console.log(result1[0].correctModel)
+         //console.log(result1[0].correctModel)
          array_test = result1[0].correctModel.split(',')
          array_test.pop()
-         console.log(array_test.length)
+         //console.log(array_test.length)
       }
     }).clone()
 
-    var userEmotion_array = await database.WatchModel.findById('pbkdpwls', function(err, result2){
+    var userEmotion_array = await database.WatchModel.findById(paramId, function(err, result2){
       if (err) {
         callback(err, null);
         return;
@@ -908,8 +913,17 @@ var watchAloneEnd = function(req, res){
                 count_test+=1
             }
          }
-         console.log("횟수 : ")
-         console.log(count_test)
+         //console.log("횟수 : ")
+         //console.log(count_test)
+         var result_correctEmotion = count_test/len_test
+         console.log("결과 부합도 퍼센트 : " + result_correctEmotion)
+         database.WatchModel.updateOne({ // 감상평,평점 업데이트
+              userId : paramId
+            }, {
+              $set: {
+                resultEmotionPer : result_correctEmotion
+              },
+            });
       }
      }).clone()
   }
@@ -940,7 +954,7 @@ var watchAloneEnd = function(req, res){
     await HighlightImageTrans_ToFolder(highlight_time, paramId, parammovieTitle);
 
   }
-  main()  
+  main()
 };
 
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
@@ -975,8 +989,8 @@ var email = function(req, res){
         var paramEmail = req.body.email;
   
         // 발신자 정의.
-        var app_email = '수정';
-        var app_pass = '수정';
+        var app_email = 'smj85548554@gmail.com';
+        var app_pass = 'wtwslloltccugeiy';
 
   
         console.log('수신자 : ', paramEmail);
@@ -1198,9 +1212,6 @@ module.exports.signup = signup;
 module.exports.login = login;
 module.exports.watchlist = watchlist;
 module.exports.watchresult = watchresult;
-module.exports.recommend1 = recommend1;
-module.exports.recommend2 = recommend2;
-module.exports.recommend3 = recommend3;
 module.exports.enterroom = enterroom;
 module.exports.email = email;
 module.exports.makeRoom = makeRoom;

@@ -21,6 +21,7 @@ Schema.createSchema = function (mongoose) {
         rating : { type: Number, required: true , 'default': 0},
         comment : { type: String, required: false , 'default': ''},
         sleepingCount : { type: Number, required: true , 'default': 0},
+        resultEmotionPer : { type: Number, required: true , 'default': 0},
     });
 
     console.log('Schema 정의를 완료하였습니다.');

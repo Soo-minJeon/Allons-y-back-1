@@ -2,7 +2,6 @@ from csv import writer
 import pandas as pd
 
 def process(id, title, rating):
-
         movies = pd.read_csv(
                 'recommend/movies_metadata.csv',
                 low_memory=False)
@@ -24,7 +23,6 @@ def process(id, title, rating):
                 writer_object = writer(ratingg)
                 writer_object.writerow(add_data)
                 ratingg.close()
-
 
 if __name__ == '__main__':
     process(2000, "Toy Story", 5)

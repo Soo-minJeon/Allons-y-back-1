@@ -55,13 +55,6 @@ router.route('/watchlist').post(user.watchlist);
 // 감상결과
 router.route('/watchresult').post(user.watchresult);
 
-router.route('/recommend1').post(user.recommend1);
-
-router.route('/recommend2').post(user.recommend2);
-
-// 선호 배우 영화 추천
-router.route('/recommend3').post(user.recommend3);
-
 // 초대 코드 입장
 router.route('/enterRoom').post(user.enterroom);
 

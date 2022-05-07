@@ -45,8 +45,6 @@ module.exports = {
         {file:'./routes/user', path:'/signup', method:'signUp', type:'post'},
         {file:'./routes/user', path:'/watchlist', method:'watchlist', type:'post'},
         {file:'./routes/user', path:'/watchresult', method:'watchresult', type:'post'},
-        {file:'./routes/user', path:'/recommend1', method:'recommend1', type:'post'},
-        {file:'./routes/user', path:'/recommend2', method:'recommend2', type:'post'},
         {file:'./routes/user', path:'/enterroom', method:'enterRoom', type:'post'},
         {file:'./routes/user', path:'/email', method:'email', type:'post'},
         {file:'./routes/user', path:'/makeRoom', method:'makeRoom', type:'post'},
@@ -54,7 +52,6 @@ module.exports = {
         {file:'./routes/user', path:'/getAllMovieList', method:'getAllMovieList', type:'post'},
         {file:'./routes/user', path:'/watchAloneStart', method:'watchAloneStart', type:'post'},
         {file:'./routes/user', path:'/watchImageCaptureEyetrack', method:'watchImageCaptureEyetrack', type:'post'},
-        {file:'./routes/user', path:'/watchImageCaptureRekognition', method:'watchImageCaptureRekognition', type:'post'},
         {file:'./routes/user', path:'/watchAloneEnd', method:'watchAloneEnd', type:'post'},
         {file:'./routes/user', path:'/addReview', method:'addReview', type:'post'},
     ]

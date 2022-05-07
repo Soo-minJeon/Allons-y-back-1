@@ -304,7 +304,7 @@ var sceneAnalyze = function(req, res) {
       });
 }
 
-// 추천1 - 컨텐츠 기반
+// 추천1 - 컨텐츠 기반(함수) - 테스트데이터 - 실행시수정
 var recommend1 = function(db, id, callback){
   console.log('/recommend1 라우팅 함수 호출');
   var database = db
@@ -353,12 +353,12 @@ var recommend1 = function(db, id, callback){
   }
 };
 
-// 추천2 - 유사 사용자
+// 추천2 - 유사 사용자(함수) - 테스트데이터 - 실행시수정
 var recommend2 = function (id, callback) {
   console.log("/recommend2 (사용자 추천) 함수 호출");
 
   // var paramId = id; // 사용자 아이디 받아오기
-  var paramId = 671; // 사용자 아이디 받아오기
+  // var paramId = 671; // 사용자 아이디 받아오기
 
   //파이썬 코드 실행 (유사 사용자 추천)
   const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
@@ -418,6 +418,7 @@ var recommend2 = function (id, callback) {
   // }}
 };
 
+// 추천3 - 선호 영화(함수)
 var recommend3 = function(db, id, callback) { // 수정중
     console.log("/recommend3 (선호배우 영화 추천) 함수 호출");
     if(db){
@@ -540,7 +541,7 @@ var getAllMovieList = function(req, res){
   }
 }
 
-// 감상 시작 - 혼자보기
+// 감상 시작 - 혼자보기 - 테스트데이터 - 실행시수정
 var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
 
@@ -548,7 +549,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-  // -테스트용
+  // -테스트데이터
   // var paramId = "smj8554"
   // var parammovieTitle = "toy story"
 
@@ -625,7 +626,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   }
 };
 
-// 사용자 집중도/감정 분석
+// 사용자 집중도/감정 분석 - 테스트데이터 - 실행시수정
 var watchImageCaptureEyetrack = async function(req, res){
 
   var database = req.app.get('database');
@@ -784,7 +785,8 @@ var watchImageCaptureEyetrack = async function(req, res){
     res.status(400).send()
   }
 };
-// 감상 끝 - 혼자보기 -- 수정필요(현재 테스트데이터 넣어놓음- pramID, paramTitle)
+
+// 감상 끝 - 혼자보기 - 테스트 데이터
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
   var database = req.app.get('database');
@@ -971,6 +973,7 @@ var watchAloneEnd = function(req, res){
   }
    
 };
+
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
   var database = req.app.get('database');
@@ -994,7 +997,7 @@ var addReview = function(req, res){
   addreview()
 };
 
-// 회원가입 인증메일
+// 회원가입 인증메일 - 발신자정의 필요 - 실행시수정
 var email = function(req, res){
     console.log('/email(이메일 인증) 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -1003,8 +1006,8 @@ var email = function(req, res){
         var paramEmail = req.body.email;
   
         // 발신자 정의.
-        var app_email = 'smj85548554@gmail.com';
-        var app_pass = 'wtwslloltccugeiy';
+        var app_email = '발신자정의';
+        var app_pass = '발신자정의';
 
   
         console.log('수신자 : ', paramEmail);
@@ -1031,7 +1034,7 @@ var email = function(req, res){
     }
 };
 
-// 같이보기 방 생성
+// 같이보기 방 생성 - 실행시수정
 var makeRoom = function (req, res) {
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");

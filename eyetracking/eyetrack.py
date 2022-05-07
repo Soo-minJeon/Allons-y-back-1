@@ -146,7 +146,8 @@ def preprocessing(id, title, path):
     standard_center_r = 0
 
 
-def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준
+def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준 설정
+
     global blink_mp
     global blink_cv
     global blinkStandard_cv
@@ -169,7 +170,7 @@ def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준
     # 눈을감지않은 첫 이미지인지
     flag = 0
 
-    # 집중도 분석 결과 ( 범위 : 0~5)
+    # 집중도 분석 결과 ( 범위 : 0~100 )
     concentration = 100
 
 
@@ -209,7 +210,7 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
 
     # 눈 roi 지정
 
-    # 왼쪽눈이 위에 ? 오른쪽눈이 위에 ?
+    # 왼쪽눈이 위에 ? 오른쪽눈이 위에 ? - 눈 움직임 허용 범위를 지정하기 위한 작업
     l_top = facial_landmarks.part(eye_points_L[1]).y
     r_top = facial_landmarks.part(eye_points_R[1]).y
     if (l_top <= r_top):  # 왼쪽이 위쪽에 위치함.
@@ -243,6 +244,7 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                          facial_landmarks.part(eye_points_R[4]).y,
                          facial_landmarks.part(eye_points_R[5]).y])
         eye_r_sub = eye_rec_end_y - eye_r_min
+
     else:
 
         eye_rec_start_x = facial_landmarks.part(eye_points_R[3]).x + 5
@@ -432,7 +434,7 @@ def main():
     if (concentration < 0):
         concentration = 0
 
-# 후처리
+# 후처리 - 로컬 저장소 - 테스트 폴더 안에 있는 사진들 모두 삭제
 def afterprocessing():
 
     # 로컬 저장소 삭제
@@ -443,7 +445,7 @@ def afterprocessing():
 
 if __name__ == "__main__":
 
-    time.sleep(3)
+    time.sleep(3) # 버킷에 올라가는 시간이 필요함.
 
     param = str(sys.argv[1]).split("/")
     # param = "10/smj8554/toy story".split("/")
@@ -451,9 +453,6 @@ if __name__ == "__main__":
     times = param[0]
     id = param[1]
     title = param[2]
-    # times = "10"
-    # id = "smj8554"
-    # title = "toy story"
 
     # 테스트할 사진들 지정
     preprocessing(id, title, times)

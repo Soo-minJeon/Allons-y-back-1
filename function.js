@@ -112,9 +112,9 @@ var signUp = function(db, id, password, name, favorite, genre, callback) { // ca
 
 // 같이보기 방 입장
 var enterRoom = function(db, roomcode, callback){
-  console.log('enterRoom (같이보기 방 입장)호출됨. 방 코드 : ' + roomcode);
+  console.log('enterRoom (같이보기 방 입장)호출됨.');
 
-  db.roomModel.findByRoomCode(roomcode, function(err, result){
+  db.RoomModel.findByRoomCode(roomcode, function(err, result){
 
     if(err){
       callback(err, null);
@@ -122,8 +122,6 @@ var enterRoom = function(db, roomcode, callback){
     }
 
     else if(result.length > 0){
-      console.log('입력된 코드에 해당하는 같이보기 방 찾음.');
-
       callback(null, result);
     }
 
@@ -191,8 +189,8 @@ var getRecommendUserList = function(result, callback){
 };
 
 // 같이보기 방 생성
-var makeroom = function (db, roomcode, callback) {
-  db.RoomModel.findByRoomCode(roomcode, function(err, result){
+var makeroom = function (db, roomToken, roomCode, callback) {
+  db.RoomModel.findByRoomTokenANDCode(roomToken, roomCode, function(err, result){
     if(err){
       callback(err, null);
       return;

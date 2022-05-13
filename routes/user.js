@@ -145,6 +145,10 @@ var watchlist = function(req, res) {
   
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var database = req.app.get('database');
+
+    var resultTitleArray = []
+    var resultPosterArray = []
+
     if(database) {
       database.WatchModel.findById(paramId, function(err, results) {
           if (err) {
@@ -156,15 +160,18 @@ var watchlist = function(req, res) {
   
           if(results.length>0) {
             console.log('감상결과 목록 존재');
-            var resultArray = new Array(results.length);
-            for(var i=0;i<results.length;i++) {
-              var objToSend = {
-                title: results[i].title,
-                poster: results[i].poster
-              };
-              resultArray[i]=objToSend;
+
+            for (let i = 0; i<results.length; i++){
+              resultTitleArray[i] = results[i].movieTitle;
+              resultPosterArray[i] = results[i].poster;
             }
-            res.status(200).send(JSON.stringify(resultArray)); // 감상결과 목록 보내기
+
+            var objToSend = {
+              title : resultTitleArray,
+              poster : resultPosterArray
+            }
+
+            res.status(200).send(JSON.stringify(objToSend)); // 감상결과 목록 보내기
           } else {
             console.log('감상 기록 없음');
           }
@@ -473,10 +480,10 @@ var enterroom = function(req, res){
         else if (result.length > 0){
           console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
   
-  
-          // 방 생성한 유저 아이디를 스키마에 넣어서 전달해주는 것도 좋을듯
-          res.status(200).send();
-          console.log('같이 보기 방 : 초대 코드 검색 완료 : 정상코드 발송 완료');
+          var objToSend = {
+            roomToken : result[0].roomToken
+          };
+          res.status(200).send(JSON.stringify(objToSend));
           console.log('\n\n');
         }
   
@@ -1038,6 +1045,7 @@ var email = function(req, res){
 var makeRoom = function (req, res) {
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");
+  var RoomToken;
   var RoomCode;
 
   async function getToken() {
@@ -1133,7 +1141,7 @@ var makeRoom = function (req, res) {
     app.get("/rtc/:channel/:role/:tokentype/:uid", nocache, generateRTCToken);
 
     // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
-    app.listen(PORT, () => {
+    var server = app.listen(PORT, () => {
       console.log(`Listening on port: ${PORT}`);
     });
 
@@ -1145,13 +1153,21 @@ var makeRoom = function (req, res) {
 
       html = html.toString().split('":"')
       result = html[1].replace('"}','')
-      RoomCode = result
-      vaildToken(RoomCode)
+      RoomToken = result
+      RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+      
+      // port 종료
+      server.close(function() {
+        console.log('토큰 발급서버 종료')
+      })
+
+      vaildToken(RoomToken, RoomCode)
     });
+
   }
 
-  async function vaildToken(RoomCode) {
-    makeroom(database, RoomCode, function (err, result) {
+  async function vaildToken(RoomToken, RoomCode) {
+    makeroom(database, RoomToken, RoomCode, function (err, result) {
       if (err) {
         console.log("방 생성 중 에러 발생");
         console.dir(err);
@@ -1163,8 +1179,9 @@ var makeRoom = function (req, res) {
 
         getToken();
       } else {
-        var room = new database.RoomModel({ roomCode: RoomCode });
+        var room = new database.RoomModel({ roomToken : RoomToken, roomCode: RoomCode });
         console.log("RoomCode : " + RoomCode);
+        console.log("RoomToken : " + RoomToken);
 
         // save()로 저장
         room.save(function (err) {
@@ -1175,6 +1192,7 @@ var makeRoom = function (req, res) {
           // 찾은 결과 전송
           var objToSend = {
             roomCode: RoomCode,
+            roomToken : RoomToken
           };
           res.status(200).send(JSON.stringify(objToSend));
         });

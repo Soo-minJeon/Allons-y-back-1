@@ -315,8 +315,8 @@ var sceneAnalyze = function(req, res) {
 var recommend1 = function(db, id, callback){
   console.log('/recommend1 라우팅 함수 호출');
   var database = db
-  // var paramId = id;
-  var paramId = 665; // 사용자 아이디 임의로 설정해놓음
+  var paramId = id;
+  // var paramId = 665; // 사용자 아이디 임의로 설정해놓음
   var titleArray = []
   var posterArray = []
 
@@ -364,7 +364,7 @@ var recommend1 = function(db, id, callback){
 var recommend2 = function (id, callback) {
   console.log("/recommend2 (사용자 추천) 함수 호출");
 
-  // var paramId = id; // 사용자 아이디 받아오기
+  var paramId = id; // 사용자 아이디 받아오기
   // var paramId = 671; // 사용자 아이디 받아오기
 
   //파이썬 코드 실행 (유사 사용자 추천)
@@ -810,6 +810,9 @@ var watchAloneEnd = function(req, res){
   var ConcentrationPreScopeAverage // 범위 변환 전 집중도 평균 (0~100)
   var count_eyetracking // 10초간격으로 집중도 측정한 횟수
 
+  var movie_genre // 영화 장르
+  var movie_poster // 영화 포스터
+
   if (database) {
     // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
     async function getWatchResult(userId, movieTitle) {
@@ -819,7 +822,7 @@ var watchAloneEnd = function(req, res){
       }).clone();
 
       if (existing_watch) {
-        console.log("해당 유저의 해당 영화의 감상 기록 찾음.");
+        console.log("해당 유저의 해당 영화의 감상 기록 찾음.", existing_watch[0]);
         console.dir(existing_watch);
         tmp_highlight_array = existing_watch[0].highlight_array;
         console.log("테스트 tmp_highlight_array");
@@ -878,6 +881,9 @@ var watchAloneEnd = function(req, res){
 
       if (existing_movie.length > 0) {
         console.log("해당 영화의 감상 기록 찾음.");
+
+        movie_genre = existing_movie[0].genres;
+        movie_poster = existing_movie[0].poster;
         movie_running_time = existing_movie[0].runningTime;
         count_eyetracking = parseInt(movie_running_time / 10); // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
         ConcentrationPreScopeAverage = concentration_sum / count_eyetracking; // 집중도 평균 계산
@@ -970,7 +976,11 @@ var watchAloneEnd = function(req, res){
         movieTitle : parammovieTitle
       });
 
-      res.status(200).send();
+      var objToSend = {
+        genres : movie_genre,
+        poster : movie_poster
+      }
+      res.status(200).send(JSON.stringify(objToSend));
     }
     main();
   }else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
@@ -1016,7 +1026,6 @@ var email = function(req, res){
         var app_email = '발신자정의';
         var app_pass = '발신자정의';
 
-  
         console.log('수신자 : ', paramEmail);
   
         sendEmail(app_email, app_pass, paramEmail, function(err, results){

@@ -6,7 +6,7 @@ from pandas import read_csv
 
 def process(favorite_):
         ratings = pd.read_csv(
-                'user_info.csv',
+                'recommend/user_info.csv',
                 low_memory=False)
         ratings = ratings.sort_values(['userId']) # 오름차순으로 정렬: 아이디가 겹치지 않게끔
         final_user = ratings.tail(1)['userId'] + 1
@@ -19,7 +19,7 @@ def process(favorite_):
         #print(favorite[0]) # 테스트용
         print(final_user)
 
-        df = read_csv('movie_info.csv')
+        df = read_csv('recommend/movie_info.csv')
 
         for j in range(len(favorite)):
                 for i in range(len(df)):
@@ -30,7 +30,7 @@ def process(favorite_):
                                 headersCSV = ['userId','movieId','rating']
                                 result_row = {'userId':final_user,'movieId':movie_id[j],'rating':5.0}
 
-                                with open('user_info.csv', 'a', newline='') as f_object:
+                                with open('recommend/user_info.csv', 'a', newline='') as f_object:
                                         writer_object = DictWriter(f_object, fieldnames=headersCSV)
                                         writer_object.writerow(result_row)
                                         f_object.close()
@@ -38,4 +38,4 @@ def process(favorite_):
 
 if __name__ == '__main__':
     process(sys.argv[1]) # param있음
-    #process('Toy Story,Jumanji,Grumpier Old Men') # param있음
+#     process('Toy Story,Jumanji,Grumpier Old Men') # param있음

@@ -512,6 +512,7 @@ var getAllMovieList = function(req, res){
   if (database){
     var resultTitleArray = []
     var resultPosterArray = []
+    var resultRunningTimeArray = []
 
     async function searchMovieInfo(){
       const existing = await database.MovieModel.find({}).clone() // 영화 스키마의 모든 정보를 찾고
@@ -524,6 +525,7 @@ var getAllMovieList = function(req, res){
           for (let i = 0; i<existing.length; i++){
             resultTitleArray[i] = existing[i].title;
             resultPosterArray[i] = existing[i].poster;
+            resultRunningTimeArray[i] = existing[i].runningTime;
           }
         }
       }
@@ -533,7 +535,8 @@ var getAllMovieList = function(req, res){
       await searchMovieInfo()
       var objToSend = {
         title : resultTitleArray,
-        poster : resultPosterArray
+        poster : resultPosterArray,
+        runningTime : resultRunningTimeArray
       }
       console.log('test\n', objToSend)
       res.status(200).send(JSON.stringify(objToSend))
@@ -832,12 +835,29 @@ var watchAloneEnd = function(req, res){
         // 하이라이트 장면 찾기
         highlight_time = 0;
         highlight_diff = 0;
-        for (let i = 0; i < tmp_highlight_array.length; i++) {
-          if (tmp_highlight_array[i].emotion_diff > highlight_time) {
-            highlight_time = tmp_highlight_array[i].time;
-            highlight_diff = tmp_highlight_array[i].emotion_diff;
-          }
+        if (tmp_highlight_array.length == 0){
+          // 감정폭 측정한 기록이 없으면 어떻게 할지 수정 필요
+          highlight_time = 10;
+          highlight_diff = 10;
+
         }
+        else{ // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+          for (let i = 0; i < tmp_highlight_array.length; i++) {
+            if (tmp_highlight_array[i].emotion_diff > highlight_time) {
+              highlight_time = tmp_highlight_array[i].time;
+              highlight_diff = tmp_highlight_array[i].emotion_diff;
+            }
+          }
+
+          await normalization(tmp_highlight_array, function (error, result) {
+              if (error){
+                console.log("정규화 실패 : ", error)
+                res.status(400).send();
+              }
+              normalization_array = result;
+            });
+        }
+
       } else {
         console.log("해당 유저의 해당 영화의 감상 기록 존재하지 않음.");
         res.status(400).send();
@@ -941,9 +961,9 @@ var watchAloneEnd = function(req, res){
 
       ////////////////////////// 하이라이트 정규화 //////////////////////////
       await getWatchResult(paramId, parammovieTitle);
-      await normalization(tmp_highlight_array, function (error, result) {
-        normalization_array = result;
-      });
+      // await normalization(tmp_highlight_array, function (error, result) {
+      //   normalization_array = result;
+      // });
       /////////////////////////////////////////////////////////////////
 
       ////////////////////////// 집중도 처리 //////////////////////////

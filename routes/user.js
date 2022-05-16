@@ -1070,12 +1070,12 @@ var email = function(req, res){
     }
 };
 
-// 같이보기 방 생성 - 실행시수정
-var makeRoom = function (req, res) {
-  console.log("/makeRoom 라우팅 함수 호출됨");
+// 같이보기 클릭시 - 모든 사용자에게 웹토큰 발급
+var getToken = function(req, res){
+  console.log("/getToken 라우팅 함수 호출됨.")
   var database = req.app.get("database");
+
   var RoomToken;
-  var RoomCode;
 
   async function getToken() {
     // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
@@ -1177,24 +1177,49 @@ var makeRoom = function (req, res) {
     var url = "http://127.0.0.1:3001/rtc/test/publisher/uid/1";
     request(url, function (error, response, html) {
       if (error) {
-        throw error;
+        res.status(400).send();
       }
 
       html = html.toString().split('":"')
       result = html[1].replace('"}','')
       RoomToken = result
-      RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
       
       // port 종료
       server.close(function() {
         console.log('토큰 발급서버 종료')
       })
 
-      vaildToken(RoomToken, RoomCode)
+      // 토큰 발급 결과 전송
+      var objToSend = {
+        token : RoomToken
+      };
+      res.status(200).send(JSON.stringify(objToSend));
     });
 
   }
+  getToken();
 
+}
+
+// 같이보기 방 생성 
+var makeRoom = function (req, res) {
+  console.log("/makeRoom 라우팅 함수 호출됨");
+  var database = req.app.get("database");
+  var RoomToken;
+  var RoomCode;
+
+  // 룸코드 발급 후 , validToken에서 중복된 토큰, 룸코드 정보 있는지 확인 후 스키마에 방 데이터 추가
+
+  if(database){
+    RoomToken = req.body.token || req.query.token;
+    RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+    vaildToken(RoomToken, RoomCode)
+  }
+  else{
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log("\n\n");
+}
   async function vaildToken(RoomToken, RoomCode) {
     makeroom(database, RoomToken, RoomCode, function (err, result) {
       if (err) {
@@ -1221,23 +1246,12 @@ var makeRoom = function (req, res) {
           // 찾은 결과 전송
           var objToSend = {
             roomCode: RoomCode,
-            roomToken : RoomToken
+            //roomToken : RoomToken
           };
           res.status(200).send(JSON.stringify(objToSend));
         });
       }
     });
-  }
-
-  if (database) {
-    async function main() {
-      await getToken()
-    }
-    main();
-  } else {
-    console.log("데이터베이스가 정의되지 않음...");
-    res.status(400).send();
-    console.log("\n\n");
   }
 };
 
@@ -1274,6 +1288,7 @@ module.exports.watchlist = watchlist;
 module.exports.watchresult = watchresult;
 module.exports.enterroom = enterroom;
 module.exports.email = email;
+module.exports.getToken = getToken;
 module.exports.makeRoom = makeRoom;
 module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;

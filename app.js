@@ -60,9 +60,6 @@ router.route('/enterRoom').post(user.enterroom);
 
 router.route('/email').post(user.email);
 
-// 같이보기 시 토큰 발급
-router.route('/getToken').post(user.getToken);
-
 // 리액션공유 방 생성
 router.route('/makeRoom').post(user.makeRoom);
 

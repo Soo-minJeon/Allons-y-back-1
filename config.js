@@ -47,7 +47,6 @@ module.exports = {
         {file:'./routes/user', path:'/watchresult', method:'watchresult', type:'post'},
         {file:'./routes/user', path:'/enterroom', method:'enterRoom', type:'post'},
         {file:'./routes/user', path:'/email', method:'email', type:'post'},
-        {file:'./routes/user', path:'/getToken', method:'getToken', type:'post'},
         {file:'./routes/user', path:'/makeRoom', method:'makeRoom', type:'post'},
         {file:'./routes/user', path:'/logout', method:'logout', type:'post'},
         {file:'./routes/user', path:'/getAllMovieList', method:'getAllMovieList', type:'post'},

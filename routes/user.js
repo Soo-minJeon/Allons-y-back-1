@@ -859,6 +859,8 @@ var watchAloneEnd = function(req, res){
   var movie_genre // 영화 장르
   var movie_poster // 영화 포스터
 
+  var category=''
+
   if (database) {
     // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
     async function getWatchResult(userId, movieTitle) {
@@ -879,6 +881,7 @@ var watchAloneEnd = function(req, res){
         highlight_time = 0;
         highlight_diff = 0;
         if (tmp_highlight_array.length == 0) {
+          category = "eyetrack"
           // 감정폭 측정한 기록이 없으면 집중도 측정 기록을 하이라이트~ 활용.
           const existing = await database.EyetrackModel.find({
             userId: paramId,
@@ -888,10 +891,11 @@ var watchAloneEnd = function(req, res){
             await getEyetrackRecord(paramId, parammovieTitle);
           }
 
-
         } 
         else {
           // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+          category = "emotion"
+
           for (let i = 0; i < tmp_highlight_array.length; i++) {
             if (tmp_highlight_array[i].emotion_diff > highlight_time) {
               highlight_time = tmp_highlight_array[i].time;
@@ -899,9 +903,11 @@ var watchAloneEnd = function(req, res){
             }
           }
         }
+
+        console.log('하이라이트 시간 : ', highlight_time, " / 하이라이트 값 : ", highlight_diff);
        
 
-        await normalization(tmp_highlight_array, function (error, result) {
+        await normalization(category, tmp_highlight_array, function (error, result) {
             if (error){
               console.log("정규화 실패 : ", error)
               res.status(400).send();

@@ -112,9 +112,9 @@ var signUp = function(db, id, password, name, favorite, genre, callback) { // ca
 
 // 같이보기 방 입장
 var enterRoom = function(db, roomcode, callback){
-  console.log('enterRoom (같이보기 방 입장)호출됨. 방 코드 : ' + roomcode);
+  console.log('enterRoom (같이보기 방 입장)호출됨.');
 
-  db.roomModel.findByRoomCode(roomcode, function(err, result){
+  db.RoomModel.findByRoomCode(roomcode, function(err, result){
 
     if(err){
       callback(err, null);
@@ -122,8 +122,6 @@ var enterRoom = function(db, roomcode, callback){
     }
 
     else if(result.length > 0){
-      console.log('입력된 코드에 해당하는 같이보기 방 찾음.');
-
       callback(null, result);
     }
 
@@ -191,8 +189,8 @@ var getRecommendUserList = function(result, callback){
 };
 
 // 같이보기 방 생성
-var makeroom = function (db, roomcode, callback) {
-  db.RoomModel.findByRoomCode(roomcode, function(err, result){
+var makeroom = function (db, roomToken, roomCode, callback) {
+  db.RoomModel.findByRoomTokenANDCode(roomToken, roomCode, function(err, result){
     if(err){
       callback(err, null);
       return;
@@ -591,7 +589,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 };
 
 // 정규화
-var normalization = async function (highlight_array, callback) {
+var normalization = async function (category, highlight_array, callback) {
 
   var min = 0;
   var max = 0;
@@ -601,21 +599,24 @@ var normalization = async function (highlight_array, callback) {
 
   async function getMinMax() {
 
-
-    for (let i = 0; i < highlight_array.length-1; i++) {
-      diff_array[i] = (highlight_array[i+1].emotion_diff);
+    if (category == "eyetrack"){
+      console.log('카테고리: 아이트래킹')
+      diff_array = [...highlight_array].sort(); // 원본을 살리면서 배열 복사
+      console.log('중간 점검1 : (diff_array) : ', diff_array)
+    }
+    else if (category == "emotion"){
+      console.log('카테코리: 감정')
+      for (let i = 0; i < highlight_array.length; i++){
+        diff_array[i] = highlight_array[i].emotion_diff
+        console.log(highlight_array[i].emotion_diff)
+      }
+      diff_array.sort(); 
+      console.log('중간 점검1 : (diff_array) : ', diff_array)
     }
 
-    diff_array.sort(function (a, b) {
-      if (a > b) return 1;
-      if (a < b) return -1;
-      if (a == b) return 0;
-    });
-
-    console.log('중간 점검1(temp_array) : ', temp_array)
 
     min = diff_array[0];
-    if (temp_array.length == 2){min = 0}
+    if (highlight_array.length == 1){min = 0}
 
     max = diff_array[diff_array.length - 1];
 
@@ -624,15 +625,29 @@ var normalization = async function (highlight_array, callback) {
 
   async function normalization() {
 
-    for (let i = 1; i<highlight_array.length; i++){
-      normal_tmp = Number(temp_array[i].emotion_diff - min) / (max - min)
-      normal_array[i-1] = {
-        "time" : temp_array[i].time,
-        "emotion_diff" : normal_tmp
+    if(category == "eyetrack"){
+      for (let i = 0; i<highlight_array.length; i++){
+        normal_tmp = Number(temp_array[i] - min) / (max - min)
+        normal_array[i] = {
+          "time" : i*10,
+          "emotion_diff" : normal_tmp
+        }
+        // console.log("중간 점검 3 : ", normal_array[i])
       }
-
-      console.log("중간 점검 3 : ", normal_array[i-1])
     }
+    else if (category == "emotion"){
+      for (let i = 0; i<highlight_array.length; i++){
+        normal_tmp = Number(temp_array[i].emotion_diff - min) / (max - min)
+        normal_array[i] = {
+          "time" : temp_array[i].time,
+          "emotion_diff" : normal_tmp
+        }
+  
+        // console.log("중간 점검 3 : ", normal_array[i])
+      }
+    }
+    console.log("중간 점검 3 : ", normal_array)
+    
 
     // for (var i = 1; i < highlight_array.length; i++) {
     //   temp_array[i].emotion_diff =

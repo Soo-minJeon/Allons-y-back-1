@@ -144,6 +144,10 @@ var watchlist = function(req, res) {
   
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var database = req.app.get('database');
+
+    var resultTitleArray = []
+    var resultPosterArray = []
+
     if(database) {
       database.WatchModel.findById(paramId, function(err, results) {
           if (err) {
@@ -155,15 +159,18 @@ var watchlist = function(req, res) {
   
           if(results.length>0) {
             console.log('감상결과 목록 존재');
-            var resultArray = new Array(results.length);
-            for(var i=0;i<results.length;i++) {
-              var objToSend = {
-                title: results[i].title,
-                poster: results[i].poster
-              };
-              resultArray[i]=objToSend;
+
+            for (let i = 0; i<results.length; i++){
+              resultTitleArray[i] = results[i].movieTitle;
+              resultPosterArray[i] = results[i].poster;
             }
-            res.status(200).send(JSON.stringify(resultArray)); // 감상결과 목록 보내기
+
+            var objToSend = {
+              title : resultTitleArray,
+              poster : resultPosterArray
+            }
+
+            res.status(200).send(JSON.stringify(objToSend)); // 감상결과 목록 보내기
           } else {
             console.log('감상 기록 없음');
           }
@@ -303,12 +310,12 @@ var sceneAnalyze = function(req, res) {
       });
 }
 
-// 추천1 - 컨텐츠 기반
+// 추천1 - 컨텐츠 기반(함수) - 테스트데이터 - 실행시수정
 var recommend1 = function(db, id, callback){
   console.log('/recommend1 라우팅 함수 호출');
   var database = db
-  // var paramId = id;
-  var paramId = 665; // 사용자 아이디 임의로 설정해놓음
+  var paramId = id;
+  // var paramId = 665; // 사용자 아이디 임의로 설정해놓음
   var titleArray = []
   var posterArray = []
 
@@ -352,12 +359,12 @@ var recommend1 = function(db, id, callback){
   }
 };
 
-// 추천2 - 유사 사용자
+// 추천2 - 유사 사용자(함수) - 테스트데이터 - 실행시수정
 var recommend2 = function (id, callback) {
   console.log("/recommend2 (사용자 추천) 함수 호출");
 
-  // var paramId = id; // 사용자 아이디 받아오기
-  var paramId = 671; // 사용자 아이디 받아오기
+  var paramId = id; // 사용자 아이디 받아오기
+  // var paramId = 671; // 사용자 아이디 받아오기
 
   //파이썬 코드 실행 (유사 사용자 추천)
   const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
@@ -417,7 +424,8 @@ var recommend2 = function (id, callback) {
   // }}
 };
 
-var recommend3 = async function(db, id, callback) { // 수정중
+// 추천3 - 선호 영화(함수)
+var recommend3 = function(db, id, callback) { // 수정중
     console.log("/recommend3 (선호배우 영화 추천) 함수 호출");
     if(db){
         // 1.DB에서 선호 배우 가져오기
@@ -503,10 +511,10 @@ var enterroom = function(req, res){
         else if (result.length > 0){
           console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
   
-  
-          // 방 생성한 유저 아이디를 스키마에 넣어서 전달해주는 것도 좋을듯
-          res.status(200).send();
-          console.log('같이 보기 방 : 초대 코드 검색 완료 : 정상코드 발송 완료');
+          var objToSend = {
+            roomToken : result[0].roomToken
+          };
+          res.status(200).send(JSON.stringify(objToSend));
           console.log('\n\n');
         }
   
@@ -535,6 +543,7 @@ var getAllMovieList = function(req, res){
   if (database){
     var resultTitleArray = []
     var resultPosterArray = []
+    var resultRunningTimeArray = []
 
     async function searchMovieInfo(){
       const existing = await database.MovieModel.find({}).clone() // 영화 스키마의 모든 정보를 찾고
@@ -547,6 +556,7 @@ var getAllMovieList = function(req, res){
           for (let i = 0; i<existing.length; i++){
             resultTitleArray[i] = existing[i].title;
             resultPosterArray[i] = existing[i].poster;
+            resultRunningTimeArray[i] = existing[i].runningTime;
           }
         }
       }
@@ -556,7 +566,8 @@ var getAllMovieList = function(req, res){
       await searchMovieInfo()
       var objToSend = {
         title : resultTitleArray,
-        poster : resultPosterArray
+        poster : resultPosterArray,
+        runningTime : resultRunningTimeArray
       }
       console.log('test\n', objToSend)
       res.status(200).send(JSON.stringify(objToSend))
@@ -571,7 +582,7 @@ var getAllMovieList = function(req, res){
   }
 }
 
-// 감상 시작 - 혼자보기
+// 감상 시작 - 혼자보기 - 테스트데이터 - 실행시수정
 var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
 
@@ -579,7 +590,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-  // -테스트용
+  // -테스트데이터
   // var paramId = "smj8554"
   // var parammovieTitle = "toy story"
 
@@ -590,6 +601,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var runningTime
     var newWatch
     var every_emotion_array
+    var every_eyetrack_array
 
     async function searchMovieInfo(){
       console.log('req.body정보')
@@ -606,9 +618,11 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           runningTime = existing[0].runningTime
           emotion_check_count = Math.floor(runningTime / 10) + 1
           every_emotion_array = new Array(emotion_check_count)
+          every_eyetrack_array = new Array(emotion_check_count)
           
           for (let i = 0; i<emotion_check_count; i++){
             every_emotion_array[i] = '-'
+            every_eyetrack_array[i] = 0
           }
         }
       }
@@ -624,11 +638,16 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'highlight_time': NaN,
         'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
         'every_emotion_array' : every_emotion_array,
-        //'highlight_array' : {},
         'rating': 0,
         'comment': NaN,
         'sleepingCount ' : 0
       });
+
+      newEyeTrack = new database.EyetrackModel({
+        'userId': paramId, 
+        'movieTitle': parammovieTitle,
+        'every_concentration_array' : every_eyetrack_array
+      })
     }
 
     async function main(){
@@ -646,6 +665,18 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           console.log('----------------------------------------------------------------------------')
         }    
       });
+      await newEyeTrack.save(function(err) {
+        if (err){
+          console.log('***ERROR!! 집중도 기록 스키마 생성 및 저장 오류... : ', err)
+          res.status(400).send() // 저장오류
+          console.log('----------------------------------------------------------------------------')
+        }
+        else{
+          console.log('집중도 기록 추가됨 => \n', newEyeTrack, '\n');
+          res.status(200).send()
+          console.log('----------------------------------------------------------------------------')
+        }    
+      });
     }
     main()
   }
@@ -656,7 +687,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   }
 };
 
-// 사용자 집중도/감정 분석
+// 사용자 집중도/감정 분석 - 테스트데이터 - 실행시수정
 var watchImageCaptureEyetrack = async function(req, res){
 
   var database = req.app.get('database');
@@ -704,6 +735,27 @@ var watchImageCaptureEyetrack = async function(req, res){
         // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
         concentration_scene = Number(getpython);
       }
+    }
+
+    async function addEyetrack_record(concentration_scene){ // 집중도 스키마에 집중도 기록을 배열로 저장
+
+      const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
+
+      if (existing.length > 0) {
+        console.dir(existing)
+        tmp_every_concentration_array = existing[0].every_concentration_array
+        tmp_every_concentration_array[paramTime/10] =  concentration_scene
+      }
+
+      await database.EyetrackModel.updateOne({ // 장면별 집중도 배열 수정 //
+        userId: paramId,
+        movieTitle: parammovieTitle
+      }, {
+        $set: { 
+          every_concentration_array: tmp_every_concentration_array,
+        },
+      }).clone()
+      
     }
 
     // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기 
@@ -804,6 +856,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 
     async function main(){
       await startEyetrack()
+      await addEyetrack_record(concentration_scene)
       await countlimit()
       await isSleep()
     }
@@ -815,9 +868,11 @@ var watchImageCaptureEyetrack = async function(req, res){
     res.status(400).send()
   }
 };
-// 감상 끝 - 혼자보기 -- 수정필요(현재 테스트데이터 넣어놓음- pramID, paramTitle)
+
+// 감상 끝 - 혼자보기 - 테스트 데이터
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
+  console.log('/watchAlonEnd 라우팅 함수 호출');
   var database = req.app.get('database');
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
@@ -832,6 +887,11 @@ var watchAloneEnd = function(req, res){
   var ConcentrationPreScopeAverage // 범위 변환 전 집중도 평균 (0~100)
   var count_eyetracking // 10초간격으로 집중도 측정한 횟수
 
+  var movie_genre // 영화 장르
+  var movie_poster // 영화 포스터
+
+  var category=''
+
   if (database) {
     // 감상결과 기록을 찾는 함수. 하이라이트 계산 배열 찾아옴.
     async function getWatchResult(userId, movieTitle) {
@@ -841,7 +901,7 @@ var watchAloneEnd = function(req, res){
       }).clone();
 
       if (existing_watch) {
-        console.log("해당 유저의 해당 영화의 감상 기록 찾음.");
+        console.log("해당 유저의 해당 영화의 감상 기록 찾음.", existing_watch[0]);
         console.dir(existing_watch);
         tmp_highlight_array = existing_watch[0].highlight_array;
         console.log("테스트 tmp_highlight_array");
@@ -851,17 +911,64 @@ var watchAloneEnd = function(req, res){
         // 하이라이트 장면 찾기
         highlight_time = 0;
         highlight_diff = 0;
-        for (let i = 0; i < tmp_highlight_array.length; i++) {
-          if (tmp_highlight_array[i].emotion_diff > highlight_time) {
-            highlight_time = tmp_highlight_array[i].time;
-            highlight_diff = tmp_highlight_array[i].emotion_diff;
+        if (tmp_highlight_array.length == 0) {
+          category = "eyetrack"
+          // 감정폭 측정한 기록이 없으면 집중도 측정 기록을 하이라이트~ 활용.
+          const existing = await database.EyetrackModel.find({
+            userId: paramId,
+            movieTitle: parammovieTitle,
+          });
+          if (existing.length > 0) {
+            await getEyetrackRecord(paramId, parammovieTitle);
+          }
+
+        } 
+        else {
+          // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+          category = "emotion"
+
+          for (let i = 0; i < tmp_highlight_array.length; i++) {
+            if (tmp_highlight_array[i].emotion_diff > highlight_time) {
+              highlight_time = tmp_highlight_array[i].time;
+              highlight_diff = tmp_highlight_array[i].emotion_diff;
+            }
           }
         }
+
+        console.log('하이라이트 시간 : ', highlight_time, " / 하이라이트 값 : ", highlight_diff);
+       
+
+        await normalization(category, tmp_highlight_array, function (error, result) {
+            if (error){
+              console.log("정규화 실패 : ", error)
+              res.status(400).send();
+            }
+            normalization_array = result;
+        });
+        
+
       } else {
         console.log("해당 유저의 해당 영화의 감상 기록 존재하지 않음.");
         res.status(400).send();
       }
     }
+    // 감정폭 측정기록 없을 때, 집중도 기록 가져오는 함수
+    async function getEyetrackRecord(paramId, parammovieTitle){
+      const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
+
+      if (existing.length > 0) {
+        tmp_highlight_array = existing[0].every_concentration_array;
+
+        // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+        for (let i = 0; i < tmp_highlight_array.length; i++) {
+          if (tmp_highlight_array[i] > highlight_diff) {
+            highlight_time = i*10;
+            highlight_diff = tmp_highlight_array[i];
+          }
+        }
+      }
+    }
+
     // 하이라이트 이미지를 버킷에 넣고 나머지 사진 삭제하는 함수
     async function HighlightImageTrans_ToFolder(highlightT, id, title) {
       // param으로 계산완료한 하이라이트 시간 전달받고
@@ -900,6 +1007,9 @@ var watchAloneEnd = function(req, res){
 
       if (existing_movie.length > 0) {
         console.log("해당 영화의 감상 기록 찾음.");
+
+        movie_genre = existing_movie[0].genres;
+        movie_poster = existing_movie[0].poster;
         movie_running_time = existing_movie[0].runningTime;
         count_eyetracking = parseInt(movie_running_time / 10); // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
         ConcentrationPreScopeAverage = concentration_sum / count_eyetracking; // 집중도 평균 계산
@@ -970,9 +1080,6 @@ var watchAloneEnd = function(req, res){
 
       ////////////////////////// 하이라이트 정규화 //////////////////////////
       await getWatchResult(paramId, parammovieTitle);
-      await normalization(tmp_highlight_array, function (error, result) {
-        normalization_array = result;
-      });
       /////////////////////////////////////////////////////////////////
 
       ////////////////////////// 집중도 처리 //////////////////////////
@@ -1005,7 +1112,11 @@ var watchAloneEnd = function(req, res){
         movieTitle : parammovieTitle
       });
 
-      res.status(200).send();
+      var objToSend = {
+        genres : movie_genre,
+        poster : movie_poster
+      }
+      res.status(200).send(JSON.stringify(objToSend));
     }
     main();
   }else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
@@ -1014,8 +1125,11 @@ var watchAloneEnd = function(req, res){
     console.log('----------------------------------------------------------------------------')
   }
 };
+
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
+  console.log('/addReview 라우팅 함수 호출');
+
   var database = req.app.get('database');
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
@@ -1028,7 +1142,7 @@ var addReview = function(req, res){
       movieTitle: parammovieTitle
     }, {  
       $set: {
-        rating: paramRating,   
+        rating: parseInt(paramRating),   
         comment : paramComment
       }
     });
@@ -1037,7 +1151,7 @@ var addReview = function(req, res){
   addreview()
 };
 
-// 회원가입 인증메일
+// 회원가입 인증메일 - 발신자정의 필요 - 실행시수정
 var email = function(req, res){
     console.log('/email(이메일 인증) 라우팅 함수 호출');
     var database = req.app.get('database');
@@ -1046,10 +1160,9 @@ var email = function(req, res){
         var paramEmail = req.body.email;
   
         // 발신자 정의.
-        var app_email = 'smj85548554@gmail.com';
-        var app_pass = 'wtwslloltccugeiy';
+        var app_email = '발신자정의';
+        var app_pass = '발신자정의';
 
-  
         console.log('수신자 : ', paramEmail);
   
         sendEmail(app_email, app_pass, paramEmail, function(err, results){
@@ -1074,10 +1187,10 @@ var email = function(req, res){
     }
 };
 
-// 같이보기 방 생성
 var makeRoom = function (req, res) {
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");
+  var RoomToken;
   var RoomCode;
 
   async function getToken() {
@@ -1173,7 +1286,7 @@ var makeRoom = function (req, res) {
     app.get("/rtc/:channel/:role/:tokentype/:uid", nocache, generateRTCToken);
 
     // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
-    app.listen(PORT, () => {
+    var server = app.listen(PORT, () => {
       console.log(`Listening on port: ${PORT}`);
     });
 
@@ -1185,13 +1298,21 @@ var makeRoom = function (req, res) {
 
       html = html.toString().split('":"')
       result = html[1].replace('"}','')
-      RoomCode = result
-      vaildToken(RoomCode)
+      RoomToken = result
+      RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+      
+      // port 종료
+      server.close(function() {
+        console.log('토큰 발급서버 종료')
+      })
+
+      vaildToken(RoomToken, RoomCode)
     });
+
   }
 
-  async function vaildToken(RoomCode) {
-    makeroom(database, RoomCode, function (err, result) {
+  async function vaildToken(RoomToken, RoomCode) {
+    makeroom(database, RoomToken, RoomCode, function (err, result) {
       if (err) {
         console.log("방 생성 중 에러 발생");
         console.dir(err);
@@ -1203,8 +1324,9 @@ var makeRoom = function (req, res) {
 
         getToken();
       } else {
-        var room = new database.RoomModel({ roomCode: RoomCode });
+        var room = new database.RoomModel({ roomToken : RoomToken, roomCode: RoomCode });
         console.log("RoomCode : " + RoomCode);
+        console.log("RoomToken : " + RoomToken);
 
         // save()로 저장
         room.save(function (err) {
@@ -1215,6 +1337,7 @@ var makeRoom = function (req, res) {
           // 찾은 결과 전송
           var objToSend = {
             roomCode: RoomCode,
+            roomToken : RoomToken
           };
           res.status(200).send(JSON.stringify(objToSend));
         });
@@ -1233,6 +1356,7 @@ var makeRoom = function (req, res) {
     console.log("\n\n");
   }
 };
+
 
 // 로그아웃
 var logout = function (req, res) {

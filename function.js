@@ -589,21 +589,31 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 };
 
 // 정규화
-var normalization = async function (highlight_array, callback) {
+var normalization = async function (category, highlight_array, callback) {
 
   var min = 0;
   var max = 0;
   var temp_array = highlight_array;
-  var diff_array;
+  var diff_array = [];
   var normal_array = [];
 
   async function getMinMax() {
 
-    diff_array = [...highlight_array].sort(); // 원본을 살리면서 배열 복사
+    if (category == "eyetrack"){
+      console.log('카테고리: 아이트래킹')
+      diff_array = [...highlight_array].sort(); // 원본을 살리면서 배열 복사
+      console.log('중간 점검1 : (diff_array) : ', diff_array)
+    }
+    else if (category == "emotion"){
+      console.log('카테코리: 감정')
+      for (let i = 0; i < highlight_array.length; i++){
+        diff_array[i] = highlight_array[i].emotion_diff
+        console.log(highlight_array[i].emotion_diff)
+      }
+      diff_array.sort(); 
+      console.log('중간 점검1 : (diff_array) : ', diff_array)
+    }
 
-    console.log('중간 점검1 : (diff_array) : ', diff_array)
-    console.log('중간 점검1 : (temp_array) : ', temp_array)
-    console.log('중간 점검1 : (highlight_array) : ', highlight_array)
 
     min = diff_array[0];
     if (highlight_array.length == 1){min = 0}
@@ -615,15 +625,29 @@ var normalization = async function (highlight_array, callback) {
 
   async function normalization() {
 
-    for (let i = 0; i<highlight_array.length; i++){
-      normal_tmp = Number(temp_array[i] - min) / (max - min)
-      normal_array[i] = {
-        "time" : i*10,
-        "emotion_diff" : normal_tmp
+    if(category == "eyetrack"){
+      for (let i = 0; i<highlight_array.length; i++){
+        normal_tmp = Number(temp_array[i] - min) / (max - min)
+        normal_array[i] = {
+          "time" : i*10,
+          "emotion_diff" : normal_tmp
+        }
+        // console.log("중간 점검 3 : ", normal_array[i])
       }
-
-      console.log("중간 점검 3 : ", normal_array[i])
     }
+    else if (category == "emotion"){
+      for (let i = 0; i<highlight_array.length; i++){
+        normal_tmp = Number(temp_array[i].emotion_diff - min) / (max - min)
+        normal_array[i] = {
+          "time" : temp_array[i].time,
+          "emotion_diff" : normal_tmp
+        }
+  
+        // console.log("중간 점검 3 : ", normal_array[i])
+      }
+    }
+    console.log("중간 점검 3 : ", normal_array)
+    
 
     // for (var i = 1; i < highlight_array.length; i++) {
     //   temp_array[i].emotion_diff =

@@ -594,26 +594,19 @@ var normalization = async function (highlight_array, callback) {
   var min = 0;
   var max = 0;
   var temp_array = highlight_array;
-  var diff_array = [];
+  var diff_array;
   var normal_array = [];
 
   async function getMinMax() {
 
+    diff_array = [...highlight_array].sort(); // 원본을 살리면서 배열 복사
 
-    for (let i = 0; i < highlight_array.length-1; i++) {
-      diff_array[i] = (highlight_array[i+1].emotion_diff);
-    }
-
-    diff_array.sort(function (a, b) {
-      if (a > b) return 1;
-      if (a < b) return -1;
-      if (a == b) return 0;
-    });
-
-    console.log('중간 점검1(temp_array) : ', temp_array)
+    console.log('중간 점검1 : (diff_array) : ', diff_array)
+    console.log('중간 점검1 : (temp_array) : ', temp_array)
+    console.log('중간 점검1 : (highlight_array) : ', highlight_array)
 
     min = diff_array[0];
-    if (temp_array.length == 2){min = 0}
+    if (highlight_array.length == 1){min = 0}
 
     max = diff_array[diff_array.length - 1];
 
@@ -622,14 +615,14 @@ var normalization = async function (highlight_array, callback) {
 
   async function normalization() {
 
-    for (let i = 1; i<highlight_array.length; i++){
-      normal_tmp = Number(temp_array[i].emotion_diff - min) / (max - min)
-      normal_array[i-1] = {
-        "time" : temp_array[i].time,
+    for (let i = 0; i<highlight_array.length; i++){
+      normal_tmp = Number(temp_array[i] - min) / (max - min)
+      normal_array[i] = {
+        "time" : i*10,
         "emotion_diff" : normal_tmp
       }
 
-      console.log("중간 점검 3 : ", normal_array[i-1])
+      console.log("중간 점검 3 : ", normal_array[i])
     }
 
     // for (var i = 1; i < highlight_array.length; i++) {

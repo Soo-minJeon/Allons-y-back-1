@@ -26,5 +26,5 @@ def process(fActor):
     print("["+result_movie+"],["+result_poster+"]")
 
 if __name__ == '__main__':
-    #process('Angelina Jolie')
-    process(sys.argv[1])
+    process('Leonardo DiCaprio')
+    #process(sys.argv[1])

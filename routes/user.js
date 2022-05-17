@@ -94,7 +94,6 @@ var login = function(req, res){
             if (result2){
                 recommend3(database,paramId, function(err, result3) {
                     if(result3) {
-                      console.log("recommend3 결과 얻어옴!")
                       res.status(200).send(JSON.stringify(final_objToSend = {
                         id: objToSend.id,
                         name: objToSend.name,
@@ -333,7 +332,7 @@ var recommend1 = function(db, id, callback){
       console.log('---------')
       for(var i=0;i<array.length-1;i++) {
           var test_ = array[i].split('/')
-          // console.log(array[i])
+          console.log(array[i])
           titleArray[i] = test_[0]
           // console.log('titleArray : '+titleArray[i])
           posterArray[i] = '/'+String(test_[1])
@@ -418,7 +417,7 @@ var recommend2 = function (id, callback) {
   // }}
 };
 
-var recommend3 = function(db, id, callback) { // 수정중
+var recommend3 = async function(db, id, callback) { // 수정중
     console.log("/recommend3 (선호배우 영화 추천) 함수 호출");
     if(db){
         // 1.DB에서 선호 배우 가져오기
@@ -428,7 +427,6 @@ var recommend3 = function(db, id, callback) { // 수정중
                 console.log('선호배우 : ' + fActor)
                 const spawn = require('child_process').spawn;
                 // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-
                 const results1 = spawn('python', ['recommend3.py',fActor]);
 
                 // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
@@ -440,10 +438,43 @@ var recommend3 = function(db, id, callback) { // 수정중
                 });
             }
             else {
-                console.log("사용자를 찾을 수 없습니다..")
-                callback(null,null)
+                console.log("likeModel 첫 생성")
+                const spawn = require('child_process').spawn;
+                const results2 = spawn('python', ["find_loveActor.py", 672]); // 추천용 아이디 넣기
+
+                results2.stdout.on('data', (data) => {
+                    const stringRe = data.toString()
+                    console.log('선호배우 추출 결과 : ' + stringRe);
+
+                    var likeUser = new db.likeModel({
+                      id: id,
+                      actors: stringRe, // 받아온 영화의 배우 넣기
+                    });
+
+                    // save()로 저장
+                    likeUser.save(function (err) {
+                        if (err) {
+                          callback(err, null);
+                          return;
+                        }
+                        console.log("사용자 데이터 추가함");
+                    });
+
+                    fActor = stringRe
+                    console.log("fActor : "+ fActor);
+                    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+                    console.log("선호배우 영화 추천 목록 가져오기 실행***")
+                    const results1 = spawn('python', ['recommend3.py',fActor]);
+
+                    // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+                    results1.stdout.on('data', (data) => {
+                        const stringResult2 = data.toString()
+                        console.log("선호배우 영화 목록 : "+stringResult2)
+                        callback(null, stringResult2)
+                    });
+                });
             }
-        })
+        });
     } else {
       console.log('데이터베이스가 정의되지 않음...');
       callback(null, null)
@@ -877,17 +908,17 @@ var watchAloneEnd = function(req, res){
         res.status(400).send();
       }
     }
-    // 감정 부합 확인 .. 작성중
+    // 감정 부합 확인
     async function emotionCorrectTest() {
+      var resultSend;
       var movieEmotion_array = await database.likeModel
-        .findById("pbkdpwls", function (err, result1) {
+        .findById(paramId, function (err, result1) {
           if (err) {
             callback(err, null);
             return;
           }
 
           if (result1.length > 0) {
-            console.log("movieEmotion");
             console.log(result1[0].correctModel);
             array_test = result1[0].correctModel.split(",");
             array_test.pop();
@@ -897,7 +928,7 @@ var watchAloneEnd = function(req, res){
         .clone();
 
       var userEmotion_array = await database.WatchModel.findById(
-        "pbkdpwls",
+        paramId,
         function (err, result2) {
           if (err) {
             callback(err, null);
@@ -905,24 +936,37 @@ var watchAloneEnd = function(req, res){
           }
 
           if (result2.length > 0) {
-            console.log("userEmotion");
             var emotionArray = result2[0].every_emotion_array;
             var len_test = result2[0].every_emotion_array.length;
 
             var count_test = 0;
+            var allCount = 0;
             for (i = 0; i < len_test; i++) {
               if (array_test[i] == emotionArray[i]) {
                 count_test += 1;
               }
+              allCount+=1;
             }
-            console.log("횟수 : ");
-            console.log(count_test);
+            console.log("횟수 : "+count_test);
+            resultSend = count_test/allCount*100
           }
         }
       ).clone();
+      await console.log("결과값 확인(0~100) : "+resultSend);
+      await database.likeModel.updateOne(
+            {
+              // 감상목록 highlight_array 수정 //
+              id: paramId,
+            },
+            {
+              $set: {
+                resultEmotionPer : resultSend
+              },
+            }
+          );
     }
     async function main() {
-      //await emotionCorrectTest()
+      await emotionCorrectTest()
 
       ////////////////////////// 하이라이트 정규화 //////////////////////////
       await getWatchResult(paramId, parammovieTitle);
@@ -969,7 +1013,6 @@ var watchAloneEnd = function(req, res){
     res.status(400).send();
     console.log('----------------------------------------------------------------------------')
   }
-   
 };
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){

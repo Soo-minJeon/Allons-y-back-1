@@ -10,6 +10,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/recommend/poster_path.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/recommend/poster_path_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/recommend/ratings_small.csv">
           <value>
             <Attribute>

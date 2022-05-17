@@ -8,13 +8,13 @@ class VideoDetect:
     sqs = boto3.client('sqs', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     sns = boto3.client('sns', region_name='ap-northeast-2', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
-    roleArn =  'arn:aws:iam::392553513869:role/serviceRekognition'
+    roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'emotion_test.mp4'
+    video = 'avengers.mp4'
     startJobId = 'null'
 
-    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/805057381367/allonsySQS'
-    snsTopicArn = 'arn:aws:sns:ap-northeast-2:805057381367:allonsySNS'
+    sqsQueueUrl = 'arn:aws:sqs:ap-northeast-2:392553513869:rekognitionQueue'
+    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:AmazonRekognitionTopic'
     processType = 'null'
 
     def __init__(self, role, bucket, video):
@@ -232,17 +232,17 @@ class VideoDetect:
 def main():
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'emotion_test.mp4'
+    video = 'avengers.mp4'
 
     analyzer = VideoDetect(roleArn, bucket, video)
     analyzer.CreateTopicandQueue()
 
-    #analyzer.StartDetection1()
-    #if analyzer.GetSQSMessageSuccess() == True:
-     #   analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
-    #analyzer.StartDetection2()
-    #if analyzer.GetSQSMessageSuccess() == True:
-     #   analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
+    analyzer.StartDetection1()
+    if analyzer.GetSQSMessageSuccess() == True:
+        analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
+    analyzer.StartDetection2()
+    if analyzer.GetSQSMessageSuccess() == True:
+        analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
     analyzer.StartDetection3()
     if analyzer.GetSQSMessageSuccess() == True:
         analyzer.GetFaceDetectionResults(72333) # 72초에 사용자 감정의 폭 Max

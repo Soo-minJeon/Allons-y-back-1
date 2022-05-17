@@ -9,8 +9,8 @@ Schema.createSchema = function (mongoose) {
    var EyetrackSchema = mongoose.Schema({
         userId: { type: String, require: true, unique: false, 'default': '' },
         movieTitle: { type: String, require: true, unique: false, 'default': '' },
-        time: { type: String, require: true, unique: true, 'default': '' },
-        concentration: { type: Number, require: true, unique: false, 'default': '' },
+        // time: { type: String, require: true, unique: true, 'default': '' },
+        every_concentration_array: { type: Array, required: true },
     });
 
     console.log('Schema 정의를 완료하였습니다.');

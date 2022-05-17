@@ -570,6 +570,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var runningTime
     var newWatch
     var every_emotion_array
+    var every_eyetrack_array
 
     async function searchMovieInfo(){
       console.log('req.body정보')
@@ -586,9 +587,11 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           runningTime = existing[0].runningTime
           emotion_check_count = Math.floor(runningTime / 10) + 1
           every_emotion_array = new Array(emotion_check_count)
+          every_eyetrack_array = new Array(emotion_check_count)
           
           for (let i = 0; i<emotion_check_count; i++){
             every_emotion_array[i] = '-'
+            every_eyetrack_array[i] = 0
           }
         }
       }
@@ -604,11 +607,16 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'highlight_time': NaN,
         'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
         'every_emotion_array' : every_emotion_array,
-        //'highlight_array' : {},
         'rating': 0,
         'comment': NaN,
         'sleepingCount ' : 0
       });
+
+      newEyeTrack = new database.EyetrackModel({
+        'userId': paramId, 
+        'movieTitle': parammovieTitle,
+        'every_concentration_array' : every_eyetrack_array
+      })
     }
 
     async function main(){
@@ -622,6 +630,18 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         }
         else{
           console.log('감상 결과 데이터 추가됨 => \n', newWatch, '\n');
+          res.status(200).send()
+          console.log('----------------------------------------------------------------------------')
+        }    
+      });
+      await newEyeTrack.save(function(err) {
+        if (err){
+          console.log('***ERROR!! 집중도 기록 스키마 생성 및 저장 오류... : ', err)
+          res.status(400).send() // 저장오류
+          console.log('----------------------------------------------------------------------------')
+        }
+        else{
+          console.log('집중도 기록 추가됨 => \n', newEyeTrack, '\n');
           res.status(200).send()
           console.log('----------------------------------------------------------------------------')
         }    
@@ -684,6 +704,27 @@ var watchImageCaptureEyetrack = async function(req, res){
         // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
         concentration_scene = Number(getpython);
       }
+    }
+
+    async function addEyetrack_record(concentration_scene){ // 집중도 스키마에 집중도 기록을 배열로 저장
+
+      const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
+
+      if (existing.length > 0) {
+        console.dir(existing)
+        tmp_every_concentration_array = existing[0].every_concentration_array
+        tmp_every_concentration_array[paramTime/10] =  concentration_scene
+      }
+
+      await database.EyetrackModel.updateOne({ // 장면별 집중도 배열 수정 //
+        userId: paramId,
+        movieTitle: parammovieTitle
+      }, {
+        $set: { 
+          every_concentration_array: tmp_every_concentration_array,
+        },
+      }).clone()
+      
     }
 
     // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기 
@@ -784,6 +825,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 
     async function main(){
       await startEyetrack()
+      await addEyetrack_record(concentration_scene)
       await countlimit()
       await isSleep()
     }
@@ -799,6 +841,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 // 감상 끝 - 혼자보기 - 테스트 데이터
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
+  console.log('/watchAlonEnd 라우팅 함수 호출');
   var database = req.app.get('database');
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
@@ -835,34 +878,60 @@ var watchAloneEnd = function(req, res){
         // 하이라이트 장면 찾기
         highlight_time = 0;
         highlight_diff = 0;
-        if (tmp_highlight_array.length == 0){
-          // 감정폭 측정한 기록이 없으면 어떻게 할지 수정 필요
-          highlight_time = 10;
-          highlight_diff = 10;
+        if (tmp_highlight_array.length == 0) {
+          // 감정폭 측정한 기록이 없으면 집중도 측정 기록을 하이라이트~ 활용.
+          const existing = await database.EyetrackModel.find({
+            userId: paramId,
+            movieTitle: parammovieTitle,
+          });
+          if (existing.length > 0) {
+            await getEyetrackRecord(paramId, parammovieTitle);
+          }
 
-        }
-        else{ // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+
+        } 
+        else {
+          // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
           for (let i = 0; i < tmp_highlight_array.length; i++) {
             if (tmp_highlight_array[i].emotion_diff > highlight_time) {
               highlight_time = tmp_highlight_array[i].time;
               highlight_diff = tmp_highlight_array[i].emotion_diff;
             }
           }
-
-          await normalization(tmp_highlight_array, function (error, result) {
-              if (error){
-                console.log("정규화 실패 : ", error)
-                res.status(400).send();
-              }
-              normalization_array = result;
-            });
         }
+       
+
+        await normalization(tmp_highlight_array, function (error, result) {
+            if (error){
+              console.log("정규화 실패 : ", error)
+              res.status(400).send();
+            }
+            normalization_array = result;
+        });
+        
 
       } else {
         console.log("해당 유저의 해당 영화의 감상 기록 존재하지 않음.");
         res.status(400).send();
       }
     }
+    // 감정폭 측정기록 없을 때, 집중도 기록 가져오는 함수
+    async function getEyetrackRecord(paramId, parammovieTitle){
+      const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
+
+      if (existing.length > 0) {
+        tmp_highlight_array = existing[0].every_concentration_array;
+
+        // 감정폭 측정한 기록이 있으면 감정폭 최대치를 하이라이트 장면으로 선정
+        for (let i = 0; i < tmp_highlight_array.length; i++) {
+          if (tmp_highlight_array[i] > highlight_diff) {
+            highlight_time = i*10;
+            highlight_diff = tmp_highlight_array[i];
+          }
+        }
+      }
+    }
+
     // 하이라이트 이미지를 버킷에 넣고 나머지 사진 삭제하는 함수
     async function HighlightImageTrans_ToFolder(highlightT, id, title) {
       // param으로 계산완료한 하이라이트 시간 전달받고
@@ -961,9 +1030,6 @@ var watchAloneEnd = function(req, res){
 
       ////////////////////////// 하이라이트 정규화 //////////////////////////
       await getWatchResult(paramId, parammovieTitle);
-      // await normalization(tmp_highlight_array, function (error, result) {
-      //   normalization_array = result;
-      // });
       /////////////////////////////////////////////////////////////////
 
       ////////////////////////// 집중도 처리 //////////////////////////
@@ -1013,6 +1079,8 @@ var watchAloneEnd = function(req, res){
 
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
+  console.log('/addReview 라우팅 함수 호출');
+
   var database = req.app.get('database');
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
@@ -1025,7 +1093,7 @@ var addReview = function(req, res){
       movieTitle: parammovieTitle
     }, {  
       $set: {
-        rating: paramRating,   
+        rating: parseInt(paramRating),   
         comment : paramComment
       }
     });

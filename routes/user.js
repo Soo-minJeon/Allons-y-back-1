@@ -875,6 +875,60 @@ var watchImageCaptureEyetrack = async function(req, res){
   }
 };
 
+// 같이보기 시 감정 분석
+var watchTogetherImageCapture = async function(req, res){
+
+  var database = req.app.get('database');
+
+  // 같이보기 시 사진 캡쳐해서 올렸다고 하면
+
+  var paramRoomCode = req.body.roomCode || req.query.roomCode; // roomCode알아오기
+  var paramTime = req.body.time || req.query.time;
+
+  console.log('/watchTogetherImageCapture 라우팅 함수 호출됨. // ', paramTime, "초");
+
+  if (database){
+  
+    function rekognition_python() {
+      //파이썬 코드 실행 (사용자 감정 분석)
+      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+      var getpython = "";
+      var path = paramRoomCode + '_' + paramTime + '.jpg'
+  
+      // (param) 이미지 경로 재설정 필요
+      const result = spawnSync("python", ["rekognition/rekognition_together.py", path]);
+  
+      if (result.status !== 0) {
+        process.stderr.write(result.stderr);
+  
+        process.exit(result.status);
+      } else {
+        process.stdout.write(result.stdout);
+        process.stderr.write(result.stderr);
+        getpython = result.stdout.toString();
+        // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
+        //console.log(getpython)
+      }
+  
+      // 문자 예쁘게 정리
+      removedResult = getpython.replace(/\'/g, "");
+      removedResult = removedResult.replace(/\[/g, "");
+      removedResult = removedResult.replace(/\]/g, "");
+      removedResult = removedResult.replace(/\\n/g, "");
+  
+      result_total = removedResult.split(", ");
+      console.log('(같이보기)감정분석 결과 : ', result_total)
+    }
+    rekognition_python()
+
+    res.status(200).send(JSON.stringify(result_total))
+
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
+};
+
 // 감상 끝 - 혼자보기 - 테스트 데이터
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화, 
 var watchAloneEnd = function(req, res){
@@ -1417,5 +1471,6 @@ module.exports.logout = logout;
 module.exports.getAllMovieList = getAllMovieList;
 module.exports.watchAloneStart = watchAloneStart;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
+module.exports.watchTogetherImageCapture = watchTogetherImageCapture;
 module.exports.watchAloneEnd = watchAloneEnd;
 module.exports.addReview = addReview;

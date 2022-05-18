@@ -636,7 +636,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'genres': genres,
         'concentration': 0,
         'highlight_time': NaN,
-        'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
+        'emotion_count_array': [{ "HAPPY" : 0}, {"SAD" : 0}, {"ANGRY" : 0}, {"CONFUSED" : 0}, {"DISGUSTED": 0}, {"SURPRISED" : 0}, {"FEAR" : 0, }],
         'every_emotion_array' : every_emotion_array,
         'rating': 0,
         'comment': NaN,
@@ -744,7 +744,13 @@ var watchImageCaptureEyetrack = async function(req, res){
       if (existing.length > 0) {
         console.dir(existing)
         tmp_every_concentration_array = existing[0].every_concentration_array
-        tmp_every_concentration_array[paramTime/10] =  concentration_scene
+        if (paramTime == 0){
+          tmp_every_concentration_array[0] =  concentration_scene
+        }
+        else {
+          tmp_every_concentration_array[paramTime/10] =  concentration_scene
+        }
+        // tmp_every_concentration_array[paramTime/10] =  concentration_scene
       }
 
       await database.EyetrackModel.updateOne({ // 장면별 집중도 배열 수정 //
@@ -1129,13 +1135,23 @@ var watchAloneEnd = function(req, res){
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
   console.log('/addReview 라우팅 함수 호출');
+  console.log(req.body)
 
   var database = req.app.get('database');
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
   var paramComment =req.body.comment || req.query.comment // 사용자가 작성한 한줄 평
+  
+  async function getInfo() {
 
+    const existing = await database.WatchModel.find(
+      { userId : paramId, title : parammovieTitle }).clone() 
+
+    if (existing.length <= 0) {
+      res.status(400).send();
+    }
+  }
   async function addreview(){
     await database.WatchModel.updateOne({ // 감상평,평점 업데이트
       userId: paramId,
@@ -1148,7 +1164,11 @@ var addReview = function(req, res){
     });
     await res.status(200).send()
   }
-  addreview()
+  async function main(){
+    getInfo()
+    addreview()
+  }
+  main()
 };
 
 // 회원가입 인증메일 - 발신자정의 필요 - 실행시수정

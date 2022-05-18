@@ -459,37 +459,37 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
   async function edit_emotion_array(first){
 
     if (first == 'HAPPY') {
-      tmp_emotion_count_array.HAPPY += 1
+      tmp_emotion_count_array[0].HAPPY += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'SAD') {
-      tmp_emotion_count_array.SAD += 1
+      tmp_emotion_count_array[1].SAD += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       await check_highlight()
     }
     else if (first == 'ANGRY') {
-      tmp_emotion_count_array.ANGRY += 1
+      tmp_emotion_count_array[2].ANGRY += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'CONFUSED') {
-      tmp_emotion_count_array.CONFUSED += 1
+      tmp_emotion_count_array[3].CONFUSED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'DISGUSTED') {
-      tmp_emotion_count_array.DISGUSTED += 1
+      tmp_emotion_count_array[4].DISGUSTED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'SURPRISED') {
-      tmp_emotion_count_array.SURPRISED += 1
+      tmp_emotion_count_array[5].SURPRISED += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }
     else if (first == 'FEAR') {
-      tmp_emotion_count_array.FEAR += 1
+      tmp_emotion_count_array[6].FEAR += 1
       tmp_every_emotion_array[time/10] = first // 10초라면 배열의 [1] 값을 현재 가장 크게 느낀 감정으로.
       check_highlight()
     }

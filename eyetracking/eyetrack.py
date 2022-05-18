@@ -93,11 +93,19 @@ def preprocessing(id, title, path):
     RIGHT_IRIS = [469, 470, 471, 472]
 
     # s3 bucket
-    photo_list = [
-        id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
-        id + '_' + title + '_' + str(int(path)) + '.jpg',
-        id + '_' + title + '_' + str(int(path) + 1) + '.jpg'
-    ]
+
+    if(path == '0') or (path == 0):
+        photo_list = [
+            id + '_' + title + '_' + str(0) + '.jpg',
+            id + '_' + title + '_' + str(1) + '.jpg',
+            id + '_' + title + '_' + str(2) + '.jpg'
+        ]
+    else :
+        photo_list = [
+            id + '_' + title + '_' + str(int(path) - 1) + '.jpg',
+            id + '_' + title + '_' + str(int(path)) + '.jpg',
+            id + '_' + title + '_' + str(int(path) + 1) + '.jpg'
+        ]
 
     directory_name = [
         "blinking1", "lookother1", "lookother2", "shaking1", "asiangirl1", "sleeping1", "shaking2"
@@ -445,7 +453,7 @@ def afterprocessing():
 
 if __name__ == "__main__":
 
-    time.sleep(3) # 버킷에 올라가는 시간이 필요함.
+    # time.sleep(3) # 버킷에 올라가는 시간이 필요함.
 
     param = str(sys.argv[1]).split("/")
     # param = "10/smj8554/toy story".split("/")

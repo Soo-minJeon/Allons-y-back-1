@@ -637,7 +637,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
         'genres': genres,
         'concentration': 0,
         'highlight_time': NaN,
-        'emotion_count_array': { "HAPPY" : 0, "SAD" : 0, "ANGRY" : 0, "CONFUSED" : 0, "DISGUSTED": 0, "SURPRISED" : 0, "FEAR" : 0, },
+        'emotion_count_array': [{ "HAPPY" : 0}, {"SAD" : 0}, {"ANGRY" : 0}, {"CONFUSED" : 0}, {"DISGUSTED": 0}, {"SURPRISED" : 0}, {"FEAR" : 0, }],
         'every_emotion_array' : every_emotion_array,
         'rating': 0,
         'comment': NaN,
@@ -745,7 +745,13 @@ var watchImageCaptureEyetrack = async function(req, res){
       if (existing.length > 0) {
         console.dir(existing)
         tmp_every_concentration_array = existing[0].every_concentration_array
-        tmp_every_concentration_array[paramTime/10] =  concentration_scene
+        if (paramTime == 0){
+          tmp_every_concentration_array[0] =  concentration_scene
+        }
+        else {
+          tmp_every_concentration_array[paramTime/10] =  concentration_scene
+        }
+        // tmp_every_concentration_array[paramTime/10] =  concentration_scene
       }
 
       await database.EyetrackModel.updateOne({ // 장면별 집중도 배열 수정 //
@@ -863,6 +869,60 @@ var watchImageCaptureEyetrack = async function(req, res){
     }
     main()
 
+
+  } else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
+};
+
+// 같이보기 시 감정 분석
+var watchTogetherImageCapture = async function(req, res){
+
+  var database = req.app.get('database');
+
+  // 같이보기 시 사진 캡쳐해서 올렸다고 하면
+
+  var paramRoomCode = req.body.roomCode || req.query.roomCode; // roomCode알아오기
+  var paramTime = req.body.time || req.query.time;
+
+  console.log('/watchTogetherImageCapture 라우팅 함수 호출됨. // ', paramTime, "초");
+
+  if (database){
+  
+    function rekognition_python() {
+      //파이썬 코드 실행 (사용자 감정 분석)
+      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+      var getpython = "";
+      var path = paramRoomCode + '_' + paramTime + '.jpg'
+  
+      // (param) 이미지 경로 재설정 필요
+      const result = spawnSync("python", ["rekognition/rekognition_together.py", path]);
+  
+      if (result.status !== 0) {
+        process.stderr.write(result.stderr);
+  
+        process.exit(result.status);
+      } else {
+        process.stdout.write(result.stdout);
+        process.stderr.write(result.stderr);
+        getpython = result.stdout.toString();
+        // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
+        //console.log(getpython)
+      }
+  
+      // 문자 예쁘게 정리
+      removedResult = getpython.replace(/\'/g, "");
+      removedResult = removedResult.replace(/\[/g, "");
+      removedResult = removedResult.replace(/\]/g, "");
+      removedResult = removedResult.replace(/\\n/g, "");
+  
+      result_total = removedResult.split(", ");
+      console.log('(같이보기)감정분석 결과 : ', result_total)
+    }
+    rekognition_python()
+
+    res.status(200).send(JSON.stringify(result_total))
 
   } else {
     console.log("데이터베이스가 정의되지 않음...");
@@ -1130,13 +1190,23 @@ var watchAloneEnd = function(req, res){
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
   console.log('/addReview 라우팅 함수 호출');
+  console.log(req.body)
 
   var database = req.app.get('database');
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
   var paramComment =req.body.comment || req.query.comment // 사용자가 작성한 한줄 평
+  
+  async function getInfo() {
 
+    const existing = await database.WatchModel.find(
+      { userId : paramId, title : parammovieTitle }).clone() 
+
+    if (existing.length <= 0) {
+      res.status(400).send();
+    }
+  }
   async function addreview(){
     await database.WatchModel.updateOne({ // 감상평,평점 업데이트
       userId: paramId,
@@ -1149,7 +1219,11 @@ var addReview = function(req, res){
     });
     await res.status(200).send()
   }
-  addreview()
+  async function main(){
+    getInfo()
+    addreview()
+  }
+  main()
 };
 
 // 회원가입 인증메일 - 발신자정의 필요 - 실행시수정
@@ -1398,5 +1472,6 @@ module.exports.logout = logout;
 module.exports.getAllMovieList = getAllMovieList;
 module.exports.watchAloneStart = watchAloneStart;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
+module.exports.watchTogetherImageCapture = watchTogetherImageCapture;
 module.exports.watchAloneEnd = watchAloneEnd;
 module.exports.addReview = addReview;

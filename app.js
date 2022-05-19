@@ -77,8 +77,11 @@ router.route('/getAllMovieList').post(user.getAllMovieList);
 // 감상 시작 시 신호
 router.route('/watchAloneStart').post(user.watchAloneStart);
 
-// s3버킷으로 사진보낼 때마다
+// s3버킷으로 사진보낼 때마다 ( 혼자보기 : 집중도, 감정분석 )
 router.route('/watchImageCaptureEyetrack').post(user.watchImageCaptureEyetrack);
+
+// s3 버킷으로 사진보낼 때마다 ( 같이보기 : 감정분석 )
+router.route('/watchTogetherImageCapture').post(user.watchTogetherImageCapture);
 
 // 감상 종료 시 신호
 router.route('/watchAloneEnd').post(user.watchAloneEnd);

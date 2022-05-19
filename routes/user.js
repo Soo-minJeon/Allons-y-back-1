@@ -447,40 +447,44 @@ var recommend3 = function(db, id, callback) { // 수정중
                 });
             }
             else {
-                console.log("likeModel 첫 생성")
-                const spawn = require('child_process').spawn;
-                const results2 = spawn('python', ["find_loveActor.py", 672]); // 추천용 아이디 넣기
+                db.UserModel.findById(id, function(err, result) {
+                    if(result.length>0) {
+                        console.log("likeModel 첫 생성")
+                        const spawn = require('child_process').spawn;
+                        const results2 = spawn('python', ["find_loveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
 
-                results2.stdout.on('data', (data) => {
-                    const stringRe = data.toString()
-                    console.log('선호배우 추출 결과 : ' + stringRe);
+                        results2.stdout.on('data', (data) => {
+                            const stringRe = data.toString()
+                            console.log('선호배우 추출 결과 : ' + stringRe);
 
-                    var likeUser = new db.likeModel({
-                      id: id,
-                      actors: stringRe, // 받아온 영화의 배우 넣기
-                    });
+                            var likeUser = new db.likeModel({
+                              id: id,
+                              actors: stringRe, // 받아온 영화의 배우 넣기
+                            });
 
-                    // save()로 저장
-                    likeUser.save(function (err) {
-                        if (err) {
-                          callback(err, null);
-                          return;
-                        }
-                        console.log("사용자 데이터 추가함");
-                    });
+                            // save()로 저장
+                            likeUser.save(function (err) {
+                                if (err) {
+                                  callback(err, null);
+                                  return;
+                                }
+                                console.log("사용자 데이터 추가함");
+                            });
 
-                    fActor = stringRe
-                    console.log("fActor : "+ fActor);
-                    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-                    console.log("선호배우 영화 추천 목록 가져오기 실행***")
-                    const results1 = spawn('python', ['recommend3.py',fActor]);
+                            fActor = stringRe
+                            console.log("fActor : "+ fActor);
+                            // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+                            console.log("선호배우 영화 추천 목록 가져오기 실행***")
+                            const results1 = spawn('python', ['recommend3.py',fActor]);
 
-                    // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-                    results1.stdout.on('data', (data) => {
-                        const stringResult2 = data.toString()
-                        console.log("선호배우 영화 목록 : "+stringResult2)
-                        callback(null, stringResult2)
-                    });
+                            // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+                            results1.stdout.on('data', (data) => {
+                                const stringResult2 = data.toString()
+                                console.log("선호배우 영화 목록 : "+stringResult2)
+                                callback(null, stringResult2)
+                            });
+                        });
+                    }
                 });
             }
         });

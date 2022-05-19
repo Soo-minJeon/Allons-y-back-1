@@ -8,7 +8,7 @@ def process(userId):
     meta = meta[['userId','movieId']]
 
     for i in range(0, len(meta)):
-        if meta['userId'][i] == userId:
+        if str(meta['userId'][i]) == str(userId):
             movieID = meta['movieId'][i]
             break
 
@@ -25,4 +25,4 @@ def process(userId):
 
 if __name__ == '__main__':
     #process(sys.argv[1])
-    process(672)
+    process('672')

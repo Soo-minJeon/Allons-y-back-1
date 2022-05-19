@@ -1,16 +1,14 @@
 from pandas import read_csv
 import sys
-random_num = []
-
-result_movie = ''
-result_poster = ''
-df = read_csv('recommend/movie_info.csv')
 
 def process(fActor):
+    random_num = []
+    df = read_csv('recommend/movie_info.csv')
     result_movie = ""
     result_poster = ""
+    fActor2 = str(fActor).strip('\n').strip('\n')
     for i in range(len(df)):
-        if(fActor in df['actor'][i]):
+        if(fActor2 in df['actor'][i]):
             random_num.append(i)
 
     count = 0
@@ -26,5 +24,5 @@ def process(fActor):
     print("["+result_movie+"],["+result_poster+"]")
 
 if __name__ == '__main__':
-    process('Leonardo DiCaprio')
-    #process(sys.argv[1])
+    #process('Leonardo DiCaprio')
+    process(sys.argv[1])

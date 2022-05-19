@@ -21,7 +21,7 @@ with open('poster_path.csv', 'a', newline='') as f_object:
     dictwriter_object = csv.DictWriter(f_object, fieldnames=headersCSV)
     dictwriter_object.writeheader()
 
-    for i in range(27035, len(meta)):
+    for i in range(42904, len(meta)):
         movieId = str(meta['id'][i])
         urlStr = 'https://www.themoviedb.org/movie/' + movieId +'?language=ko%27'
         print(urlStr)

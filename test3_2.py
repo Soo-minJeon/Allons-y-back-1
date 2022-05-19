@@ -12,7 +12,7 @@ pd.set_option('mode.chained_assignment',  None) # <==== 경고를 끈다
 movie_info = pd.read_csv('recommend/movie_info.csv', low_memory=False)
 movie_info = movie_info[['original_title','poster_path']]
 
-ratings = pd.read_csv('recommend/ratings_small.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
+ratings = pd.read_csv('recommend/user_info.csv', low_memory=False) # 원본은 데이터가 많아서 small 데이터 사용
 ratings = ratings[['userId', 'movieId', 'rating']] # 사용자 아이디, 영화 아이디, 평가
 ratings.head()
 ratings.movieId = pd.to_numeric(ratings.movieId, errors='coerce')

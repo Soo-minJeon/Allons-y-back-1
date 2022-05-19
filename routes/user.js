@@ -323,6 +323,7 @@ var recommend1 = function(db, id, callback){
     // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
     // 1. child-process모듈의 spawn 취득
     const spawn = require('child_process').spawn;
+
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
     const result = spawn('python', ['test3_2.py', paramId]);
 

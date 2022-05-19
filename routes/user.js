@@ -1177,6 +1177,12 @@ var watchAloneEnd = function(req, res){
         movieTitle : parammovieTitle
       });
 
+      // eyetracking안의 시간대별 감정 측정 결과를 기록해놓은 데이터 삭제
+      await database.EyetrackModel.deleteMany({
+        userId : paramId,
+        movieTitle : parammovieTitle
+      });
+
       var objToSend = {
         genres : movie_genre,
         poster : movie_poster
@@ -1190,6 +1196,42 @@ var watchAloneEnd = function(req, res){
     console.log('----------------------------------------------------------------------------')
   }
 };
+
+var watchTogetherEnd = function(req, res){
+
+  console.log('/watchTogetherEnd 라우팅 함수 호출');
+  var database = req.app.get('database');
+
+  if (database){
+
+    var paramRoomCode = req.body.roomCode || req.query.roomCode; // 룸코드 받아오기
+
+    async function find_room(){
+
+      var existing_room = await database.RoomModel.find({
+        roomCode : paramRoomCode
+      }).clone();
+
+      if (existing_room) {
+        console.log('존재하는 룸 확인됨.')
+        var a = await database.RoomModel.deleteOne({
+          roomCode : paramRoomCode.toString()
+        });
+        console.log('룸코드 [' + paramRoomCode + '] 삭제 완료')
+        res.status(200).send()
+      }else {
+        console.log("해당하는 방 정보를 찾을 수 없음.")
+        res.status(400).send()
+      }
+    }
+
+    find_room()
+  }else {
+    console.log("데이터베이스가 정의되지 않음...");
+    res.status(400).send()
+  }
+
+}
 
 // 감상정보 업데이트 : 감상 후 작성되는 감상평,평점 콜렉션에 반영 
 var addReview = function(req, res){
@@ -1475,6 +1517,7 @@ module.exports.sceneAnalyze = sceneAnalyze;
 module.exports.logout = logout;
 module.exports.getAllMovieList = getAllMovieList;
 module.exports.watchAloneStart = watchAloneStart;
+module.exports.watchTogetherEnd = watchTogetherEnd;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
 module.exports.watchTogetherImageCapture = watchTogetherImageCapture;
 module.exports.watchAloneEnd = watchAloneEnd;

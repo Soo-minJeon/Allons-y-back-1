@@ -83,8 +83,11 @@ router.route('/watchImageCaptureEyetrack').post(user.watchImageCaptureEyetrack);
 // s3 버킷으로 사진보낼 때마다 ( 같이보기 : 감정분석 )
 router.route('/watchTogetherImageCapture').post(user.watchTogetherImageCapture);
 
-// 감상 종료 시 신호
+// 혼자보기 감상 종료 시 신호
 router.route('/watchAloneEnd').post(user.watchAloneEnd);
+
+// 같이보기 감상 종료 시 신호
+router.route('/watchTogetherEnd').post(user.watchTogetherEnd);
 
 // 리뷰 등록 시 신호
 router.route('/addReview').post(user.addReview);

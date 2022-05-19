@@ -54,6 +54,7 @@ module.exports = {
         {file:'./routes/user', path:'/watchImageCaptureEyetrack', method:'watchImageCaptureEyetrack', type:'post'},
         {file:'./routes/user', path:'/watchTogetherImageCapture', method:'watchTogetherImageCapture', type:'post'},
         {file:'./routes/user', path:'/watchAloneEnd', method:'watchAloneEnd', type:'post'},
+        {file:'./routes/user', path:'/watchTogetherEnd', method:'watchTogetherEnd', type:'post'},
         {file:'./routes/user', path:'/addReview', method:'addReview', type:'post'},
     ]
 }

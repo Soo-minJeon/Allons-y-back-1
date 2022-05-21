@@ -24,5 +24,5 @@ def process(userId):
             break
 
 if __name__ == '__main__':
-    #process(sys.argv[1])
-    process('672')
+    process(sys.argv[1])
+    #process('672')

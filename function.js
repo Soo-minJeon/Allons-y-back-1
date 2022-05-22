@@ -141,17 +141,17 @@ var getRecommendUserList = function(result, callback){
   splitResult = result.split('] [')
 
   ids = splitResult[0];
-  console.log('ids : ', ids)
+  // console.log('ids : ', ids)
   ids = ids.split(", ")
   ids[0] = ids[0].replace("[", '')
 
   titles = splitResult[1];
-  console.log('titles : ', titles)
+  // console.log('titles : ', titles)
   // titles = titles.replace('"', "'").replace('",', "',").split("', '")
   titles = titles.split(",")
 
   posters = splitResult[2];
-  console.log('posters : ', posters)
+  // console.log('posters : ', posters)
   posters = posters.split(',')
   // posters = posters.replace('nan', "'nan'").split("', '")
   // for(let i = 0; i<posters.length; i++){
@@ -181,9 +181,9 @@ var getRecommendUserList = function(result, callback){
   }
 
   var count = resultArray.length
-  console.log('===================\n결과 갯수 : ', count)
+  // console.log('===================\n결과 갯수 : ', count)
 
-  console.log("============================ 처리 결과 ============================\n", resultArray, "\n============================ 처리 결과 ============================\n");
+  // console.log("============================ 처리 결과 ============================\n", resultArray, "\n============================ 처리 결과 ============================\n");
 
   callback(null, resultArray)
 };

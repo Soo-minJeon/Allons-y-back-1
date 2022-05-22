@@ -154,11 +154,10 @@ var watchlist = function(req, res) {
             callback(err, null);
             return;
           }
-          console.log(results);
-          console.log(paramId + '의 감상결과 리스트 가져오기');
+          // console.log(results);
+          // console.log(paramId + '의 감상결과 리스트 가져오기');
   
           if(results.length>0) {
-            console.log('감상결과 목록 존재');
 
             for (let i = 0; i<results.length; i++){
               resultTitleArray[i] = results[i].movieTitle;
@@ -170,16 +169,22 @@ var watchlist = function(req, res) {
               poster : resultPosterArray
             }
 
+            console.log('감상결과 목록 존재', objToSend);
+
             res.status(200).send(JSON.stringify(objToSend)); // 감상결과 목록 보내기
+            console.log('----------------------------------------------------------------------------')
           } else {
             console.log('감상 기록 없음');
+            var objToSend = {title : [], poster : []}
+            res.status(200).send(JSON.stringify(objToSend)); // 빈  감상결과 목록 보내기
+            console.log('----------------------------------------------------------------------------')
           }
         });
     }
     else{
         console.log('데이터베이스가 정의되지 않음...');
         res.status(400).send();
-        console.log("\n\n");
+        console.log('----------------------------------------------------------------------------')
     }
 };
 
@@ -201,7 +206,7 @@ var watchresult = function(req, res) {
         });
 
         if (results.length > 0) {
-          console.dir(results);
+          // console.log(results);
 
           var objToSend = {
             title: results[0].movieTitle,
@@ -217,9 +222,14 @@ var watchresult = function(req, res) {
 
           res.status(200).send(JSON.stringify(objToSend));
           console.log(
-            "감상기록 결과 : 데이터베이스 존재 : 기록 존재 : 찾은 결과 전송 성공"
+            "감상기록 결과 : 데이터베이스 존재 : 기록 존재 : 찾은 결과 전송 성공", objToSend
           );
-          console.log("\n\n");
+          console.log('----------------------------------------------------------------------------')
+        }
+        else {
+          res.status(400).send()
+          console.log("유저의 해당 영화 감상기록이 존재하지 않음.")
+          console.log('----------------------------------------------------------------------------')
         }
       }
       main() 
@@ -227,7 +237,7 @@ var watchresult = function(req, res) {
     else{
       console.log('데이터베이스가 정의되지 않음...');
       res.status(400).send();
-      console.log("\n\n");
+      console.log('----------------------------------------------------------------------------')
     }
 };
 
@@ -273,6 +283,7 @@ var sceneAnalyze = function(req, res) {
                 console.log('장면분석 정보 등록 에러 발생...');
                 console.dir(err);
                 res.status(400).send();
+                console.log('----------------------------------------------------------------------------')
             }
            // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
             if(result) {
@@ -284,7 +295,7 @@ var sceneAnalyze = function(req, res) {
             } else { // 결과 객체가 없으면 실패 응답 전송
               console.log('장면분석 정보 등록 에러 발생...');
               res.status(400).send();
-              console.log('\n\n');
+              console.log('----------------------------------------------------------------------------')
             }
           });
         }
@@ -292,7 +303,7 @@ var sceneAnalyze = function(req, res) {
           console.log('장면분석 정보 등록 에러 발생...');
           console.dir(err);
           res.status(400).send();
-          console.log('\n\n');
+          console.log('----------------------------------------------------------------------------')
         }
       });
 
@@ -373,7 +384,6 @@ var recommend2 = function (id, callback) {
 
   //result에는 유저에게 추천할 사용자들 id 가 들어있음.
   const result = spawnSync("python", ["recommend/main.py", paramId]);
-  console.log("중간점검");
 
   if (result.status !== 0) {
     process.stderr.write(result.stderr);
@@ -383,11 +393,10 @@ var recommend2 = function (id, callback) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     getpython = result.stdout.toString();
-    console.log("python 결과 형식 : ", typeof getpython);
   }
 
   getRecommendUserList(getpython, function (err, result) {
-    console.dir(result);
+    // console.dir(result);
 
     if (err) {
       console.log("추천 사용자 목록 가져오는 중에 에러 발생 ...");
@@ -513,20 +522,20 @@ var enterroom = function(req, res){
           res.status(400).send();
         }
   
-        else if (result.length > 0){
+        else if (result){
           console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
   
           var objToSend = {
             roomToken : result[0].roomToken
           };
           res.status(200).send(JSON.stringify(objToSend));
-          console.log('\n\n');
+          console.log('----------------------------------------------------------------------------')
         }
   
         else{
           res.status(400).send();
           console.log('초대 코드에 해당하는 같이 보기 방 없음...');
-          console.log('\n\n')
+          console.log('----------------------------------------------------------------------------')
         };
   
       })
@@ -534,7 +543,7 @@ var enterroom = function(req, res){
     else{
       console.log('데이터베이스가 정의되지 않음...');
       res.status(400).send();
-      console.log('\n\n');
+      console.log('----------------------------------------------------------------------------')
     }
   
 };
@@ -609,8 +618,6 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     var every_eyetrack_array
 
     async function searchMovieInfo(){
-      console.log('req.body정보')
-      console.dir(req.body)
       // console.log('req.body 정보 : {Id : ', paramId, " / movieTitle : ", parammovieTitle, " }")
       const existing = await database.MovieModel.find(
         { title : parammovieTitle }).clone()
@@ -665,21 +672,24 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           console.log('----------------------------------------------------------------------------')
         }
         else{
-          console.log('감상 결과 데이터 추가됨 => \n', newWatch, '\n');
-          res.status(200).send()
-          console.log('----------------------------------------------------------------------------')
-        }    
-      });
-      await newEyeTrack.save(function(err) {
-        if (err){
-          console.log('***ERROR!! 집중도 기록 스키마 생성 및 저장 오류... : ', err)
-          res.status(400).send() // 저장오류
-          console.log('----------------------------------------------------------------------------')
-        }
-        else{
-          console.log('집중도 기록 추가됨 => \n', newEyeTrack, '\n');
-          res.status(200).send()
-          console.log('----------------------------------------------------------------------------')
+          console.log('감상 결과 데이터 추가됨')
+          // console.log('=> \n', newWatch, '\n');
+          // res.status(200).send()
+          // console.log('----------------------------------------------------------------------------')
+
+          newEyeTrack.save(function(err) {
+            if (err){
+              console.log('***ERROR!! 집중도 기록 스키마 생성 및 저장 오류... : ', err)
+              res.status(400).send() // 저장오류
+              console.log('----------------------------------------------------------------------------')
+            }
+            else{
+              console.log('집중도 기록 추가됨');
+              // console.log('=> \n', newEyeTrack, '\n');
+              res.status(200).send()
+              console.log('----------------------------------------------------------------------------')
+            }    
+          });
         }    
       });
     }
@@ -810,6 +820,7 @@ var watchImageCaptureEyetrack = async function(req, res){
         console.log('WatchModel에 정보 없음요')
         console.dir(await database.WatchModel.find({userId : paramId, movieTitle : parammovieTitle}))
         res.status(400).send()
+        console.log('----------------------------------------------------------------------------')
       }
     }
     // await countlimit()
@@ -838,6 +849,7 @@ var watchImageCaptureEyetrack = async function(req, res){
         if ((sleepCount) >= checkLimit) {
           console.log('분석 횟수 중 절반 이상 자는 중.');
           res.status(410).send() // 자는 중이라고 프론트에 알려줌 - 410 // 프론트에 알려줘야 함.
+          console.log('----------------------------------------------------------------------------')
         } else {
           console.log('아직 분석 횟수 중 절반 이하 자는 중.');
         }
@@ -854,11 +866,13 @@ var watchImageCaptureEyetrack = async function(req, res){
           if (result){
             console.log('집중도 | 감정데이터 분석 및 정보 추가 완료');
             res.status(200).send()
+            console.log('----------------------------------------------------------------------------')
           }
           else {
             console.log('집중도 성공 | 감정 실패');
             console.dir(err)
             res.status(400).send();
+            console.log('----------------------------------------------------------------------------')
           }
         }); 
       }
@@ -927,10 +941,11 @@ var watchTogetherImageCapture = async function(req, res){
     rekognition_python()
 
     res.status(200).send(JSON.stringify(result_total))
-
+    console.log('----------------------------------------------------------------------------')
   } else {
     console.log("데이터베이스가 정의되지 않음...");
     res.status(400).send()
+    console.log('----------------------------------------------------------------------------')
   }
 };
 
@@ -1081,6 +1096,7 @@ var watchAloneEnd = function(req, res){
       } else {
         console.log("해당 영화의 기록 존재하지 않음.");
         res.status(400).send();
+        console.log('----------------------------------------------------------------------------')
       }
     }
     // 감정 부합 확인
@@ -1188,6 +1204,7 @@ var watchAloneEnd = function(req, res){
         poster : movie_poster
       }
       res.status(200).send(JSON.stringify(objToSend));
+      console.log('----------------------------------------------------------------------------')
     }
     main();
   }else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
@@ -1219,9 +1236,11 @@ var watchTogetherEnd = function(req, res){
         });
         console.log('룸코드 [' + paramRoomCode + '] 삭제 완료')
         res.status(200).send()
+        console.log('----------------------------------------------------------------------------')
       }else {
         console.log("해당하는 방 정보를 찾을 수 없음.")
         res.status(400).send()
+        console.log('----------------------------------------------------------------------------')
       }
     }
 
@@ -1229,6 +1248,7 @@ var watchTogetherEnd = function(req, res){
   }else {
     console.log("데이터베이스가 정의되지 않음...");
     res.status(400).send()
+    console.log('----------------------------------------------------------------------------')
   }
 
 }
@@ -1291,20 +1311,20 @@ var email = function(req, res){
           if(err){
             console.log('이메일 발송 실패')
             res.status(400).send();
-            console.log('\n\n');
+            console.log('----------------------------------------------------------------------------')
           }
   
           if (results){
             console.log('mail 전송을 완료하였습니다.');
             res.status(200).send(JSON.stringify(results));
-            console.log('\n\n');
+            console.log('----------------------------------------------------------------------------')
           }
         })
     }
     else{
         console.log('데이터베이스가 정의되지 않음...');
         res.status(400).send();
-        console.log("\n\n");
+        console.log('----------------------------------------------------------------------------')
     }
 };
 
@@ -1461,6 +1481,7 @@ var makeRoom = function (req, res) {
             roomToken : RoomToken
           };
           res.status(200).send(JSON.stringify(objToSend));
+          console.log('----------------------------------------------------------------------------')
         });
       }
     });
@@ -1474,7 +1495,7 @@ var makeRoom = function (req, res) {
   } else {
     console.log("데이터베이스가 정의되지 않음...");
     res.status(400).send();
-    console.log("\n\n");
+    console.log('----------------------------------------------------------------------------')
   }
 };
 
@@ -1483,6 +1504,7 @@ var makeRoom = function (req, res) {
 var logout = function (req, res) {
     res.status(200).send();
     console.log('로그아웃합니다..');
+    console.log('----------------------------------------------------------------------------')
 };
 
 // 함수 시작

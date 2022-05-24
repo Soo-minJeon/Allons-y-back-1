@@ -95,8 +95,6 @@ def process(title):
 
         return (movies.loc[find_row[0]]['original_title'],'|',  genres_after, '|', movies.loc[find_row[0]]['poster_path'])
 
-
-
 # 변수에 대한 가중치
 def user_release_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber] # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
@@ -175,9 +173,9 @@ def Estimate_Score_sum1(user_df, user_release_ratio_list):
             user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
                                                               user_release_ratio_list['2020']
     return user_df
+
 # 유저에 따른 개인 영화 추천
 # 리뷰 데이터, userId, 평점(5점일 때만), 영화 메타데이터, 사용하지 않을 영화데이터, reader함수, 알고리즘명
-
 def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     df = data
     df_user = df[(df['userId']==usernumber) & (df['rating']==rating)]  # userId로 받아온 사용자 데이터만, 주어진 평점일때만 남김
@@ -187,12 +185,12 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     #print(df_user)
     #  유저의 연도 비율을 가져온다.
     user_release_ratio_list = user_release_ratio(df, usernumber) # 유저의 년도 비율을 가져온다.
-    print('유저 연도 비율 : ')
-    print(user_release_ratio_list)
+    #print('유저 연도 비율 : ')
+    #print(user_release_ratio_list)
     user_df = moviedata.copy()
     user_df = user_df[~user_df['movieId'].isin(dropdata)]  # 사용하지 않는 영화데이터 제거
-    print('영화 메타 데이터 : ')
-    print(user_df)
+    #print('영화 메타 데이터 : ')
+    #print(user_df)
     data1 = Dataset.load_from_df(df[['userId', 'movieId', 'rating']], reader) #학습 데이터를 만들기 위해 Dataset 객체 생성
     # data1 = <surprise.dataset.DatasetAutoFolds object at 0x7ff1d0196b00>
     trainset = data1.build_full_trainset() # 데이터를 학습데이터로 만드는 과정
@@ -207,7 +205,7 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     print(user_df['original_title'].head(10))
     return user_df
 
-# 위 함수와 더불어 추천해주는 함수
+# Estimate_Score_sum1 위 함수와 더불어 추천해주는 함수
 def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo):
     df = data
     user_release_ratio_list = user_release_ratio(df, usernumber) # 유저의 년도 비율을 가져온다.
@@ -230,5 +228,5 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo
     return user_df_sum_relase
 
 
-user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd)
-#user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
+#user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
+user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)

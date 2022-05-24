@@ -13,7 +13,7 @@ class VideoDetect:
     video = 'avengers.mp4'
     startJobId = 'null'
 
-    sqsQueueUrl = 'arn:aws:sqs:ap-northeast-2:392553513869:rekognitionQueue'
+    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/rekognitionQueue'
     snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:AmazonRekognitionTopic'
     processType = 'null'
 
@@ -43,13 +43,12 @@ class VideoDetect:
                 for message in sqsResponse['Messages']:
                     notification = json.loads(message['Body'])
                     rekMessage = json.loads(notification['Message'])
-                    if rekMessage['JobId'] == self.startJobId:
-                        jobFound = True
-                        if (rekMessage['Status'] == 'SUCCEEDED'):
+                    jobFound = True
+                    if (rekMessage['Status'] == 'SUCCEEDED'):
                             succeeded = True
-                        self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
-                        # Delete the unknown message. Consider sending to dead letter queue
-                        self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
+                    self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
+                    # Delete the unknown message. Consider sending to dead letter queue
+                    self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
         return succeeded
 
     def GetLabelDetectionResults(self, second):
@@ -131,22 +130,22 @@ class VideoDetect:
 
     def CreateTopicandQueue(self):
 
-        millis = str(int(round(time.time() * 1000)))
+        # millis = str(int(round(time.time() * 1000)))
+        #
+        # # Create SNS topic
+        # snsTopicName = "AmazonRekognitionExample" + millis
+        #
+        # topicResponse = self.sns.create_topic(Name=snsTopicName)
+        # self.snsTopicArn = topicResponse['TopicArn']
+        #
+        # # create SQS queue
+        # sqsQueueName = "AmazonRekognitionQueue" + millis
+        # self.sqs.create_queue(QueueName=sqsQueueName)
+        # self.sqsQueueUrl = self.sqs.get_queue_url(QueueName=sqsQueueName)['QueueUrl']
+        #
+        # attribs = self.sqs.get_queue_attributes(QueueUrl=self.sqsQueueUrl, AttributeNames=['QueueArn'])['Attributes']
 
-        # Create SNS topic
-        snsTopicName = "AmazonRekognitionExample" + millis
-
-        topicResponse = self.sns.create_topic(Name=snsTopicName)
-        self.snsTopicArn = topicResponse['TopicArn']
-
-        # create SQS queue
-        sqsQueueName = "AmazonRekognitionQueue" + millis
-        self.sqs.create_queue(QueueName=sqsQueueName)
-        self.sqsQueueUrl = self.sqs.get_queue_url(QueueName=sqsQueueName)['QueueUrl']
-
-        attribs = self.sqs.get_queue_attributes(QueueUrl=self.sqsQueueUrl, AttributeNames=['QueueArn'])['Attributes']
-
-        sqsQueueArn = attribs['QueueArn']
+        sqsQueueArn = 'arn:aws:sqs:us-east-1:392553513869:allonsySQS'
 
         # Subscribe SQS queue to SNS topic
         self.sns.subscribe(
@@ -166,7 +165,7 @@ class VideoDetect:
       "Resource": "{}",
       "Condition":{{
         "ArnEquals":{{
-          "aws:SourceArn": "{}"
+          "aws:SourceArn": "arn:aws:sqs:us-east-1:392553513869:allonsySQS"
         }}
       }}
     }}
@@ -183,12 +182,12 @@ class VideoDetect:
         self.sqs.delete_queue(QueueUrl=self.sqsQueueUrl)
         self.sns.delete_topic(TopicArn=self.snsTopicArn)
 
-    def StartDetection1(self):
+    def StartDetection(self):
         # 사물 인식 아이디 발급
-        response1 = self.rek.start_label_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
+        response = self.rek.start_label_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
                                                   NotificationChannel={'RoleArn': self.roleArn,
                                                                        'SNSTopicArn': self.snsTopicArn})
-        self.startJobId = response1['JobId']
+        self.startJobId = response['JobId']
 
     def StartDetection3(self):
         # 감정 인식 아이디 발급
@@ -237,17 +236,17 @@ def main():
     analyzer = VideoDetect(roleArn, bucket, video)
     analyzer.CreateTopicandQueue()
 
-    analyzer.StartDetection1()
+    analyzer.StartDetection()
     if analyzer.GetSQSMessageSuccess() == True:
         analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
-    analyzer.StartDetection2()
-    if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
-    analyzer.StartDetection3()
-    if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetFaceDetectionResults(72333) # 72초에 사용자 감정의 폭 Max
+    # analyzer.StartDetection2()
+    # if analyzer.GetSQSMessageSuccess() == True:
+    #     analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
+    # analyzer.StartDetection3()
+    # if analyzer.GetSQSMessageSuccess() == True:
+    #     analyzer.GetFaceDetectionResults(72333) # 72초에 사용자 감정의 폭 Max
 
-    analyzer.DeleteTopicandQueue()
+    #analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
     main()

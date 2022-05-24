@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/recommend/movie_info_2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/recommend/poster_path.csv">
           <value>
             <Attribute>

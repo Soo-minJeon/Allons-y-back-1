@@ -627,7 +627,7 @@ var normalization = async function (category, highlight_array, callback) {
 
     if(category == "eyetrack"){
       for (let i = 0; i<highlight_array.length; i++){
-        normal_tmp = Number(temp_array[i] - min) / (max - min)
+        normal_tmp = Math.round(Number(temp_array[i] - min) / (max - min))
         normal_array[i] = {
           "time" : i*10,
           "emotion_diff" : normal_tmp

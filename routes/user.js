@@ -325,7 +325,7 @@ var sceneAnalyze = function(req, res) {
 var recommend1 = function(db, id, callback){
   console.log('/recommend1 라우팅 함수 호출');
   var database = db
-  var paramId = id;
+  var paramId = id
   // var paramId = 665; // 사용자 아이디 임의로 설정해놓음
   var titleArray = []
   var posterArray = []
@@ -350,11 +350,11 @@ var recommend1 = function(db, id, callback){
       array.pop()
       console.log('---------')
       for(var i=0;i<array.length-1;i++) {
-          var test_ = array[i].split('/')
+          var test_ = array[i].split('/t/p')
           console.log(array[i])
           titleArray[i] = test_[0]
           // console.log('titleArray : '+titleArray[i])
-          posterArray[i] = '/'+String(test_[1])
+          posterArray[i] = '/t/p'+String(test_[1])
           // console.log('posterArray : '+posterArray[i])
       }
       var objToSend = {

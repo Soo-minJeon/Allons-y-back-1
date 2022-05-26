@@ -1,7 +1,7 @@
 import string
-
 import pandas as pd
 import csv
+
 # 오류(SettingWithCopyError 발생)
 pd.set_option('mode.chained_assignment', 'raise') # SettingWithCopyError
 

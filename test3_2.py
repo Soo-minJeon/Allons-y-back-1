@@ -228,5 +228,5 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reaader, algo
     return user_df_sum_relase
 
 
-#user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
-user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
+user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
+#user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)

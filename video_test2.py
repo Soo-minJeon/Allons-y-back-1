@@ -45,7 +45,7 @@ class VideoDetect:
                     rekMessage = json.loads(notification['Message'])
                     jobFound = True
                     if (rekMessage['Status'] == 'SUCCEEDED'):
-                            succeeded = True
+                        succeeded = True
                     self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
                     # Delete the unknown message. Consider sending to dead letter queue
                     self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
@@ -130,22 +130,22 @@ class VideoDetect:
 
     def CreateTopicandQueue(self):
 
-        # millis = str(int(round(time.time() * 1000)))
-        #
-        # # Create SNS topic
-        # snsTopicName = "AmazonRekognitionExample" + millis
-        #
-        # topicResponse = self.sns.create_topic(Name=snsTopicName)
-        # self.snsTopicArn = topicResponse['TopicArn']
-        #
-        # # create SQS queue
-        # sqsQueueName = "AmazonRekognitionQueue" + millis
-        # self.sqs.create_queue(QueueName=sqsQueueName)
-        # self.sqsQueueUrl = self.sqs.get_queue_url(QueueName=sqsQueueName)['QueueUrl']
-        #
-        # attribs = self.sqs.get_queue_attributes(QueueUrl=self.sqsQueueUrl, AttributeNames=['QueueArn'])['Attributes']
+        millis = str(int(round(time.time() * 1000)))
 
-        sqsQueueArn = 'arn:aws:sqs:us-east-1:392553513869:allonsySQS'
+        # Create SNS topic
+        snsTopicName = "AmazonRekognitionExample" + millis
+
+        topicResponse = self.sns.create_topic(Name=snsTopicName)
+        self.snsTopicArn = topicResponse['TopicArn']
+
+        # create SQS queue
+        sqsQueueName = "AmazonRekognitionQueue" + millis
+        self.sqs.create_queue(QueueName=sqsQueueName)
+        self.sqsQueueUrl = self.sqs.get_queue_url(QueueName=sqsQueueName)['QueueUrl']
+
+        attribs = self.sqs.get_queue_attributes(QueueUrl=self.sqsQueueUrl, AttributeNames=['QueueArn'])['Attributes']
+
+        sqsQueueArn = attribs['QueueArn']
 
         # Subscribe SQS queue to SNS topic
         self.sns.subscribe(
@@ -165,7 +165,7 @@ class VideoDetect:
       "Resource": "{}",
       "Condition":{{
         "ArnEquals":{{
-          "aws:SourceArn": "arn:aws:sqs:us-east-1:392553513869:allonsySQS"
+          "aws:SourceArn": "{}"
         }}
       }}
     }}
@@ -182,12 +182,12 @@ class VideoDetect:
         self.sqs.delete_queue(QueueUrl=self.sqsQueueUrl)
         self.sns.delete_topic(TopicArn=self.snsTopicArn)
 
-    def StartDetection(self):
+    def StartDetection1(self):
         # 사물 인식 아이디 발급
-        response = self.rek.start_label_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
+        response1 = self.rek.start_label_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
                                                   NotificationChannel={'RoleArn': self.roleArn,
                                                                        'SNSTopicArn': self.snsTopicArn})
-        self.startJobId = response['JobId']
+        self.startJobId = response1['JobId']
 
     def StartDetection3(self):
         # 감정 인식 아이디 발급
@@ -236,17 +236,17 @@ def main():
     analyzer = VideoDetect(roleArn, bucket, video)
     analyzer.CreateTopicandQueue()
 
-    analyzer.StartDetection()
+    analyzer.StartDetection1()
     if analyzer.GetSQSMessageSuccess() == True:
         analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
-    # analyzer.StartDetection2()
-    # if analyzer.GetSQSMessageSuccess() == True:
-    #     analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
-    # analyzer.StartDetection3()
-    # if analyzer.GetSQSMessageSuccess() == True:
-    #     analyzer.GetFaceDetectionResults(72333) # 72초에 사용자 감정의 폭 Max
+    analyzer.StartDetection2()
+    if analyzer.GetSQSMessageSuccess() == True:
+        analyzer.GetCelebrityDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
+    analyzer.StartDetection3()
+    if analyzer.GetSQSMessageSuccess() == True:
+        analyzer.GetFaceDetectionResults(72333) # 72초에 사용자 감정의 폭 Max
 
-    #analyzer.DeleteTopicandQueue()
+    analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
     main()

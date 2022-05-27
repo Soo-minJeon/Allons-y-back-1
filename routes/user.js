@@ -341,22 +341,19 @@ var recommend1 = function(db, id, callback){
     // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
     result.stdout.on('data', function(data) {
       const stringResult = data.toString();
+      console.log(stringResult)
+      var array = stringResult.split('],[');
 
-      var array = stringResult.split('\n');
-      for(var i=1;i<array.length;i++) {
-         array[i-1]=array[i].slice(6).trim();
-         //console.log(array[i-1])
-      }
-      array.pop()
-      console.log('---------')
-      for(var i=0;i<array.length-1;i++) {
-          var test_ = array[i].split('/t/p')
-          console.log(array[i])
-          titleArray[i] = test_[0]
-          // console.log('titleArray : '+titleArray[i])
-          posterArray[i] = '/t/p'+String(test_[1])
-          // console.log('posterArray : '+posterArray[i])
-      }
+      titleArray = []
+      titleArray = array[0].replace('[',"").split(',');
+      console.log("titleArray:")
+      console.log(titleArray)
+
+      posterArray = []
+      posterArray = array[1].replace(']',"").split(',');
+      console.log("posterArray:")
+      console.log(posterArray)
+
       var objToSend = {
         titleArray : titleArray,
         posterArray : posterArray
@@ -450,9 +447,24 @@ var recommend3 = function(db, id, callback) { // 수정중
                 // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
                 results1.stdout.on('data', (data) => {
                     const stringResult = data.toString()
-                    console.log("선호배우 영화 결과 : ")
-                    console.log(stringResult)
-                    callback(null, stringResult)
+
+                    const array = stringResult.split('],[')
+
+                    titleArray = []
+                    titleArray = array[0].replace('[',"").split(',');
+                    console.log("titleArray:")
+                    console.log(titleArray)
+
+                    posterArray = []
+                    posterArray = array[1].replace(']',"").split(',');
+                    console.log("posterArray:")
+                    console.log(posterArray)
+
+                    var objToSend = {
+                      titleArray : titleArray,
+                      posterArray : posterArray
+                    }
+                    callback(null, objToSend)
                 });
             }
             else {

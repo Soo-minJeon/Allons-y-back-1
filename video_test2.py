@@ -13,8 +13,8 @@ class VideoDetect:
     video = 'avengers.mp4'
     startJobId = 'null'
 
-    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/rekognitionQueue'
-    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:AmazonRekognitionTopic'
+    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue'
+    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:allonsySNS'
     processType = 'null'
 
     def __init__(self, role, bucket, video):
@@ -29,11 +29,12 @@ class VideoDetect:
         while jobFound == False:
             sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'], MaxNumberOfMessages=10)
             if sqsResponse:
+                print(sqsResponse)
                 if 'Messages' not in sqsResponse:
                     if dotLine < 40:
                         print('.', end='')
                         dotLine = dotLine + 1
-                        time.sleep(0.5)
+                        time.sleep(5)
                     else:
                         print()
                         dotLine = 0

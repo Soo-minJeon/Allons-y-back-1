@@ -235,7 +235,17 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo)
     for i in range(len(user_df_sum_relase)):
         titleArray.append(user_df_sum_relase.iloc[i]['original_title'])
         posterArray.append(user_df_sum_relase.iloc[i]['poster_path'])
-    print(str(titleArray)+","+str(posterArray))
+
+    result_movie = ""
+    result_poster = ""
+
+    for i in range(len(titleArray)):
+        result_movie+=titleArray[i]+','
+        result_poster+=posterArray[i]+','
+
+    result_movie=result_movie.strip(',')
+    result_poster=result_poster.strip(',')
+    print("[" + result_movie + "],[" + result_poster + "]")
     return user_df_sum_relase
 
 user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)

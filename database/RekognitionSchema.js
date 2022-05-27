@@ -9,7 +9,7 @@ Schema.createSchema = function (mongoose) {
    var RekognitionSchema = mongoose.Schema({ // array - firstEmotion만 넣은 배열 - 시간순서대로
         userId: { type: String, require: true, unique: false, 'default': '' },
         movieTitle: { type: String, require: true, unique: false, 'default': '' },
-        time: { type: String, require: true, unique: true, 'default': '' },
+        time: { type: String, require: true, unique: false, 'default': '' },
         firstEmotion: { type: String, require: true, unique: false, 'default': '' },
         firstConfidence : { type: Number, require: true, unique: false, 'default': '' },  
         calm_count : { type: Number, require: true, unique: false, 'default': '' }, 

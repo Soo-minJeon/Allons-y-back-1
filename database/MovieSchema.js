@@ -10,7 +10,8 @@ Schema.createSchema = function (mongoose) {
     // 스키마 정의 (속성: type, required, unique)
     var MovieSchema = mongoose.Schema({ // d영화정보
         title: { type: String, required: true, unique: true, 'default': '' }, // 영화 제목
-        runningTime: { type: Number, required: true, unique: false, 'default': '' }, // 영화 재생 시간
+        runningTime: { type: Number, required: true, unique: false, 'default': '' }, // 영화 재생 시간_초
+        runningTime_m: { type: Number, required: true, unique: false, 'default': '' }, // 영화 재생 시간_분
         genres: { type: String, required: true, unique: false, 'default' : '' }, // 장르
         poster: { type: String, required: true, unique: true, 'default': '' }, // 영화 포스터
     });

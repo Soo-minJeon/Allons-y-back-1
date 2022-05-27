@@ -582,7 +582,7 @@ var getAllMovieList = function(req, res){
           for (let i = 0; i<existing.length; i++){
             resultTitleArray[i] = existing[i].title;
             resultPosterArray[i] = existing[i].poster;
-            resultRunningTimeArray[i] = existing[i].runningTime;
+            resultRunningTimeArray[i] = existing[i].runningTime_m; // 영화시간 분으로 전달
           }
         }
       }

@@ -470,4 +470,4 @@ if __name__ == "__main__":
 
     # 집중도 출력
     print(concentration)
-    time.sleep(3)
+    # time.sleep(3)

@@ -613,8 +613,6 @@ var normalization = async function (category, highlight_array, callback) {
       diff_array.sort(); 
       console.log('중간 점검1 : (diff_array) : ', diff_array)
     }
-
-
     min = diff_array[0];
     if (highlight_array.length == 1){min = 0}
 
@@ -627,7 +625,7 @@ var normalization = async function (category, highlight_array, callback) {
 
     if(category == "eyetrack"){
       for (let i = 0; i<highlight_array.length; i++){
-        normal_tmp = Math.round(Number(temp_array[i] - min) / (max - min))
+        normal_tmp = (Number(temp_array[i] - min) / (max - min))
         normal_array[i] = {
           "time" : i*10,
           "emotion_diff" : normal_tmp

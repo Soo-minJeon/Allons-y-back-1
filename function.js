@@ -364,7 +364,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     }).clone()
 
     if (existing_re.length>0){
-      console.log('10초 전의 rekognition 기록 찾음.', existing_re[0])
+      // console.log('10초 전의 rekognition 기록 찾음.', existing_re[0])
 
       tmp_calm_count = existing_re[0].calm_count
       tmp_calm_sum = Number(existing_re[0].calm_sum)
@@ -385,7 +385,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 
 
     if (existing_watch.length>0){
-      console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
+      // console.log('해당 유저의 해당 영화의 감상 기록 찾음.')
       tmp_emotion_count_array = existing_watch[0].emotion_count_array
       tmp_every_emotion_array = existing_watch[0].every_emotion_array
     }
@@ -445,7 +445,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
           calm_emotion_calm_aver = (calm_emotion_calm_sum / 2)
           calm_emotion_aver = (calm_emotion_sum / 2)
           highlight_emotion_diff = (((calm_aver - calm_emotion_calm_aver) + calm_emotion_aver)/2)
-          highlight_emotion_time = time
+          highlight_emotion_time = time-10
 
           // 초기화
           calm_count = 0;
@@ -508,16 +508,16 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
   async function main(){
 
     await getPastRekognition(userId, movieTitle, time)
-    console.log('====================첫번째 완료====================')
+    // console.log('====================첫번째 완료====================')
 
     await getWatchResult(userId, movieTitle);
-    console.log("====================두번째 완료====================");
+    // console.log("====================두번째 완료====================");
 
     // watch model 기록안에 있던 emotion_array를 대입.
     // edit_emotionArray = tmp_emotion_count_array;
 
     await edit_emotion_array(result_total[0])
-    console.log('====================네번째 완료====================')
+    // console.log('====================네번째 완료====================')
     // edit_emotionArray = 
     //   { "HAPPY" : tmp_emotion_count_array[0].HAPPY, 
     //   "SAD" : tmp_emotion_count_array[0].SAD, 
@@ -562,7 +562,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
         }
       })
     }
-    console.log('====================다섯번째 완료====================')
+    // console.log('====================다섯번째 완료====================')
 
     // 감정분석 기록 추가
     var newRekognition = await new db.RekognitionModel({
@@ -582,7 +582,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       }
       console.log('감정분석 데이터 추가');
     })
-    console.log('====================여섯번째 완료====================')
+    // console.log('====================여섯번째 완료====================')
     callback(null, 'true')
   }
   main()
@@ -601,7 +601,13 @@ var normalization = async function (category, highlight_array, callback) {
 
     if (category == "eyetrack"){
       console.log('카테고리: 아이트래킹')
-      diff_array = [...highlight_array].sort(); // 원본을 살리면서 배열 복사
+      for (let i = 0; i<highlight_array.length; i++){
+        diff_array[i] = Math.round(highlight_array[i])
+        console.log(diff_array[i])
+      }
+      diff_array = [...diff_array].sort(function(a, b){
+        return a - b;
+      }); 
       console.log('중간 점검1 : (diff_array) : ', diff_array)
     }
     else if (category == "emotion"){
@@ -610,7 +616,9 @@ var normalization = async function (category, highlight_array, callback) {
         diff_array[i] = highlight_array[i].emotion_diff
         console.log(highlight_array[i].emotion_diff)
       }
-      diff_array.sort(); 
+      diff_array = [...diff_array].sort(function(a, b){
+        return a - b;
+      });
       console.log('중간 점검1 : (diff_array) : ', diff_array)
     }
     min = diff_array[0];
@@ -626,6 +634,7 @@ var normalization = async function (category, highlight_array, callback) {
     if(category == "eyetrack"){
       for (let i = 0; i<highlight_array.length; i++){
         normal_tmp = (Number(temp_array[i] - min) / (max - min))
+        if ( normal_tmp < 0 ) {normal_tmp = 0 }
         normal_array[i] = {
           "time" : i*10,
           "emotion_diff" : normal_tmp

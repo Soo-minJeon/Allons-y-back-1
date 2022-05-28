@@ -94,7 +94,7 @@ def preprocessing(id, title, path):
 
     # s3 bucket
 
-    if(path == '0') or (path == 0):
+    if((path == '0') or (path == 0)):
         photo_list = [
             id + '_' + title + '_' + str(0) + '.jpg',
             id + '_' + title + '_' + str(1) + '.jpg',
@@ -470,3 +470,4 @@ if __name__ == "__main__":
 
     # 집중도 출력
     print(concentration)
+    time.sleep(3)

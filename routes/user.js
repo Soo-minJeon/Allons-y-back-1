@@ -582,7 +582,7 @@ var getAllMovieList = function(req, res){
           for (let i = 0; i<existing.length; i++){
             resultTitleArray[i] = existing[i].title;
             resultPosterArray[i] = existing[i].poster;
-            resultRunningTimeArray[i] = existing[i].runningTime_m; // 영화시간 분으로 전달
+            resultRunningTimeArray[i] = existing[i].runningTime_m;
           }
         }
       }
@@ -761,6 +761,7 @@ var watchImageCaptureEyetrack = async function(req, res){
         getpython = result.stdout.toString();
         // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
         concentration_scene = Number(getpython);
+        addEyetrack_record(concentration_scene)
       }
     }
 
@@ -771,7 +772,7 @@ var watchImageCaptureEyetrack = async function(req, res){
       if (existing.length > 0) {
         console.dir(existing)
         tmp_every_concentration_array = existing[0].every_concentration_array
-        if (paramTime == 0){
+        if (paramTime == 0 || paramTime == '0'){
           tmp_every_concentration_array[0] =  concentration_scene
         }
         else {
@@ -895,7 +896,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 
     async function main(){
       await startEyetrack()
-      await addEyetrack_record(concentration_scene)
+      // await addEyetrack_record(concentration_scene)
       await countlimit()
       await isSleep()
     }

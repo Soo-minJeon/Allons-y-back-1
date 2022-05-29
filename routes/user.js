@@ -1,5 +1,6 @@
 var functionUser = require('../function');
 var request = require("request");
+var personal_info = require("../personal_info");
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token"); // 아고라 토큰 발급 위해 필요
 
 // 회원가입 라우팅 함수
@@ -1305,8 +1306,8 @@ var email = function(req, res){
         var paramEmail = req.body.email;
   
         // 발신자 정의.
-        var app_email = '발신자정의';
-        var app_pass = '발신자정의';
+        var app_email = personal_info.app_email;
+        var app_pass = personal_info.app_pass;
 
         console.log('수신자 : ', paramEmail);
   
@@ -1347,8 +1348,8 @@ var makeRoom = function (req, res) {
 
     // 자격 증명과 요청 수신하는 데 사용할 포트 추가
     const PORT = 3001;
-    const APP_ID = "디코참고";
-    const APP_CERTIFICATE = "디코참고";
+    const APP_ID = personal_info.APP_ID;
+    const APP_CERTIFICATE = personal_info.APP_CERTIFICATE;
 
     // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
     const nocache = (req, res, next) => {

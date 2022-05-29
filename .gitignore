@@ -7,3 +7,4 @@ rekognition_videoTest.py
 recommend/movie_info_create.py
 recommend/new_movie_info_create.py
 .idea/csv-plugin.xml
+personal_info.js

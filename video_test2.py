@@ -13,8 +13,8 @@ class VideoDetect:
     video = 'avengers.mp4'
     startJobId = 'null'
 
-    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue'
-    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:allonsySNS'
+    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue' #
+    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:allonsySNS' #
     processType = 'null'
 
     def __init__(self, role, bucket, video):
@@ -28,15 +28,15 @@ class VideoDetect:
         dotLine = 0
         while jobFound == False:
             sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'], MaxNumberOfMessages=10)
+            #print(sqsResponse)
             if sqsResponse:
-                print(sqsResponse)
                 if 'Messages' not in sqsResponse:
                     if dotLine < 40:
-                        print('.', end='')
+                        #print('.', end='')
                         dotLine = dotLine + 1
                         time.sleep(5)
                     else:
-                        print()
+                        #print()
                         dotLine = 0
                     sys.stdout.flush()
                     continue
@@ -109,8 +109,8 @@ class VideoDetect:
                     if time//10==t:
                         t+=1
                         timeList.append(time)
-                        print(faceDetection['Face']['Emotions'][0])
-                        print(faceDetection['Timestamp'])
+                        #print(faceDetection['Face']['Emotions'][0])
+                        #print(faceDetection['Timestamp'])
                         correctSchema += ((faceDetection['Face']['Emotions'][0])["Type"]) + " "
 
                     if faceDetection['Timestamp'] / 1000 >= 5:

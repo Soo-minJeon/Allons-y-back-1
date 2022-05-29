@@ -8,11 +8,11 @@ Schema.createSchema = function (mongoose) {
     // 스키마 정의 (속성: type, required, unique)
     var likeSchema = mongoose.Schema({ // 사용자정보
         id: { type: String, required: true, unique: true, 'default': '' }, // 사용자 아이디
-        genres: { type: String, required: false, 'default':'Comedy' }, // 선호 장르
-        actors: { type: String, required: false }, // 선호 배우
-        emotions: { type: String, required: false, 'default':'happy' }, // 선호 감정
-        correctModel: {type: String, required: false, 'default':''},
-        resultEmotionPer: {type: String , required:false, 'default':''}
+        genres: { type: String, required: false, 'default':'Comedy' }, // 선호 장르, 유저스키마로
+        actors: { type: String, required: false }, // 선호 배우, 유저스키마로
+        emotions: { type: String, required: false, 'default':'happy' }, // 선호 감정, 유저스키마로
+        correctModel: {type: String, required: false, 'default':''}, // 왓치스키마로 옮김
+        resultEmotionPer: {type: String , required:false, 'default':''} // 왓치스키마로 옮김
     });
 
     console.log('Schema 정의를 완료하였습니다.');

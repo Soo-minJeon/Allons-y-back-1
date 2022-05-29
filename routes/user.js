@@ -245,13 +245,13 @@ var watchresult = function(req, res) {
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
     var database = req.app.get('database');
-    var paramGenre = null
-    var paramActor = null
-    var paramEmotion = null
-    var paramCorrect = null
+    var paramGenre = "Comedy"
+    var paramActor = "Leonardo DiCaprio"
+    var paramEmotion = "Happy"
+    var paramCorrect = ""
     // 감정맥스 초, 감정 종류 받아오기
     //var maxSecond = req.body.maxSecond || req.query.maxSecond;
-    var paramId = 'pbkdpwls';//req.body.id || req.query.id;
+    var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
 
     // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
       // 1. child-process모듈의 spawn 취득
@@ -259,18 +259,20 @@ var sceneAnalyze = function(req, res) {
       // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
       const result = spawn('python', ['video_test2.py']);
 
+      async function main() {
       // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-      result.stdout.on('data', function(data) {
+      result.stdout.on('data', await function(data) {
         const stringResult = data.toString();
         // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
         var array = stringResult.split('\n');
-        for(var i=0;i<3;i++) {
+        for(var i=0;i<array.length;i++) {
            console.log(array[i]);
+
+            paramGenre = (array[0].split(',')).toString()
+            paramActor = (array[1].split(' ')).toString()
+            paramEmotion = (array[2].split(' ')).toString()
+            paramCorrect = (array[3].split(' ')).toString()
         }
-        paramGenre = (array[0].split(' ')).toString()
-        paramActor = (array[1].split(' ')).toString()
-        paramEmotion = (array[2].split(' ')).toString()
-        paramCorrect = (array[3].split(' ')).toString()
 
         console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion+', '+paramCorrect);
 
@@ -305,20 +307,8 @@ var sceneAnalyze = function(req, res) {
           res.status(400).send();
           console.log('----------------------------------------------------------------------------')
         }
-      });
-
-      // 4. 에러 발생 시, stderr의 'data'이벤트리스너로 실행결과를 받는다.
-      result.stderr.on('data', function(data) {
-        const stringResult = data.toString();
-        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
-        var array = stringResult.split('\n');
-        for(var i=0;i<array.length;i++) {
-           console.log(array[i]);
-        }
-        paramGenre = array[0]
-        paramActor = array[1]
-        paramEmotion = array[2]
-      });
+      });}
+      main()
 }
 
 // 추천1 - 컨텐츠 기반(함수) - 테스트데이터 - 실행시수정

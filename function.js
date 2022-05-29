@@ -277,12 +277,12 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
 
            // save()로 저장
            user.save(function(err) {
-           if(err) {
-                  callback(err, null);
-                  return;
-           }
-           console.log('사용자 장면분석 데이터 추가함');
-           callback(null, user);
+               if(err) {
+                      callback(err, null);
+                      return;
+               }
+               console.log('사용자 장면분석 데이터 추가함');
+               callback(null, user);
            });
         }
   })

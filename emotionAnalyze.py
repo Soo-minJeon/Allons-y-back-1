@@ -35,17 +35,16 @@ class VideoDetect:
         succeeded = False
         dotLine = 0
         while jobFound == False:
-            sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'],
-                                                   MaxNumberOfMessages=10)
-            # print(sqsResponse)
+            sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'], MaxNumberOfMessages=10)
+            #print(sqsResponse)
             if sqsResponse:
                 if 'Messages' not in sqsResponse:
                     if dotLine < 40:
-                        # print('.', end='')
+                        #print('.', end='')
                         dotLine = dotLine + 1
                         time.sleep(5)
                     else:
-                        # print()
+                        #print()
                         dotLine = 0
                     sys.stdout.flush()
                     continue
@@ -55,51 +54,12 @@ class VideoDetect:
                     rekMessage = json.loads(notification['Message'])
                     jobFound = True
                     if (rekMessage['Status'] == 'SUCCEEDED'):
-                        succeeded = True
+                            succeeded = True
 
                     self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
                     # Delete the unknown message. Consider sending to dead letter queue
                     self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
         return succeeded
-
-    def GetLabelDetectionResults(self, second):
-        genreList = []
-        second = int(second/1000)
-        maxResults = 10
-        paginationToken = ''
-        finished = False
-        sf = ['Aircraft', 'Sky','Sunrise','Overwatch','Universe','Space']
-        adventure = ['Train','Vehicle','Transportation','Nature']
-        fscount = 0 # 3 이상되면 sf 장르로 분류
-        adventurecount = 0
-
-        while finished == False:
-            response = self.rek.get_label_detection(JobId=self.startJobId, MaxResults=maxResults,
-                                                    NextToken=paginationToken, SortBy='TIMESTAMP') # 시간순으로 정렬, SortBy TIMESTAMP
-
-            for labelDetection in response['Labels']:
-                if labelDetection['Timestamp']/1000>=5:
-                    last = second-5
-
-                    if int(labelDetection['Timestamp']/1000)<=second+5 and int(labelDetection['Timestamp']/1000)>=last:
-                        label = labelDetection['Label']
-                        if label['Name'] in sf:
-                            fscount+=1
-                        if label['Name'] in adventure:
-                            adventurecount+=1
-                    else:
-                        continue
-
-            if 'NextToken' in response:
-                paginationToken = response['NextToken']
-            else:
-                finished = True
-
-        if(fscount>=3):
-            genreList.append('sf')
-        if (adventurecount >= 3):
-            genreList.append('adventure')
-        print(genreList)
 
     def GetFaceDetectionResults(self,second): # 장면분석, 감정은 가장 크게 느낀 2가지만 가져오기.
             second = int(second / 1000)
@@ -193,13 +153,6 @@ class VideoDetect:
         self.sqs.delete_queue(QueueUrl=self.sqsQueueUrl)
         self.sns.delete_topic(TopicArn=self.snsTopicArn)
 
-    def StartDetection1(self):
-        # 사물 인식 아이디 발급
-        response1 = self.rek.start_label_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
-                                                  NotificationChannel={'RoleArn': self.roleArn,
-                                                                       'SNSTopicArn': self.snsTopicArn})
-        self.startJobId = response1['JobId']
-
     def StartDetection3(self):
         # 감정 인식 아이디 발급
         response2 = self.rek.start_face_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
@@ -208,36 +161,6 @@ class VideoDetect:
                                                  FaceAttributes='ALL')
         self.startJobId = response2['JobId']
 
-    def StartDetection2(self):
-        # 유명인 인식 아이디 발급
-        response3 = self.rek.start_celebrity_recognition(
-            Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
-            NotificationChannel={'RoleArn': self.roleArn, 'SNSTopicArn': self.snsTopicArn})
-        self.startJobId = response3['JobId']
-
-    def GetCelebrityDetectionResults(self,second):
-        second = int(second / 1000)
-        maxResults = 10
-        paginationToken = ''
-        finished = False
-        celeblist = []
-        while finished == False:
-            response = self.rek.get_celebrity_recognition(JobId=self.startJobId, MaxResults=maxResults,NextToken=paginationToken)
-
-            for celebrityRecognition in response['Celebrities']:
-                if celebrityRecognition['Timestamp']/1000>=2:
-                    last = second-2
-                    if int(celebrityRecognition['Timestamp']/1000)<=second+2 and int(celebrityRecognition['Timestamp']/1000)>=last:
-                        if str(celebrityRecognition['Celebrity']['Name']) not in celeblist:
-                            name = str(celebrityRecognition['Celebrity']['Name'])
-                            celeblist.append(name)
-                    else:
-                        continue
-            if 'NextToken' in response:
-                paginationToken = response['NextToken']
-            else:
-                finished = True
-        print(celeblist)
 
 def main():
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
@@ -245,13 +168,13 @@ def main():
     video = 'avengers.mp4'
 
     analyzer = VideoDetect(roleArn, bucket, video)
-    #analyzer.CreateTopicandQueue()
+    analyzer.CreateTopicandQueue()
 
-    analyzer.StartDetection1()
+    analyzer.StartDetection3()
     if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
+        analyzer.GetFaceDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
 
-    #analyzer.DeleteTopicandQueue()
+    analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
     main()

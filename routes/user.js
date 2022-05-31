@@ -245,70 +245,107 @@ var watchresult = function(req, res) {
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
     var database = req.app.get('database');
-    var paramGenre = "Comedy"
-    var paramActor = "Leonardo DiCaprio"
-    var paramEmotion = "Happy"
-    var paramCorrect = ""
+    var paramGenre = null
+    var paramActor = null
+    var paramEmotion = null
+    var paramCorrect = null
     // 감정맥스 초, 감정 종류 받아오기
     //var maxSecond = req.body.maxSecond || req.query.maxSecond;
-    var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
+    var paramId = req.body.id || req.query.id;
 
     // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
       // 1. child-process모듈의 spawn 취득
       const spawn = require('child_process').spawn;
       // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
       const result = spawn('python', ['video_test2.py']);
+      const result2 = spawn('python', ['celebrityAnalyze.py']);
+      const result3 = spawn('python', ['emotionAnalyze.py']);
 
-      async function main() {
-      // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-      result.stdout.on('data', await function(data) {
-        const stringResult = data.toString();
-        // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
-        var array = stringResult.split('\n');
-        for(var i=0;i<array.length;i++) {
-           console.log(array[i]);
+      function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
+            var database = req.app.get('database');
+            // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+            if(database) {
+               scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect,function(err, result) {
+                if(err) {
+                    console.log('장면분석 정보 등록 에러 발생...');
+                    console.dir(err);
+                    res.status(400).send();
+                    console.log('----------------------------------------------------------------------------')
+                }
+               // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+                if(result) {
+                  console.log('장면분석 정보 등록 성공.');
+                  console.dir(result);
+                  res.status(200).send();
+                  console.log('\n\n');
 
-            paramGenre = (array[0].split(',')).toString()
-            paramActor = (array[1].split(' ')).toString()
-            paramEmotion = (array[2].split(' ')).toString()
-            paramCorrect = (array[3].split(' ')).toString()
-        }
-
-        console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion+', '+paramCorrect);
-
-        var database = req.app.get('database');
-
-        // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
-        if(database) {
-          scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect,function(err, result) {
-            if(err) {
-                console.log('장면분석 정보 등록 에러 발생...');
-                console.dir(err);
-                res.status(400).send();
-                console.log('----------------------------------------------------------------------------')
+                } else { // 결과 객체가 없으면 실패 응답 전송
+                  console.log('장면분석 정보 등록 에러 발생...');
+                  res.status(400).send();
+                  console.log('----------------------------------------------------------------------------')
+                }
+              });
             }
-           // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-            if(result) {
-              console.log('장면분석 정보 등록 성공.');
-              console.dir(result);
-              res.status(200).send();
-              console.log('\n\n');
-
-            } else { // 결과 객체가 없으면 실패 응답 전송
+            else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
               console.log('장면분석 정보 등록 에러 발생...');
+              console.dir(err);
               res.status(400).send();
               console.log('----------------------------------------------------------------------------')
             }
+      }
+
+      async function main() {
+          // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+          const result = spawn('python', ['video_test2.py']);
+          const result2 = spawn('python', ['celebrityAnalyze.py']);
+          const result3 = spawn('python', ['emotionAnalyze.py']);
+
+          // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
+          console.log("1. 장르 분석 실행 시작 ")
+          result.stdout.on('data', function(data) {
+            console.log("1. 장르 분석 실행끝! ")
+            const stringResult = data.toString();
+            console.log(stringResult)
+
+            paramGenre = stringResult
+            // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
+//            var array = stringResult.split('\n');
+//            for(var i=0;i<array.length;i++) {
+//                console.log(array[i]);
+//
+//                paramGenre = (array[0].split(',')).toString()
+//                paramActor = (array[1].split(',')).toString()
+//                paramEmotion = (array[2].split(' ')).toString()
+//                paramCorrect = (array[3].split(' ')).toString()
+//            }
+//            console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion+', '+paramCorrect);
+          });
+
+          console.log("2. 배우 분석 실행 시작 ")
+          result2.stdout.on('data', function(data2) {
+          console.log("2. 배우 분석 실행끝! ")
+            const stringResult2 = data2.toString();
+            console.log(stringResult2)
+
+            paramActor = stringResult2
+          });
+
+          console.log("3. 감정 분석 실행 시작 ")
+          result3.stdout.on('data', function(data3) {
+          console.log("3. 감정 분석 실행끝! ")
+            const stringResult3 = data3.toString();
+            console.log(stringResult3)
+
+            paramEmotion = stringResult3
+            paramCorrect = stringResult3
           });
         }
-        else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
-          console.log('장면분석 정보 등록 에러 발생...');
-          console.dir(err);
-          res.status(400).send();
-          console.log('----------------------------------------------------------------------------')
-        }
-      });}
+
+
       main()
+      if (paramGenre || paramActor){
+              dbSet("paramGenre", "paramActor", "paramEmotion","paramCorrect")
+      }
 }
 
 // 추천1 - 컨텐츠 기반(함수) - 테스트데이터 - 실행시수정
@@ -392,8 +429,8 @@ var recommend2 = function (id, callback) {
     } else if (result.length > 0) {
       console.log("추천 사용자 목록 가져오기 성공");
       callback(null, result)
-      
-    } else {
+    }
+    else {
       console.log("추천 사용자 목록 없음.");
       console.log("\n\n");
       callback(null, null)
@@ -1105,9 +1142,8 @@ var watchAloneEnd = function(req, res){
     }
     // 감정 부합 확인
     async function emotionCorrectTest() {
-      var resultSend;
-      var movieEmotion_array = await database.likeModel
-        .findById(paramId, function (err, result1) {
+      var resultSend=0;
+      await database.likeModel.findById(paramId, function (err, result1) {
           if (err) {
             callback(err, null);
             return;
@@ -1122,9 +1158,15 @@ var watchAloneEnd = function(req, res){
         })
         .clone();
 
-      var userEmotion_array = await database.WatchModel.findById(
-        paramId,
-        function (err, result2) {
+      async function updateResultPer(resultSend) {
+          await console.log("결과값 확인(0~100) : "+resultSend);
+          await database.likeModel.updateOne(
+              { id: paramId },
+              { $set: { resultEmotionPer : resultSend },}
+          );
+      }
+
+      await database.WatchModel.findById(paramId, function (err, result2) {
           if (err) {
             callback(err, null);
             return;
@@ -1132,8 +1174,8 @@ var watchAloneEnd = function(req, res){
 
           if (result2.length > 0) {
             var emotionArray = result2[0].every_emotion_array;
+            console.log(emotionArray)
             var len_test = result2[0].every_emotion_array.length;
-
             var count_test = 0;
             var allCount = 0;
             for (i = 0; i < len_test; i++) {
@@ -1142,23 +1184,15 @@ var watchAloneEnd = function(req, res){
               }
               allCount+=1;
             }
-            console.log("횟수 : "+count_test);
-            resultSend = count_test/allCount*100
+            console.log("횟수 : " + count_test + " 전체 횟수 : "+allCount);
+            resultSend = ((count_test/allCount)*100).toFixed(3)
+
+            console.log("결과값 확인(0~100) : "+resultSend);
+            updateResultPer(resultSend);
           }
         }
       ).clone();
-      await console.log("결과값 확인(0~100) : "+resultSend);
-      await database.likeModel.updateOne(
-            {
-              // 감상목록 highlight_array 수정 //
-              id: paramId,
-            },
-            {
-              $set: {
-                resultEmotionPer : resultSend
-              },
-            }
-          );
+
     }
     async function main() {
       await emotionCorrectTest()
@@ -1216,6 +1250,7 @@ var watchAloneEnd = function(req, res){
     res.status(400).send();
     console.log('----------------------------------------------------------------------------')
   }
+
 };
 
 var watchTogetherEnd = function(req, res){

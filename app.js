@@ -17,8 +17,8 @@ var database_loader = require('./database/database_loader');
 
 var user = require('./routes/user');
 
-// Mail 모듈
-var nodemailer = require("nodemailer");
+// // Mail 모듈
+// var nodemailer = require("nodemailer");
 
 //===== mongoose 모듈 사용 =====//
 var mongoose = require("mongoose");
@@ -37,9 +37,9 @@ app.use(expressSession({
    saveUninitialized:true
 }));
 
-// body-parser 설정
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// // body-parser 설정
+// app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
 
 var router = express.Router();
 

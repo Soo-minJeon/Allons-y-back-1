@@ -1124,7 +1124,7 @@ var watchAloneEnd = function(req, res){
     async function getMovieInfo(movieTitle) {
       var existing_movie = await database.MovieModel.find({
         // 영화 정보 데베에서 추출
-        movieTitle: movieTitle,
+        title: movieTitle,
       }).clone();
 
       if (existing_movie.length > 0) {

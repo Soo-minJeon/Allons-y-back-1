@@ -503,7 +503,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                         const results2 = spawn('python', ["find_loveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
 
                         results2.stdout.on('data', (data) => {
-                            const stringRe = data.toString()
+                            const stringRe = data.toString().replace(/\r/g, "");
                             console.log('선호배우 추출 결과 : ' + stringRe);
 
                             var likeUser = new db.likeModel({

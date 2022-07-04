@@ -35,30 +35,39 @@ class VideoDetect:
         succeeded = False
         dotLine = 0
         while jobFound == False:
-            sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'], MaxNumberOfMessages=10)
-            #print(sqsResponse)
+            sqsResponse = self.sqs.receive_message(QueueUrl=self.sqsQueueUrl, MessageAttributeNames=['ALL'],
+                                                   MaxNumberOfMessages=10)
+            # print(sqsResponse)
             if sqsResponse:
                 if 'Messages' not in sqsResponse:
                     if dotLine < 40:
                         #print('.', end='')
                         dotLine = dotLine + 1
-                        time.sleep(5)
                     else:
                         #print()
                         dotLine = 0
                     sys.stdout.flush()
+                    time.sleep(5)
                     continue
 
                 for message in sqsResponse['Messages']:
                     notification = json.loads(message['Body'])
                     rekMessage = json.loads(notification['Message'])
-                    jobFound = True
-                    if (rekMessage['Status'] == 'SUCCEEDED'):
+
+                    if rekMessage['JobId'] == self.startJobId:
+                        #print('Matching JobId 찾음! :' + rekMessage['JobId'])
+                        jobFound = True
+                        if (rekMessage['Status'] == 'SUCCEEDED'):
                             succeeded = True
 
-                    self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
-                    # Delete the unknown message. Consider sending to dead letter queue
-                    self.sqs.delete_message(QueueUrl=self.sqsQueueUrl, ReceiptHandle=message['ReceiptHandle'])
+                        self.sqs.delete_message(QueueUrl=self.sqsQueueUrl,
+                                                ReceiptHandle=message['ReceiptHandle'])
+                    #else:
+                        #print("Matching JobId 아님 :" +
+                         #     str(rekMessage['JobId']) + ' : ' + self.startJobId)
+                        # Delete the unknown message. Consider sending to dead letter queue
+                    self.sqs.delete_message(QueueUrl=self.sqsQueueUrl,
+                                            ReceiptHandle=message['ReceiptHandle'])
         return succeeded
 
     def GetFaceDetectionResults(self,second): # 장면분석, 감정은 가장 크게 느낀 2가지만 가져오기.

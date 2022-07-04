@@ -40,10 +40,10 @@ class VideoDetect:
             if sqsResponse:
                 if 'Messages' not in sqsResponse:
                     if dotLine < 40:
-                        print('.', end='')
+                        #print('.', end='')
                         dotLine = dotLine + 1
                     else:
-                        print()
+                        #print()
                         dotLine = 0
                     sys.stdout.flush()
                     time.sleep(5)
@@ -54,16 +54,16 @@ class VideoDetect:
                     rekMessage = json.loads(notification['Message'])
 
                     if rekMessage['JobId'] == self.startJobId:
-                        print('Matching JobId 찾음! :' + rekMessage['JobId'])
+                        #print('Matching JobId 찾음! :' + rekMessage['JobId'])
                         jobFound = True
                         if (rekMessage['Status'] == 'SUCCEEDED'):
                             succeeded = True
 
                         self.sqs.delete_message(QueueUrl=self.sqsQueueUrl,
                                                 ReceiptHandle=message['ReceiptHandle'])
-                    else:
-                        print("Matching JobId 아님 :" +
-                              str(rekMessage['JobId']) + ' : ' + self.startJobId)
+                    #else:
+                        #print("Matching JobId 아님 :" +
+                         #     str(rekMessage['JobId']) + ' : ' + self.startJobId)
                         # Delete the unknown message. Consider sending to dead letter queue
                     self.sqs.delete_message(QueueUrl=self.sqsQueueUrl,
                                             ReceiptHandle=message['ReceiptHandle'])

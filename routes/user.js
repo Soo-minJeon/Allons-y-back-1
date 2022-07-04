@@ -242,6 +242,46 @@ var watchresult = function(req, res) {
     }
 };
 
+var labelDetection = function(second, callback){
+    const spawn = require('child_process').spawn;
+    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+    const result = spawn('python', ['video_test2.py']);
+    console.log("1. 장르 분석 실행 시작 ")
+      result.stdout.on('data', function(data) {
+      console.log("1. 장르 분석 실행끝! ")
+      const stringResult = data.toString();
+      console.log(stringResult)
+
+      callback(null,stringResult);
+    });
+};
+var celebrityDetection = function(second, callback){
+      const spawn = require('child_process').spawn;
+      const result2 = spawn('python', ['celebrityAnalyze.py']);
+
+      console.log("2. 배우 분석 실행 시작 ")
+      result2.stdout.on('data', function(data) {
+          console.log("2. 배우 분석 실행 끝! ")
+          const stringResult = data.toString();
+          console.log(stringResult)
+
+          callback(null,stringResult);
+      });
+};
+var emotionDetection = function(second, callback){
+    const spawn = require('child_process').spawn;
+    const result3 = spawn('python', ['emotionAnalyze.py']);
+
+    console.log("3. 감정 분석 실행 시작 ")
+    result3.stdout.on('data', function(data) {
+      console.log("3. 감정 분석 실행 끝! ")
+      const stringResult = data.toString();
+      console.log(stringResult)
+
+      callback(null,stringResult);
+    });
+};
+
 // 장면분석
 var sceneAnalyze = function(req, res) {
     console.log('/sceneAnalyze 라우팅 함수 호출');
@@ -252,15 +292,7 @@ var sceneAnalyze = function(req, res) {
     var paramCorrect = null
     // 감정맥스 초, 감정 종류 받아오기
     //var maxSecond = req.body.maxSecond || req.query.maxSecond;
-    var paramId = req.body.id || req.query.id;
-
-    // 파이썬 실행 처리 코드, 장면분석 결과 받아옴
-      // 1. child-process모듈의 spawn 취득
-      const spawn = require('child_process').spawn;
-      // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-      const result = spawn('python', ['video_test2.py']);
-      const result2 = spawn('python', ['celebrityAnalyze.py']);
-      const result3 = spawn('python', ['emotionAnalyze.py']);
+    var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
 
       function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
             var database = req.app.get('database');
@@ -279,7 +311,6 @@ var sceneAnalyze = function(req, res) {
                   console.dir(result);
                   res.status(200).send();
                   console.log('\n\n');
-
                 } else { // 결과 객체가 없으면 실패 응답 전송
                   console.log('장면분석 정보 등록 에러 발생...');
                   res.status(400).send();
@@ -295,57 +326,23 @@ var sceneAnalyze = function(req, res) {
             }
       }
 
-      async function main() {
-          // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-          const result = spawn('python', ['video_test2.py']);
-          const result2 = spawn('python', ['celebrityAnalyze.py']);
-          const result3 = spawn('python', ['emotionAnalyze.py']);
+      labelDetection(database, 'second', function(err, result1) {
+           paramGenre = result1
+      });
+      celebrityDetection(database, 'second', function(err, result2) {
+           paramActor = result2
+      });
+      emotionDetection(database, 'second', function(err, result3) {
+            a = result3.split('\n')
+            paramEmotion = a[0]
+            paramCorrect = a[1]
+      });
 
-          // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
-          console.log("1. 장르 분석 실행 시작 ")
-          result.stdout.on('data', function(data) {
-            console.log("1. 장르 분석 실행끝! ")
-            const stringResult = data.toString();
-            console.log(stringResult)
-
-            paramGenre = stringResult
-            // 받아온 파이썬 코드 결과 데이터 형식 여기서 처리
-//            var array = stringResult.split('\n');
-//            for(var i=0;i<array.length;i++) {
-//                console.log(array[i]);
-//
-//                paramGenre = (array[0].split(',')).toString()
-//                paramActor = (array[1].split(',')).toString()
-//                paramEmotion = (array[2].split(' ')).toString()
-//                paramCorrect = (array[3].split(' ')).toString()
-//            }
-//            console.log('요청 파라미터 : ' + paramGenre + ', ' + paramActor + ', ' + paramEmotion+', '+paramCorrect);
-          });
-
-          console.log("2. 배우 분석 실행 시작 ")
-          result2.stdout.on('data', function(data2) {
-          console.log("2. 배우 분석 실행끝! ")
-            const stringResult2 = data2.toString();
-            console.log(stringResult2)
-
-            paramActor = stringResult2
-          });
-
-          console.log("3. 감정 분석 실행 시작 ")
-          result3.stdout.on('data', function(data3) {
-          console.log("3. 감정 분석 실행끝! ")
-            const stringResult3 = data3.toString();
-            console.log(stringResult3)
-
-            paramEmotion = stringResult3
-            paramCorrect = stringResult3
-          });
-        }
-
-
-      main()
-      if (paramGenre || paramActor){
-              dbSet("paramGenre", "paramActor", "paramEmotion","paramCorrect")
+      while (true) {
+          if (paramGenre && paramActor && paramEmotion && paramCorrect){
+              dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
+              break
+          }
       }
 }
 

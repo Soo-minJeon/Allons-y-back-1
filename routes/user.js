@@ -213,7 +213,7 @@ var watchresult = function(req, res) {
             title: results[0].movieTitle,
             poster: results[0].poster,
             genres: results[0].genres,
-            concentration: results[0].concentration,
+            concentration: (results[0].concentration*10),
             highlight_time: results[0].highlight_time, // 감정폭 가장 큰 시간
             emotion_count_array: results[0].emotion_count_array, // 감정들 count
             highlight_array: results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
@@ -610,7 +610,7 @@ var getAllMovieList = function(req, res){
           for (let i = 0; i<existing.length; i++){
             resultTitleArray[i] = existing[i].title;
             resultPosterArray[i] = existing[i].poster;
-            resultRunningTimeArray[i] = existing[i].runningTime_m;
+            resultRunningTimeArray[i] = existing[i].runningTime;
           }
         }
       }
@@ -743,197 +743,232 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
 };
 
 // 사용자 집중도/감정 분석 - 테스트데이터 - 실행시수정
-var watchImageCaptureEyetrack = async function(req, res){
+var watchImageCaptureEyetrack = function(req, res){
 
-  var database = req.app.get('database');
+  async function start() {
+    var database = req.app.get("database");
 
-  // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
+    // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
-  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
-  var paramTime = req.body.time || req.query.time;
-  var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
-  // var paramId = 'smj8554'; // 테스트데이터
-  // var parammovieTitle = 'toy story'; // 테스트데이터
-  // var paramTime = "40" // 테스트 데이터
-  // var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
+    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+    var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
+    var paramTime = req.body.time || req.query.time;
+    var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
+    // var paramId = 'smj8554'; // 테스트데이터
+    // var parammovieTitle = 'toy story'; // 테스트데이터
+    // var paramTime = "40" // 테스트 데이터
+    // var paramImgPath = "smj8554_toy story_40.jpg"; // 테스트데이터
 
-  console.log('/watchImageCaptureEyetrack 라우팅 함수 호출됨. // ', paramTime, "초");
+    console.log(
+      "/watchImageCaptureEyetrack 라우팅 함수 호출됨. // ", paramTime, "초");
 
-  var count = 0 // 러닝타임 나누기 10 + 1 (러닝타임이 30초라면, 0초 10초 20초 30초 측정)
-  var sleepCount = 0
-  var checkLimit = 0
-  var concentration_scene = 0
-  var tmp_concentration = 0
-  var getpython = "";
+    var count = 0; // 러닝타임 나누기 10 + 1 (러닝타임이 30초라면, 0초 10초 20초 30초 측정)
+    var sleepCount = 0;
+    var checkLimit = 0;
+    var concentration_scene = 0;
+    var tmp_concentration = 0;
+    var getpython = "";
 
-  if (database){
-  
-    async function startEyetrack() {
-      //파이썬 코드 실행
-      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+    if (database) {
+      async function startEyetrack() {
+        //파이썬 코드 실행
+        const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
 
-      param = paramTime + "/" + paramId + "/" + parammovieTitle
-      //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-      const result = spawnSync("python", [
-        "eyetracking/eyetrack.py",
-        param
-      ]);
+        param = paramTime + "/" + paramId + "/" + parammovieTitle;
+        //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+        const result = spawnSync("python", ["eyetracking/eyetrack.py", param]);
 
-      if (result.status !== 0) {
-        process.stderr.write(result.stderr);
-        process.exit(result.status);
-      } else {
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        getpython = result.stdout.toString();
-        // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
-        concentration_scene = Number(getpython);
-        addEyetrack_record(concentration_scene)
-      }
-    }
-
-    async function addEyetrack_record(concentration_scene){ // 집중도 스키마에 집중도 기록을 배열로 저장
-
-      const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
-
-      if (existing.length > 0) {
-        // console.dir(existing)
-        tmp_every_concentration_array = existing[0].every_concentration_array
-        if (paramTime == 0 || paramTime == '0'){
-          tmp_every_concentration_array[0] =  concentration_scene
-        }
-        else {
-          tmp_every_concentration_array[paramTime/10] =  concentration_scene
-        }
-        // tmp_every_concentration_array[paramTime/10] =  concentration_scene
-      }
-      await database.EyetrackModel.updateOne({ // 장면별 집중도 배열 수정 //
-        userId: paramId,
-        movieTitle: parammovieTitle
-      }, {
-        $set: { 
-          every_concentration_array: tmp_every_concentration_array,
-        },
-      }).clone()
-      
-    }
-
-    // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기 
-    // 영화 러닝타임 알아오기 -> (몇번 잤니?) 가 용인되는 횟수보다 적은가 확인해야 하기때문
-    /// ==> 기다려줘야함 1. 
-    // const existing = await database.WatchModel.find(
-    //   {userId : paramId, movieTitle : parammovieTitle}).clone()
-    
-    async function countlimit() {
-      const existing = await database.WatchModel.find({userId : paramId, movieTitle : parammovieTitle})
-
-      if (existing.length > 0) {
-        console.dir(existing)
-
-        sleepCount = existing[0].sleepingCount 
-        tmp_concentration = existing[0].concentration // 현재까지의 집중도 합을 구해옴.
-
-        concentration_scene = tmp_concentration + Number(getpython) // 현재 장면에서의 집중도를 더함.
-        
-        await database.WatchModel.updateOne({ // 감상목록 concentration 수정 //
-          userId: paramId,
-          movieTitle: parammovieTitle
-        }, {
-          $set: { 
-            concentration: concentration_scene,
-          },
-        }).clone()
-
-        await database.MovieModel.findByTitle(parammovieTitle, async function(err, result){
-          if (result.length > 0){
-            // console.dir(result[0])
-            count = Math.floor(result[0].runningTime / 10 ) + 1
-            checkLimit = count / 2
-            console.log('러닝타임 : ', result[0].runningTime)
-            console.log('용인 한계 : ', checkLimit)
-            console.log('현재 : ', sleepCount, "\n")
-          }
-        }).clone()
-      }
-      else{
-        console.log('WatchModel에 정보 없음요')
-        console.dir(await database.WatchModel.find({userId : paramId, movieTitle : parammovieTitle}))
-        res.status(400).send()
-        console.log('----------------------------------------------------------------------------')
-      }
-    }
-    // await countlimit()
-
-    // 자는 중이니?
-    /// 2.
-    async function isSleep(){
-
-      if (Number(getpython) == 0){
-        console.log('집중도 분석 결과 : 자는 중');
-        sleepCount = sleepCount + 1
-  
-        // 결과 스키마의 (몇번잤니?) 수정
-        /// 3.
-        await database.WatchModel.updateOne({
-          userId: paramId,
-          movieTitle: parammovieTitle
-        },{
-          $set: {
-            sleepingCount: sleepCount
-          }
-        }).clone()
-  
-        // sleepCount가 용인 횟수를 넘었을 때
-        /// 4.
-        if ((sleepCount) >= checkLimit) {
-          console.log('분석 횟수 중 절반 이상 자는 중.');
-          res.status(410).send() // 자는 중이라고 프론트에 알려줌 - 410 // 프론트에 알려줘야 함.
-          console.log('----------------------------------------------------------------------------')
+        if (result.status !== 0) {
+          process.stderr.write(result.stderr);
+          process.exit(result.status);
         } else {
-          console.log('아직 분석 횟수 중 절반 이하 자는 중.');
-          res.status(200).send()
-          console.log('----------------------------------------------------------------------------')
+          process.stdout.write(result.stdout);
+          process.stderr.write(result.stderr);
+          getpython = result.stdout.toString();
+          // console.log('eyetrack.py 결과 형식 : ', typeof(getpython))
+          concentration_scene = Number(getpython);
+          addEyetrack_record(concentration_scene);
         }
-  
       }
-      else{ // 안 자는 중
-        console.log('집중도 분석 결과 : 안 자는 중');
-  
-        path = '' // path - 수정필요
-  
-        // 감정분석 시작 - 수정 필요
-        // watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, count, paramTime, function(err, result){
-        watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, paramTime, function(err, result){
-          if (result){
-            console.log('집중도 | 감정데이터 분석 및 정보 추가 완료');
-            res.status(200).send()
-            console.log('----------------------------------------------------------------------------')
+
+      async function addEyetrack_record(concentration_scene) {
+        // 집중도 스키마에 집중도 기록을 배열로 저장
+
+        const existing = await database.EyetrackModel.find({
+          userId: paramId,
+          movieTitle: parammovieTitle,
+        });
+
+        if (existing.length > 0) {
+          // console.dir(existing)
+          tmp_every_concentration_array = existing[0].every_concentration_array;
+          if (paramTime == 0 || paramTime == "0") {
+            tmp_every_concentration_array[0] = concentration_scene;
+          } else {
+            tmp_every_concentration_array[paramTime / 10] = concentration_scene;
           }
-          else {
-            console.log('집중도 성공 | 감정 실패');
-            console.dir(err)
-            res.status(400).send();
-            console.log('----------------------------------------------------------------------------')
+          // tmp_every_concentration_array[paramTime/10] =  concentration_scene
+        }
+        await database.EyetrackModel.updateOne(
+          {
+            // 장면별 집중도 배열 수정 //
+            userId: paramId,
+            movieTitle: parammovieTitle,
+          },
+          {
+            $set: {
+              every_concentration_array: tmp_every_concentration_array,
+            },
           }
-        }); 
+        ).clone();
       }
+
+      // 감상결과에 저장해놓은 (몇번 잤니?) 받아오기
+      // 영화 러닝타임 알아오기 -> (몇번 잤니?) 가 용인되는 횟수보다 적은가 확인해야 하기때문
+      /// ==> 기다려줘야함 1.
+      // const existing = await database.WatchModel.find(
+      //   {userId : paramId, movieTitle : parammovieTitle}).clone()
+
+      async function countlimit() {
+        const existing = await database.WatchModel.find({
+          userId: paramId,
+          movieTitle: parammovieTitle,
+        });
+
+        if (existing.length > 0) {
+          console.dir(existing);
+
+          sleepCount = existing[0].sleepingCount;
+          tmp_concentration = existing[0].concentration; // 현재까지의 집중도 합을 구해옴.
+
+          concentration_scene = tmp_concentration + Number(getpython); // 현재 장면에서의 집중도를 더함.
+
+          await database.WatchModel.updateOne(
+            {
+              // 감상목록 concentration 수정 //
+              userId: paramId,
+              movieTitle: parammovieTitle,
+            },
+            {
+              $set: {
+                concentration: concentration_scene,
+              },
+            }
+          ).clone();
+
+          await database.MovieModel.findByTitle(
+            parammovieTitle,
+            async function (err, result) {
+              if (result.length > 0) {
+                // console.dir(result[0])
+                count = Math.floor(result[0].runningTime / 10) + 1;
+                checkLimit = count / 2;
+                console.log("러닝타임 : ", result[0].runningTime);
+                console.log("용인 한계 : ", checkLimit);
+                console.log("현재 : ", sleepCount, "\n");
+              }
+            }
+          ).clone();
+        } else {
+          console.log("WatchModel에 정보 없음요");
+          console.dir(
+            await database.WatchModel.find({
+              userId: paramId,
+              movieTitle: parammovieTitle,
+            })
+          );
+          res.status(400).send();
+          console.log(
+            "----------------------------------------------------------------------------"
+          );
+        }
+      }
+      // await countlimit()
+
+      // 자는 중이니?
+      /// 2.
+      async function isSleep() {
+        if (Number(getpython) == 0) {
+          console.log("집중도 분석 결과 : 자는 중");
+          sleepCount = sleepCount + 1;
+
+          // 결과 스키마의 (몇번잤니?) 수정
+          /// 3.
+          await database.WatchModel.updateOne(
+            {
+              userId: paramId,
+              movieTitle: parammovieTitle,
+            },
+            {
+              $set: {
+                sleepingCount: sleepCount,
+              },
+            }
+          ).clone();
+
+          // sleepCount가 용인 횟수를 넘었을 때
+          /// 4.
+          if (sleepCount >= checkLimit) {
+            console.log("분석 횟수 중 절반 이상 자는 중.");
+            res.status(410).send(); // 자는 중이라고 프론트에 알려줌 - 410 // 프론트에 알려줘야 함.
+            console.log(
+              "----------------------------------------------------------------------------"
+            );
+          } else {
+            console.log("아직 분석 횟수 중 절반 이하 자는 중.");
+            res.status(200).send();
+            console.log(
+              "----------------------------------------------------------------------------"
+            );
+          }
+        } else {
+          // 안 자는 중
+          console.log("집중도 분석 결과 : 안 자는 중");
+
+          path = ""; // path - 수정필요
+
+          // 감정분석 시작 - 수정 필요
+          // watchImageCaptureRekognition(database, paramId, parammovieTitle, paramImgPath, count, paramTime, function(err, result){
+          watchImageCaptureRekognition(
+            database,
+            paramId,
+            parammovieTitle,
+            paramImgPath,
+            paramTime,
+            function (err, result) {
+              if (result) {
+                console.log("집중도 | 감정데이터 분석 및 정보 추가 완료");
+                res.status(200).send();
+                console.log(
+                  "----------------------------------------------------------------------------"
+                );
+              } else {
+                console.log("집중도 성공 | 감정 실패");
+                console.dir(err);
+                res.status(400).send();
+                console.log(
+                  "----------------------------------------------------------------------------"
+                );
+              }
+            }
+          );
+        }
+      }
+      // await isSleep()
+
+      async function main() {
+        await startEyetrack();
+        // await addEyetrack_record(concentration_scene)
+        await countlimit();
+        await isSleep();
+      }
+      main();
+    } else {
+      console.log("데이터베이스가 정의되지 않음...");
+      res.status(400).send();
     }
-    // await isSleep()
-
-    async function main(){
-      await startEyetrack()
-      // await addEyetrack_record(concentration_scene)
-      await countlimit()
-      await isSleep()
-    }
-    main()
-
-
-  } else {
-    console.log("데이터베이스가 정의되지 않음...");
-    res.status(400).send()
   }
+  start()
 };
 
 // 같이보기 시 감정 분석
@@ -1133,8 +1168,12 @@ var watchAloneEnd = function(req, res){
         movie_genre = existing_movie[0].genres;
         movie_poster = existing_movie[0].poster;
         movie_running_time = existing_movie[0].runningTime;
-        count_eyetracking = parseInt(movie_running_time / 10); // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
-        ConcentrationPreScopeAverage = concentration_sum / count_eyetracking; // 집중도 평균 계산
+        count_eyetracking = Math.floor(movie_running_time / 10) + 1; // 집중도 계산할 횟수 구함 (러닝타임 나누기 10(10초간격으로 측정하기 때문))
+        ConcentrationPreScopeAverage = Math.floor(concentration_sum / count_eyetracking); // 집중도 평균 계산
+
+        console.log('집중도평균 계산 count = ', count_eyetracking)
+        console.log('집중도평균 계산 합 : ', concentration_sum)
+        console.log('집중도평균 계산 결과 : ', ConcentrationPreScopeAverage)
       } else {
         console.log("해당 영화의 기록 존재하지 않음.");
         res.status(400).send();

@@ -453,7 +453,7 @@ def afterprocessing():
 
 if __name__ == "__main__":
 
-    # time.sleep(3) # 버킷에 올라가는 시간이 필요함.
+    time.sleep(2) # 버킷에 올라가는 시간이 필요함.
 
     param = str(sys.argv[1]).split("/")
     # param = "10/smj8554/toy story".split("/")

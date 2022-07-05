@@ -626,6 +626,11 @@ var normalization = async function (category, highlight_array, callback) {
 
     max = diff_array[diff_array.length - 1];
 
+    if (min == max) { 
+      min = 0
+      max = 1
+    }
+
     console.log("중간 점검 2 : min : ", min, "// max : ", max)
   }
 
@@ -635,6 +640,7 @@ var normalization = async function (category, highlight_array, callback) {
       for (let i = 0; i<highlight_array.length; i++){
         normal_tmp = (Number(temp_array[i] - min) / (max - min))
         if ( normal_tmp < 0 ) {normal_tmp = 0 }
+        if ( normal_tmp <= 100 ) {normal_tmp = 1 }
         normal_array[i] = {
           "time" : i*10,
           "emotion_diff" : normal_tmp

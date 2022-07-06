@@ -47,19 +47,40 @@ def process(id):
     movieTitle = []
     moviePoster = []
 
-    # 가장 유사도가 높은 유저의 감상기록 가져오기
-    for i in range(1, recommend_user+1):
+   # 가장 유사도가 높은 유저의 감상기록 가져오기
+    for i in range(1, recommend_user + 1):
         user = user_based_collab[client_user].sort_values(ascending=False)[:10].index[i]
         user2 = (title_user.loc[user].sort_values(ascending=False))
         users.append(user)
-        movieid.append(user2.head(5).index.values)
+        movieid = np.concatenate((movieid, user2.head(5).index.values), axis=0)
 
-    for i in range(0, len(movieid)):
-        for j in range(0, len(movieid[0])):
-            find_row = movies.index[(movies['movieId'] == movieid[i][j])]
-            # print(find_row[0])
-            movieTitle.append(movies.loc[find_row[0]]['original_title'])
-            moviePoster.append(movies.loc[find_row[0]]['poster_path'])
+        movieid_ = []
+        for j in movieid:
+            if j not in movieid_:
+                movieid_.append(j)
+        movieid = movieid_
+
+        if (len(movieid) < (i * 5)):
+            while(len(movieid) < i * 5):
+
+                lack = (i*5) - len(movieid)
+                movieid = np.concatenate((movieid, user2.head(5+lack).index.values), axis=0)
+
+                movieid_ = []
+                for j in movieid:
+                    if j not in movieid_:
+                        movieid_.append(j)
+                movieid = movieid_
+
+    for i in range(len(movieid)):
+        movieid[i] = int(movieid[i])
+
+
+    for j in range(25):
+        find_row = movies.index[(movies['movieId'] == movieid[j])]
+        # print(find_row[0])
+        movieTitle.append(movies.loc[find_row[0]]['original_title'])
+        moviePoster.append(movies.loc[find_row[0]]['poster_path'])
 
     print(users, movieTitle, moviePoster)
 

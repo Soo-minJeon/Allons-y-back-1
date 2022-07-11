@@ -1275,6 +1275,7 @@ var watchAloneEnd = function(req, res){
         movieTitle : parammovieTitle
       });
 
+      await ratingUpdate();
       var objToSend = {
         genres : movie_genre,
         poster : movie_poster
@@ -1282,8 +1283,7 @@ var watchAloneEnd = function(req, res){
       res.status(200).send(JSON.stringify(objToSend));
       console.log('----------------------------------------------------------------------------')
     }
-    //main();
-    ratingUpdate();
+    main();
     return;
 
   }

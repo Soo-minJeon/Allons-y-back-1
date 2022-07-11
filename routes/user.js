@@ -946,7 +946,6 @@ var watchTogetherImageCapture = async function(req, res){
   console.log('/watchTogetherImageCapture 라우팅 함수 호출됨. // ', paramTime, "초");
 
   if (database){
-  
     function rekognition_python() {
       //파이썬 코드 실행 (사용자 감정 분석)
       const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
@@ -1192,6 +1191,47 @@ var watchAloneEnd = function(req, res){
       ).clone();
 
     }
+
+// user_info.csv 업데이트 - 평점 가공 (감정부합도+집중도+평점)
+    async function ratingUpdate(){
+        database.WatchModel.find({ userId : paramId, title : parammovieTitle }, function(err, results) {
+          if (err) {
+            callback(err, null);
+            return;
+          }
+
+          if(results.length>0) {
+            const existing = results[0]
+            //console.log(results[0]);
+            //console.log(results[0].rating);
+            const spawn = require('child_process').spawn;
+
+            database.UserModel.findById(paramId, function (err, result2) {
+                  if (err) {
+                    return;
+                  }
+
+                  if (result2.length > 0) {
+                    var recoID = result2[0].reco2_id
+                    console.log("recoID: "+recoID)
+                    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+                    const result = spawn('python', ['recommend/findMovieID.py', recoID, results[0].rating, results[0].resultEmotionPer, results[0].concentration, parammovieTitle]);
+                    result.stdout.on('data', function(ls_result){
+                        console.log(ls_result.toString());
+                    })
+                    return;
+                  }
+              }
+            )
+
+          }
+          else {
+            console.log("DB에서 해당 영화를 찾지 못했습니다.");
+            return;
+          }
+        });
+
+    }
     async function main() {
       await emotionCorrectTest()
 
@@ -1242,8 +1282,12 @@ var watchAloneEnd = function(req, res){
       res.status(200).send(JSON.stringify(objToSend));
       console.log('----------------------------------------------------------------------------')
     }
-    main();
-  }else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+    //main();
+    ratingUpdate();
+    return;
+
+  }
+  else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
     console.log('***ERROR!! 데이터 베이스 에러 ... : ', err);
     res.status(400).send();
     console.log('----------------------------------------------------------------------------')

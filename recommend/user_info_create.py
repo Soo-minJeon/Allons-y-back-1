@@ -1,6 +1,5 @@
 import pandas as pd
 import csv
-# 활용할 csv 파일 만들기
 
 # 활용할 csv 파일 만들기
 f = open("user_info.csv", "w")

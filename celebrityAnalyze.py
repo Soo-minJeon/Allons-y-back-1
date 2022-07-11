@@ -21,8 +21,8 @@ class VideoDetect:
     video = 'avengers.mp4'
     startJobId = 'null'
 
-    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue' #
-    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:allonsySNS' #
+    sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue'
+    snsTopicArn = 'arn:aws:sns:ap-northeast-2:392553513869:allonsySNS'
     processType = 'null'
 
     def __init__(self, role, bucket, video):

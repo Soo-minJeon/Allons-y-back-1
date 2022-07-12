@@ -40,7 +40,7 @@ drop_cust_list = df_cust_summary[df_cust_summary['count'] < cust_benchmark].inde
 
 # 여기서 위에서 제외할 리스트들을 넣어주어 drop 해주었다.
 df = df[~df['movieId'].isin(drop_movie_list)]  # df의 'Movie_Id'에서 drop_movie_list의 값이 있으면 True
-df = df[~df['userId'].isin(drop_cust_list)]
+#df = df[~df['userId'].isin(drop_cust_list)]
 
 # 피봇테이블 생성, pivot_table()은 데이터 프레임 생성, 구성 요소 입력해줌
 df_p = pd.pivot_table(df, values='rating', index='userId', columns='movieId')
@@ -143,6 +143,56 @@ def user_release_ratio(df, usernumber):
         release_data_list[i] = round(release_data_list[i] / sum, 3)
     return release_data_list
 
+# 비율 가져옴 , 카운트 셈 - 데이터 편집
+def genre_ratio(df, usernumber):
+    user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
+    meta2 = pd.read_csv('recommend/movie_info.csv', low_memory=False)  # 영화정보 가져옴
+    value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
+    value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
+    value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
+    value_meta = value_meta.dropna(axis=0)
+    value_meta = value_meta.reset_index()
+    merge_data = pd.merge(user_df, value_meta, on='movieId', how='left')  # 데이터 합침 : 평가 정보 + 영화 정보
+    merge_data = merge_data.dropna(axis=0)
+    merge_data = merge_data.reset_index()  # index 초기화
+    # Animation, Action,Adventure, Comedy, Drama,  Romance, Fantasy, Family, Science Fiction, Horror
+    # 사용자가 평점준 영화 개봉 연도에 따라 값을 추가해줌
+    release_data_list = {'Animation': 0, 'Action': 0, 'Adventure': 0, 'Comedy': 0, 'Drama': 0, 'Romance': 0, 'Fantasy': 0,'Family':0, 'Science Fiction': 0, 'Horror': 0}
+
+    for i in range(0, len(merge_data)):
+        if 'Animation' in merge_data['genres'].loc[i]:
+            release_data_list["Animation"] += 1
+        elif 'Action' in merge_data['genres'].loc[i]:
+            release_data_list["Action"] += 1
+        elif 'Adventure' in merge_data['genres'].loc[i]:
+            release_data_list["Adventure"] += 1
+        elif 'Comedy' in merge_data['genres'].loc[i]:
+            release_data_list["Comedy"] += 1
+        elif 'Drama' in merge_data['genres'].loc[i]:
+            release_data_list["Drama"] += 1
+        elif 'Romance' in merge_data['genres'].loc[i]:
+            release_data_list["Romance"] += 1
+        elif 'Fantasy' in merge_data['genres'].loc[i]:
+            release_data_list["Fantasy"] += 1
+        elif 'Fantasy' in merge_data['genres'].loc[i]:
+            release_data_list["Fantasy"] += 1
+        elif 'Science Fiction' in merge_data['genres'].loc[i]:
+            release_data_list["Science Fiction"] += 1
+        elif 'Horror' in merge_data['genres'].loc[i]:
+            release_data_list["Horror"] += 1
+        elif 'Action' in merge_data['genres'].loc[i]:
+            release_data_list["Action"] += 1
+
+    # release_data_list
+    sum = 0
+    for i in release_data_list:
+        sum += release_data_list[i]
+    release_data_rate = []
+    for i in release_data_list:
+        if release_data_list[i] == 0:
+            continue
+        release_data_list[i] = round(release_data_list[i] / sum, 3)
+    return release_data_list
 
 # 영화 추천 시 측정치 + 변수에 따른 가중치를 더해 추천
 def Estimate_Score_sum1(user_df, user_release_ratio_list):
@@ -175,6 +225,43 @@ def Estimate_Score_sum1(user_df, user_release_ratio_list):
         elif int(user_df.iloc[i]['release_date'][0:4]) <= 2020:
             user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
                                                               user_release_ratio_list['2020']
+    return user_df
+
+# Animation, Action,Adventure, Comedy, Drama,  Romance, Fantasy, Family, Science Fiction, Horror
+# 영화 추천 시 측정치 + 변수에 따른 가중치를 더해 추천
+def Estimate_Score_genres(user_df, user_release_ratio_list):
+    user_df = user_df.dropna(axis=0)
+    for i in range(0, len(user_df)):
+        if user_df.iloc[i]['genres'] in "Animation":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Animation']
+        elif user_df.iloc[i]['genres'] in "Action":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Action']
+        elif user_df.iloc[i]['genres'] in "Adventure":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Adventure']
+        elif user_df.iloc[i]['genres'] in "Comedy":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Comedy']
+        elif user_df.iloc[i]['genres'] in "Drama":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Drama']
+        elif user_df.iloc[i]['genres'] in "Romance":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Romance']
+        elif user_df.iloc[i]['genres'] in "Fantasy":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Fantasy'] + \
+                                                              user_release_ratio_list['2000']
+        elif user_df.iloc[i]['genres'] in "Family":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Family']
+        elif user_df.iloc[i]['genres'] in "Science Fiction":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Science Fiction']
+        elif user_df.iloc[i]['genres'] in "Horror":
+            user_df['Estimate_Score'].loc[user_df.index[i]] = user_df.iloc[i]['Estimate_Score'] + \
+                                                              user_release_ratio_list['Horror']
     return user_df
 
 
@@ -213,7 +300,7 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
 # Estimate_Score_sum1 위 함수와 더불어 추천해주는 함수
 def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo):
     df = data
-    user_release_ratio_list = user_release_ratio(df, usernumber)  # 유저의 년도 비율을 가져온다.
+    user_release_ratio_list = genre_ratio(df, usernumber)  # 유저의 장르 비율을 가져온다.
     # user_pop_ratio_list = user_pop_ratio(df, usernumber) # 유저의 popularity 비율을 가져온다.
     # user_language_ratio_list = user_language_ratio(df, usernumber) # 유저의 language 비율을 가져온다.
     user_df = moviedata.copy()
@@ -224,9 +311,9 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo)
     user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber, x).est)
     user_df = user_df.sort_values('Estimate_Score', ascending=False)
 
-    # user_df_sum = Estimate_Score_sum1(user_df, user_release_ratio_list)
-    # user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
-    user_df_sum_relase = pd.merge(movie_info, user_df, on='original_title', how='left')
+    user_df_sum = Estimate_Score_genres(user_df, user_release_ratio_list) # 가중치 적용 함수
+    #user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
+    user_df_sum_relase = pd.merge(movie_info, user_df_sum, on='original_title', how='left')
     user_df_sum_relase = user_df_sum_relase.sort_values('Estimate_Score', ascending=False)
     user_df_sum_relase = user_df_sum_relase[['original_title', 'poster_path']]
     titleArray = []
@@ -248,5 +335,5 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo)
     print("[" + result_movie + "],[" + result_poster + "]")
     return user_df_sum_relase
 
-user_df_sum_relase = variable_weight(df, 665, 6, meta, drop_movie_list, reader, svd)
+user_df_sum_relase = variable_weight(df, 1, 6, meta, drop_movie_list, reader, svd)
 # user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)

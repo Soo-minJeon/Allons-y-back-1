@@ -71,6 +71,7 @@ class VideoDetect:
         return succeeded
 
     def GetLabelDetectionResults(self, second):
+        # Animation, Action,Adventure, Comedy, Drama,  Romance, Fantasy, Family, Science Fiction, Horror
         genreList = []
         second = int(second/1000)
         maxResults = 10

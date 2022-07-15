@@ -373,7 +373,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
       tmp_calm_emotion_calm_sum = Number(existing_re[0].calm_emotion_calm_sum)
     }
     else {
-      console.log('10초 전의 rekognition 기록 존재하지 않음.')
+      // console.log(time, " s: ", '10초 전의 rekognition 기록 존재하지 않음.')
     }
   }
 
@@ -408,12 +408,12 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 
       calm_emotion_count = tmp_calm_emotion_count + 1
       calm_emotion_sum = Number(tmp_calm_emotion_sum) + Number(result_total[1])
-      console.log('calm_emotion_sum: ', calm_emotion_sum)
+      // console.log('calm_emotion_sum: ', calm_emotion_sum)
 
       await getCalmConcentration();
 
-      console.log('tmp_calm_count : ', tmp_calm_count)
-      console.log('calm_emotion_count : ', calm_emotion_count)
+      // console.log('tmp_calm_count : ', tmp_calm_count)
+      // console.log('calm_emotion_count : ', calm_emotion_count)
 
       if (tmp_calm_count == 0){
         calm_count = 0;
@@ -529,9 +529,9 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     
     // console.log("확인필요 ; ", tmp_emotion_count_array);
     // 테스트
-    console.log("-----------------------테스트-----------------------")
-    console.dir(tmp_every_emotion_array)
-    console.log("---------------------------------------------------")
+    // console.log("-----------------------테스트-----------------------")
+    // console.dir(tmp_every_emotion_array)
+    // console.log("---------------------------------------------------")
 
     if (highlight_emotion_time == 0){
       await db.WatchModel.updateOne({ // 감상목록 emotion_array 수정 //
@@ -590,6 +590,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
 
 // 정규화
 var normalization = async function (category, highlight_array, callback) {
+  console.log('정규화 함수 호출')
 
   var min = 0;
   var max = 0;
@@ -639,8 +640,8 @@ var normalization = async function (category, highlight_array, callback) {
     if(category == "eyetrack"){
       for (let i = 0; i<highlight_array.length; i++){
         normal_tmp = (Number(temp_array[i] - min) / (max - min))
-        if ( normal_tmp < 0 ) {normal_tmp = 0 }
-        if ( normal_tmp <= 100 ) {normal_tmp = 1 }
+        if ( normal_tmp <= 0 ) {normal_tmp = 0 }
+        if ( normal_tmp >= 100 ) {normal_tmp = 1 }
         normal_array[i] = {
           "time" : i*10,
           "emotion_diff" : normal_tmp

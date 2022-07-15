@@ -3,6 +3,7 @@ import os
 import time
 
 import boto3
+import botocore
 import csv
 
 # s3 bucket
@@ -136,9 +137,15 @@ def preprocessing(id, title, path):
     # 이미지 셋 선택
     testfolder = 'eyetracking/testfolder/'
 
-    for i in range(3):
-        down = s3.download_file(bucket, "capture/" + photo_list[i],
+    try:
+        for i in range(3):
+            down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
+    except botocore.exceptions.ClientError as err : 
+        #  에러 처리(버킷) - 발생시 집중도 0으로 리턴
+            return False
+
+    
 
     ImgArray = [testfolder + photo_list[0],
              testfolder + photo_list[1],
@@ -152,6 +159,7 @@ def preprocessing(id, title, path):
     radious = 0
     standard_center_l = 0
     standard_center_r = 0
+    return True
 
 
 def settingStandard(eyeRatio_cv, eyeRatio_mp):  # 집중도 기준 설정
@@ -463,10 +471,13 @@ if __name__ == "__main__":
     title = param[2]
 
     # 테스트할 사진들 지정
-    preprocessing(id, title, times)
-    settingStandard(5, 3)  # 일단 기준은 cv = 7 / mp = 3
-    main()
-    afterprocessing()
+    pre = preprocessing(id, title, times)
+    if (pre):
+        settingStandard(5, 3)  # 일단 기준은 cv = 7 / mp = 3
+        main()
+        afterprocessing()
+    else:
+        concentration = 0
 
     # 집중도 출력
     print(concentration)

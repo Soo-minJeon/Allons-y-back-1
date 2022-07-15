@@ -1028,12 +1028,12 @@ var watchTogetherImageCapture = async function(req, res){
 var watchAloneEnd = async function(req, res){
   console.log('/watchAlonEnd 라우팅 함수 호출');
 
-  function delay(){
-    return new Promise(function(resolve){
-      setTimeout(resolve, 60000);
-    });
-  }
-  await delay();
+  // function delay(){
+  //   return new Promise(function(resolve){
+  //     setTimeout(resolve, 60000);
+  //   });
+  // }
+  // await delay();
 
   async function main() {
     var database = req.app.get('database');

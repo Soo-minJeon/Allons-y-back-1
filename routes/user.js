@@ -751,6 +751,7 @@ var watchImageCaptureEyetrack = async function(req, res){
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 아이디 받아오기
     var paramTime = req.body.time || req.query.time;
+    var currentTime = paramTime / 10;
     var paramImgPath = req.body.imgPath || req.body.imgPath; // 버킷에 올라간 파일 경로
 
     var time = new Date();
@@ -787,36 +788,55 @@ var watchImageCaptureEyetrack = async function(req, res){
       }
 
       async function addEyetrack_record(concentration_scene) {
-        // 집중도 스키마에 집중도 기록을 배열로 저장
+      //   // 집중도 스키마에 집중도 기록을 배열로 저장
 
-        const existing = await database.EyetrackModel.find({
-          userId: paramId,
-          movieTitle: parammovieTitle,
-        });
+      //   const existing = await database.EyetrackModel.find({
+      //     userId: paramId,
+      //     movieTitle: parammovieTitle,
+      //   });
 
-        if (existing.length > 0) {
-          // console.dir(existing)
-          tmp_every_concentration_array = existing[0].every_concentration_array;
-          if (paramTime == 0 || paramTime == "0") {
-            tmp_every_concentration_array[0] = concentration_scene;
-          } else {
-            tmp_every_concentration_array[paramTime / 10] = concentration_scene;
-          }
-          // tmp_every_concentration_array[paramTime/10] =  concentration_scene
-        }
-        await database.EyetrackModel.updateOne(
-          {
-            // 장면별 집중도 배열 수정 //
-            userId: paramId,
-            movieTitle: parammovieTitle,
-          },
-          {
-            $set: {
-              every_concentration_array: tmp_every_concentration_array,
+      //   if (existing.length > 0) {
+      //     // console.dir(existing)
+      //     tmp_every_concentration_array = existing[0].every_concentration_array;
+      //     if (paramTime == 0 || paramTime == "0") {
+      //       tmp_every_concentration_array[0] = concentration_scene;
+      //     } else {
+      //       tmp_every_concentration_array[currentTime] = concentration_scene;
+      //     }
+      //     // tmp_every_concentration_array[paramTime/10] =  concentration_scene
+      //   }
+        // await database.EyetrackModel.updateOne(
+        //   {
+        //     // 장면별 집중도 배열 수정 //
+        //     userId: paramId,
+        //     movieTitle: parammovieTitle,
+        //   },
+        //   {
+        //     $set: {
+        //       every_concentration_array: tmp_every_concentration_array,
+        //     },
+        //   }
+        // ).clone();
+
+        try{
+          await database.EyetrackModel.updateOne(
+            {
+              // 장면별 집중도 배열 수정 //
+              userId: paramId,
+              movieTitle: parammovieTitle,
+              every_concentration_array : 0,
             },
-          }
-        ).clone();
-        
+            {
+              $set: {
+                'every_concentration_array.$' : concentration_scene
+              },
+            }
+          ).clone();
+
+        }catch(err){
+          console.log("아이트래킹 정보 저장 중 오류 발생함. > \n", err);
+        }
+      
       }
 
       async function countlimit() {

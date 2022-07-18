@@ -416,13 +416,14 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                 cv2.polylines(frame, [mesh_points[vertical]], True, color, 1, cv2.LINE_AA)
 
             else:
-                none += 1
+                none += 100
 
 def main():
     global blink_mp
     global blink_cv
     global concentration
     global warning
+    global none
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(
@@ -434,16 +435,20 @@ def main():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = detector(gray)
 
-        # 얼굴 인식 부분
-        for face in faces:
-            landmarks = predictor(gray, face)
+        if (len(faces) < 1):
+            concentration = 0
+        else:
+            # 얼굴 인식 부분
+            for face in faces:
+                landmarks = predictor(gray, face)
 
-            # 눈 그리기
-            process([36, 37, 38, 39, 40, 41], [42, 43, 44, 45, 46, 47], landmarks, gray, frame, i)
+                # 눈 그리기
+                process([36, 37, 38, 39, 40, 41], [42, 43, 44, 45, 46, 47], landmarks, gray, frame, i)
 
     if (blink_mp == len(ImgArray)):
         concentration = 0  # 조는 중이면 집중도 0
 
+    concentration = concentration - none
     concentration = concentration - warning
     concentration = concentration - blink_cv
     concentration = concentration - (blink_mp*15)

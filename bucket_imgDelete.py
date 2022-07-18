@@ -119,3 +119,7 @@ if __name__ == "__main__":
     # capture폴더 안의 사진을 모두 삭제한다.
     makeManifest(capture_folder, id, title)
     # main("smj85548554_toystory_10.jpg")
+    # 로컬 저장소 삭제
+    [os.remove(f)
+     for f in
+     glob.glob('eyetracking/testfolder/*.jpg')]

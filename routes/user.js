@@ -672,8 +672,8 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
           
           for (let i = 0; i<emotion_check_count; i++){
             every_emotion_array[i] = '-'
-            every_eyetrack_array[i] = 0
-          }
+            every_eyetrack_array[i] = -1
+          } 
         }
       }
       await getInfo()
@@ -824,7 +824,7 @@ var watchImageCaptureEyetrack = async function(req, res){
               // 장면별 집중도 배열 수정 //
               userId: paramId,
               movieTitle: parammovieTitle,
-              every_concentration_array : 0,
+              every_concentration_array : -1,
             },
             {
               $set: {
@@ -903,8 +903,14 @@ var watchImageCaptureEyetrack = async function(req, res){
       async function isSleep() {
         if (Number(getpython) == 0) {
           console.log(paramTime, " 초: ", "집중도 분석 결과 : 자는 중");
-          sleepCount = sleepCount + 1;
 
+          const existing = await database.WatchModel.find({
+            userId: paramId,
+            movieTitle: parammovieTitle,
+          });
+  
+          sleepCount = existing[0].sleepingCount+1;
+          
           // 결과 스키마의 (몇번잤니?) 수정
           /// 3.
           await database.WatchModel.updateOne(
@@ -928,7 +934,7 @@ var watchImageCaptureEyetrack = async function(req, res){
               "----------------------------------------------------------------------------"
             );
           } else {
-            console.log(paramTime, " 초: ", "아직 분석 횟수 중 절반 이하 자는 중.");
+            console.log(paramTime, " 초: ", "아직 분석 횟수 중 절반 이하("+sleepCount+") 자는 중.");
             res.status(200).send();
             console.log(
               "----------------------------------------------------------------------------"

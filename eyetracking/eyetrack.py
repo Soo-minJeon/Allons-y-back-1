@@ -141,7 +141,7 @@ def preprocessing(id, title, path):
         for i in range(3):
             down = s3.download_file(bucket, "capture/" + photo_list[i],
                                 testfolder + photo_list[i])
-    except botocore.exceptions.ClientError as err : 
+    except : 
         #  에러 처리(버킷) - 발생시 집중도 0으로 리턴
             return False
 

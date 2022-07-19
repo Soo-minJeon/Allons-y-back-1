@@ -1,6 +1,7 @@
 import os
 import sys
 import boto3
+import botocore
 import csv
 import glob
 
@@ -46,11 +47,20 @@ def main(id, title, highlight_time):
     img = id + '_'+title+'_'+str(highlight_time)+'.jpg'
 
     # 파일 다운 to local from s3 캡쳐폴더
-    down = s3.download_file(bucket, "capture/" + img,
+    try:
+        down = s3.download_file(bucket, "capture/" + img,
                             testfolder + img)
+        return down
+    except : 
+        print('bucket_imgDelete: 하이이이트 사진 다운받기 실패')
 
     # 하이라이트 전용 폴더에 파일 업로드 to s3 하이라이트 전용 폴더 from Local
-    upload = s3.upload_file(testfolder + img, bucket, highlight_folder + img)
+    try:
+        upload = s3.upload_file(testfolder + img, bucket, highlight_folder + img)
+        return upload
+    except : 
+        print('bucket_imgDelete: 하이라이트 전용 폴더에 사진 업로드 실패')
+    
 
     # 로컬 저장소 삭제
     [os.remove(f)
@@ -109,3 +119,7 @@ if __name__ == "__main__":
     # capture폴더 안의 사진을 모두 삭제한다.
     makeManifest(capture_folder, id, title)
     # main("smj85548554_toystory_10.jpg")
+    # 로컬 저장소 삭제
+    [os.remove(f)
+     for f in
+     glob.glob('eyetracking/testfolder/*.jpg')]

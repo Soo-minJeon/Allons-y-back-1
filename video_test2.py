@@ -18,7 +18,7 @@ class VideoDetect:
 
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'avengers.mp4'
+    video = 'animation_label_test.mp4'
     startJobId = 'null'
 
     sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue' #
@@ -79,8 +79,10 @@ class VideoDetect:
         finished = False
         sf = ['Aircraft', 'Sky','Sunrise','Overwatch','Universe','Space']
         adventure = ['Train','Vehicle','Transportation','Nature']
+        animation = ['Comics','Manga']
         fscount = 0 # 3 이상되면 sf 장르로 분류
         adventurecount = 0
+        animationcount = 0
 
         while finished == False:
             response = self.rek.get_label_detection(JobId=self.startJobId, MaxResults=maxResults,
@@ -92,10 +94,13 @@ class VideoDetect:
 
                     if int(labelDetection['Timestamp']/1000)<=second+5 and int(labelDetection['Timestamp']/1000)>=last:
                         label = labelDetection['Label']
+                        print(label['Name'])
                         if label['Name'] in sf:
                             fscount+=1
                         if label['Name'] in adventure:
                             adventurecount+=1
+                        if label['Name'] in animation:
+                            animationcount+=1
                     else:
                         continue
 
@@ -108,6 +113,8 @@ class VideoDetect:
             genreList.append('sf')
         if (adventurecount >= 3):
             genreList.append('adventure')
+        if (animationcount>=1):
+            genreList.append('animation')
         print(genreList)
 
     def GetFaceDetectionResults(self,second): # 장면분석, 감정은 가장 크게 느낀 2가지만 가져오기.
@@ -251,7 +258,7 @@ class VideoDetect:
 def main():
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'avengers.mp4'
+    video = 'animation_label_test.mp4'
 
     analyzer = VideoDetect(roleArn, bucket, video)
     #analyzer.CreateTopicandQueue()

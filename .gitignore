@@ -8,3 +8,4 @@ recommend/movie_info_create.py
 recommend/new_movie_info_create.py
 credentials.csv
 personal_info.js
+movie_info_new_create.py

@@ -100,7 +100,8 @@ var login = function(req, res){
                         if(result4){
                           recommend5(function(err, result5){
                             if (result5){
-                              res.status(200).send(JSON.stringify(final_objToSend = {
+                              recommend6(database,function(err, result6) {
+                                res.status(200).send(JSON.stringify(final_objToSend = {
                                 id: objToSend.id,
                                 name: objToSend.name,
                                 reco1: result1,
@@ -111,11 +112,13 @@ var login = function(req, res){
                                 reco2_5 : result2[4],
                                 reco3 : result3,
                                 reco4 : result4,
-                                reco5 : result5
+                                reco5 : result5,
+                                reco6 : result6
                               }));
                               console.log('final = ')
                               console.log(final_objToSend)
                               console.log("----------------------------------------------------------------------------");
+                              })
                             }
                             else{
                               console.dir(err)
@@ -644,6 +647,54 @@ var recommend5 = function (callback) {
     }
   });
 };
+
+
+// 추천6 - 고전 탑텐
+var recommend6 = function(db, callback){
+  console.log('/recommend6 라우팅 함수 호출');
+  var database = db
+  var titleArray = []
+  var posterArray = []
+
+  if(database) {
+    // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
+    // 1. child-process모듈의 spawn 취득
+    const spawn = require('child_process').spawn;
+
+    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+    const result = spawn('python', ['recommend5_top.py']);
+
+    result.stdout.on('data', (data) => {
+      console.log("------check!--------")
+      const stringResult = data.toString()
+      console.log(stringResult)
+      var array = stringResult.split('],[')
+      //console.log("array check : " + array)
+
+      titleArray = []
+      titleArray = array[0].replace('[',"").split(',');
+      console.log("titleArray:")
+      console.log(titleArray)
+
+      posterArray = []
+      posterArray = array[1].replace(']',"").split(',');
+      console.log("posterArray:")
+      console.log(posterArray)
+
+      var objToSend = {
+        titleArray : titleArray,
+        posterArray : posterArray
+      }
+      callback(null, objToSend)
+    });
+  }
+  else{
+      console.log('데이터베이스가 정의되지 않음...');
+      callback(null, null)
+      console.log("\n\n");
+  }
+};
+
 
 // 영화검색 페이지에 영화 정보 전달하기
 var getAllMovieList = function(req, res){

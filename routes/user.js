@@ -1727,10 +1727,12 @@ var enterroom = function(req, res){
   if(database){
 
     var paramRoomCode = req.body.roomCode || req.query.roomCode;
+    var paramId = req.body.id || req.query.id;
+    var paramRole = req.body.role || req.query.role;
 
     console.log('입력된 룸 코드 : ' + paramRoomCode);
 
-    enterRoom(database, paramRoomCode, function(err, result){
+    enterRoom(database, paramRoomCode, async function(err, result){
 
       if (err) {
         console.log('초대 코드 검색 중 오류');
@@ -1740,12 +1742,131 @@ var enterroom = function(req, res){
 
       else if (result){
         console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
+        RoomToken = 0
 
-        var objToSend = {
-          roomToken : result[0].roomToken
-        };
-        res.status(200).send(JSON.stringify(objToSend));
-        console.log('----------------------------------------------------------------------------')
+        async function getToken(callback) {
+          // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
+      
+          // express 및 agora-access-token 에 대한 참조 추출
+          // const express = require("express");
+          const app = req.app;
+      
+          // 자격 증명과 요청 수신하는 데 사용할 포트 추가
+          const PORT = 3001;
+          const APP_ID = personal_info.APP_ID;
+          const APP_CERTIFICATE = personal_info.APP_CERTIFICATE;
+      
+          // 첫번째 함수: 브라우저가 응답을 캐시하지 않게 => 항상 새로운 토큰을 얻음
+          const nocache = (req, res, next) => {
+            res.header("Cache-Control", "private, no-store", "must-revalidate");
+            res.header("Expires", "-1");
+            res.header("Pragma", "no-cache");
+            next(); // 첫번째 미들웨어 함수 > 다음 함수 계속
+          };
+      
+          // 두 번째 함수: 요청 처리 및 JSON 응답 반환
+          // Agora RTC Token 생성
+          const generateRTCToken = (req, res) => {
+            // 응답 헤더 설정 - set response header
+            res.header("Access-Control-Allow-Origin", "*");
+      
+            // 요청 매개변수 가져오기 - get channel name
+            const channelName = req.params.channel; //req.query.channelName;
+            if (!channelName) {
+              return res.status(500).json({ error: "channel is required" });
+            }
+      
+            // get uid
+            let uid = req.params.uid; // req.query.uid;
+            if (!uid || uid === "") {
+              uid = 0;
+              return res.status(500).json({ error: "uid is required" });
+            }
+      
+            // get role
+            let role = RtcRole.SUBSCRIBER;
+            //if (req.query.role == 'publisher') {
+            if (req.params.role === "publisher") {
+              role = RtcRole.PUBLISHER;
+            }
+      
+            // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
+            // let expireTime = req.query.expireTime;
+            let expireTime = req.query.expiry;
+            if (!expireTime || expireTime == "") {
+              expireTime = 300; // 5분 - 확실하진 않음
+            } else {
+              expireTime = parseInt(expireTime, 10);
+            }
+      
+            // 만료 시간 계산 - calculate privilege expire time
+            const currentTime = Math.floor(Date.now() / 1000);
+            const privilegeExpireTime = currentTime + expireTime;
+      
+            // 토큰 구축 - build the token
+            // const token = RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channelName, uid, role, privilegeExpireTime);
+            let token;
+            if (req.params.tokentype === "userAccount") {
+              token = RtcTokenBuilder.buildTokenWithAccount(
+                APP_ID,
+                APP_CERTIFICATE,
+                channelName,
+                uid,
+                role,
+                privilegeExpireTime
+              );
+            } else if (req.params.tokentype === "uid") {
+              token = RtcTokenBuilder.buildTokenWithUid(
+                APP_ID,
+                APP_CERTIFICATE,
+                channelName,
+                uid,
+                role,
+                privilegeExpireTime
+              );
+            } else {
+              return res.status(500).json({ error: "token type is invalid" });
+            }
+      
+            // 응답 반환 - return the token
+            return res.json({ token: token });
+          };
+      
+          // GET 방식 - 경로
+          // app.get('/access_token', nocache, generateAccessToken);
+          app.get("/rtc/:channel/:role/:tokentype/:uid", nocache, generateRTCToken);
+      
+          // 서버가 준비되고 지정된 포트에서 수신 대기하면 메소드 구현하고 포트와 콜백 전달
+          var server = app.listen(PORT, () => {
+            console.log(`Listening on port: ${PORT}`);
+          });
+      
+          var url = "http://127.0.0.1:3001/rtc/"+paramRoomCode+"/"+paramRole+"/userAccount/"+paramId;
+          request(url, function (error, response, html) {
+            if (error) {
+              throw error;
+            }
+      
+            html = html.toString().split('":"')
+            result = html[1].replace('"}','')
+            RoomToken = result
+            
+            
+            // port 종료
+            server.close(function() {
+              console.log('토큰 발급서버 종료')
+
+              var objToSend = {
+                roomToken : RoomToken
+              };
+              res.status(200).send(JSON.stringify(objToSend));
+              console.log('----------------------------------------------------------------------------')
+            })
+      
+          });
+      
+        }
+        await getToken()
       }
 
       else{

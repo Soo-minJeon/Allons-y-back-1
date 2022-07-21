@@ -9,7 +9,7 @@ import random
 # 무시
 pd.set_option('mode.chained_assignment', None)  # <==== 경고를 끈다
 
-movie_info = pd.read_csv('recommend/movie_info2.csv', low_memory=False)
+movie_info = pd.read_csv('recommend/movie_info.csv', low_memory=False)
 movie_info = movie_info[['original_title', 'poster_path','release_date']]
 
 ratings = pd.read_csv('recommend/user_info.csv', low_memory=False)  # 원본은 데이터가 많아서 small 데이터 사용
@@ -146,7 +146,7 @@ def user_release_ratio(df, usernumber):
 # 비율 가져옴 , 카운트 셈 - 데이터 편집
 def genre_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('recommend/movie_info2.csv', low_memory=False)  # 영화정보 가져옴
+    meta2 = pd.read_csv('recommend/movie_info.csv', low_memory=False)  # 영화정보 가져옴
     value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
     value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
     value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
@@ -311,7 +311,7 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber, x).est)
     user_df = user_df.sort_values('Estimate_Score', ascending=False)
 
-    movie_info2 = pd.read_csv('recommend/movie_info2.csv', low_memory=False)
+    movie_info2 = pd.read_csv('recommend/movie_info.csv', low_memory=False)
     movie_info2 = movie_info2[['original_title', 'poster_path', 'release_date']]
     movie_info2 = movie_info2.sort_values(by='release_date')
 

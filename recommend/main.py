@@ -18,7 +18,8 @@ def process(id):
     movies = pd.read_csv(
         'recommend/movie_info.csv',
         low_memory=False)
-    movies.columns = ['movieId','original_title','genres','runtime','release_date','actor','poster_path']
+    movies.columns = ['movieId','original_title','genres','runtime','release_date','actor','poster_path', 'remakeTitle',
+              'remakePoster']
 
     movies.movieId = pd.to_numeric(movies.movieId, errors='coerce')
     ratings.movieId = pd.to_numeric(ratings.movieId, errors='coerce')

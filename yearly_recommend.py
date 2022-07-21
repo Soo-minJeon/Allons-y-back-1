@@ -330,6 +330,7 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     titleArray = []
     posterArray = []
     user_df_sum_relase = user_df_sum_relase.head(10)
+
     for i in range(len(user_df_sum_relase)):
         titleArray.append(user_df_sum_relase.iloc[i]['original_title'])
         posterArray.append(user_df_sum_relase.iloc[i]['poster_path'])

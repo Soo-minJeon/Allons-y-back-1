@@ -96,7 +96,8 @@ var login = function(req, res){
             if (result2){
                 recommend3(database,paramId, function(err, result3) {
                     if(result3) {
-                      res.status(200).send(JSON.stringify(final_objToSend = {
+                      recommend4(database, reco_id, function(err, result4){
+                        res.status(200).send(JSON.stringify(final_objToSend = {
                         id: objToSend.id,
                         name: objToSend.name,
                         reco1: result1,
@@ -106,11 +107,13 @@ var login = function(req, res){
                         reco2_4 : result2[3],
                         reco2_5 : result2[4],
                         reco3 : result3,
+                        reco4 : result4
                       }));
 
                       console.log('final = ')
                       console.log(final_objToSend)
                       console.log("----------------------------------------------------------------------------");
+                      })
                     }
                     else{
                       console.dir(err)
@@ -541,6 +544,57 @@ var recommend3 = function(db, id, callback) { // 수정중
       console.log("\n\n");
     }
 }
+
+// 추천4 - 연도별 추천
+var recommend4 = function(db, id, callback){
+  console.log('/recommend4 라우팅 함수 호출');
+  var database = db
+  //var paramId = id
+  var paramId = 1; // 사용자 아이디 임의로 설정해놓음
+  var titleArray = []
+  var posterArray = []
+
+  if(database) {
+    // 파이썬 실행 처리 코드, 파이썬에서 처리한 추쳔영화 10개 가져옴
+    // 1. child-process모듈의 spawn 취득
+    const spawn = require('child_process').spawn;
+
+    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+    const result = spawn('python', ['yearly_recommend.py',paramId]);
+
+    result.stdout.on('data', (data) => {
+      console.log("------check!--------")
+      const stringResult = data.toString()
+      console.log(stringResult)
+      var year = stringResult.slice(0,4)
+      //console.log("year check : " + year)
+      var array = stringResult.slice(5,).split('],[')
+      //console.log("array check : " + array)
+
+      titleArray = []
+      titleArray = array[0].replace('[',"").split(',');
+      console.log("titleArray:")
+      console.log(titleArray)
+
+      posterArray = []
+      posterArray = array[1].replace(']',"").split(',');
+      console.log("posterArray:")
+      console.log(posterArray)
+
+      var objToSend = {
+        year : year,
+        titleArray : titleArray,
+        posterArray : posterArray
+      }
+      callback(null, objToSend)
+    });
+  }
+  else{
+      console.log('데이터베이스가 정의되지 않음...');
+      callback(null, null)
+      console.log("\n\n");
+  }
+};
 
 // 같이보기 방 입장
 var enterroom = function(req, res){

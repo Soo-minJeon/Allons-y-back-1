@@ -5,14 +5,14 @@ import sys
 import pandas as pd
 from surprise import Reader, Dataset, SVD, NormalPredictor, KNNBasic  # 알고리즘이 들어간다.
 from surprise import BaselineOnly, SVDpp, NMF, SlopeOne, CoClustering  # 분석툴
-
+import random
 # 무시
 pd.set_option('mode.chained_assignment', None)  # <==== 경고를 끈다
 
-movie_info = pd.read_csv('movie_info2.csv', low_memory=False)
+movie_info = pd.read_csv('recommend/movie_info2.csv', low_memory=False)
 movie_info = movie_info[['original_title', 'poster_path','release_date']]
 
-ratings = pd.read_csv('user_info.csv', low_memory=False)  # 원본은 데이터가 많아서 small 데이터 사용
+ratings = pd.read_csv('recommend/user_info.csv', low_memory=False)  # 원본은 데이터가 많아서 small 데이터 사용
 ratings = ratings[['userId', 'movieId', 'rating']]  # 사용자 아이디, 영화 아이디, 평가
 ratings.head()
 ratings.movieId = pd.to_numeric(ratings.movieId, errors='coerce')
@@ -46,7 +46,7 @@ df = df[~df['movieId'].isin(drop_movie_list)]  # df의 'Movie_Id'에서 drop_mov
 df_p = pd.pivot_table(df, values='rating', index='userId', columns='movieId')
 
 # 영화 데이터를 가져왔다.
-meta = pd.read_csv('movies_metadata.csv', low_memory=False)
+meta = pd.read_csv('recommend/movies_metadata.csv', low_memory=False)
 # 필요한 컬럼만 가져온다. 아이디,제목,장르,개봉알,인기도,언어
 meta = meta[['id', 'original_title', 'genres', 'release_date', 'popularity', 'original_language']]
 # 간단하게 id 값을 movieId로 바꿔주고
@@ -99,7 +99,7 @@ def process(title):
 # 변수에 대한 가중치
 def user_release_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('movie_info2.csv', low_memory=False)  # 영화정보 가져옴
+    meta2 = pd.read_csv('recommend/movie_info2.csv', low_memory=False)  # 영화정보 가져옴
     value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
     value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
     value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
@@ -146,7 +146,7 @@ def user_release_ratio(df, usernumber):
 # 비율 가져옴 , 카운트 셈 - 데이터 편집
 def genre_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('movie_info2.csv', low_memory=False)  # 영화정보 가져옴
+    meta2 = pd.read_csv('recommend/movie_info2.csv', low_memory=False)  # 영화정보 가져옴
     value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
     value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
     value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
@@ -311,7 +311,7 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber, x).est)
     user_df = user_df.sort_values('Estimate_Score', ascending=False)
 
-    movie_info2 = pd.read_csv('movie_info2.csv', low_memory=False)
+    movie_info2 = pd.read_csv('recommend/movie_info2.csv', low_memory=False)
     movie_info2 = movie_info2[['original_title', 'poster_path', 'release_date']]
     movie_info2 = movie_info2.sort_values(by='release_date')
 
@@ -346,5 +346,8 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     print("[" + result_movie + "],[" + result_poster + "]")
     return user_df_sum_relase
 
-user_df_sum_relase = variable_weight(df, 1, 6, meta, drop_movie_list, reader, svd,1950)
+yearList = [1940,1950,1960,1970,1980,1990] # 추후 연도 추가
+randomNum = random.choice(yearList)
+print(randomNum)
+user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd, randomNum)
 # user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)

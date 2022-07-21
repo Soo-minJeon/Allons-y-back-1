@@ -97,28 +97,37 @@ var login = function(req, res){
                 recommend3(database,paramId, function(err, result3) {
                     if(result3) {
                       recommend4(database, reco_id, function(err, result4){
-                        res.status(200).send(JSON.stringify(final_objToSend = {
-                        id: objToSend.id,
-                        name: objToSend.name,
-                        reco1: result1,
-                        reco2_1: result2[0],
-                        reco2_2 : result2[1],
-                        reco2_3 : result2[2],
-                        reco2_4 : result2[3],
-                        reco2_5 : result2[4],
-                        reco3 : result3,
-                        reco4 : result4
-                      }));
-
-                      console.log('final = ')
-                      console.log(final_objToSend)
-                      console.log("----------------------------------------------------------------------------");
+                        if(result4){
+                          recommend5(function(err, result5){
+                            if (result5){
+                              res.status(200).send(JSON.stringify(final_objToSend = {
+                                id: objToSend.id,
+                                name: objToSend.name,
+                                reco1: result1,
+                                reco2_1: result2[0],
+                                reco2_2 : result2[1],
+                                reco2_3 : result2[2],
+                                reco2_4 : result2[3],
+                                reco2_5 : result2[4],
+                                reco3 : result3,
+                                reco4 : result4,
+                                reco5 : result5
+                              }));
+                              console.log('final = ')
+                              console.log(final_objToSend)
+                              console.log("----------------------------------------------------------------------------");
+                            }
+                            else{
+                              console.dir(err)
+                              res.status(404).send();
+                              console.log("----------------------------------------------------------------------------");
+                            }
+                          })
+                        }
+                        else{
+                          console.log('추천4 오류 발생 : ', err)
+                        }
                       })
-                    }
-                    else{
-                      console.dir(err)
-                      res.status(404).send();
-                      console.log("----------------------------------------------------------------------------");
                     }
                 })
                 }
@@ -596,48 +605,44 @@ var recommend4 = function(db, id, callback){
   }
 };
 
-// 같이보기 방 입장
-var enterroom = function(req, res){
-    console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
-    var database = req.app.get('database');
-    if(database){
-  
-      var paramRoomCode = req.body.roomCode || req.query.roomCode;
-  
-      console.log('입력된 룸 코드 : ' + paramRoomCode);
-  
-      enterRoom(database, paramRoomCode, function(err, result){
-  
-        if (err) {
-          console.log('초대 코드 검색 중 오류');
-          console.dir(err);
-          res.status(400).send();
-        }
-  
-        else if (result){
-          console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
-  
-          var objToSend = {
-            roomToken : result[0].roomToken
-          };
-          res.status(200).send(JSON.stringify(objToSend));
-          console.log('----------------------------------------------------------------------------')
-        }
-  
-        else{
-          res.status(400).send();
-          console.log('초대 코드에 해당하는 같이 보기 방 없음...');
-          console.log('----------------------------------------------------------------------------')
-        };
-  
-      })
+// 추천 5- 리메이크영화 추천(함수)
+var recommend5 = function (callback) {
+  console.log("/recommend5 (리메이크영화 추천) 함수 호출");
+
+  //파이썬 코드 실행 (유사 사용자 추천)
+  const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+  var getpython = "";
+
+  //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+  const result = spawnSync("python", ["recommend/remake_recomment.py"]);
+
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr);
+
+    process.exit(result.status);
+  } else {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    getpython = result.stdout.toString();
+  }
+
+  getRemakeList(getpython, function (err, result) {
+    // console.dir(result);
+
+    if (err) {
+      console.log("리메이작 목록 가져오는 중에 에러 발생 ...");
+      console.dir(err);
+      callback(err, null)
+    } else if (result) {
+      console.log("리메이작 가져오기 성공");
+      callback(null, result)
     }
-    else{
-      console.log('데이터베이스가 정의되지 않음...');
-      res.status(400).send();
-      console.log('----------------------------------------------------------------------------')
+    else {
+      console.log("리메이크작 목록 없음.");
+      console.log("\n\n");
+      callback(null, null)
     }
-  
+  });
 };
 
 // 영화검색 페이지에 영화 정보 전달하기
@@ -1715,6 +1720,50 @@ var makeRoom = async function (req, res) {
   }
 };
 
+// 같이보기 방 입장
+var enterroom = function(req, res){
+  console.log('/enterRoom ( 방 코드 입력 / 입장 ) 라우팅 함수 호출');
+  var database = req.app.get('database');
+  if(database){
+
+    var paramRoomCode = req.body.roomCode || req.query.roomCode;
+
+    console.log('입력된 룸 코드 : ' + paramRoomCode);
+
+    enterRoom(database, paramRoomCode, function(err, result){
+
+      if (err) {
+        console.log('초대 코드 검색 중 오류');
+        console.dir(err);
+        res.status(400).send();
+      }
+
+      else if (result){
+        console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
+
+        var objToSend = {
+          roomToken : result[0].roomToken
+        };
+        res.status(200).send(JSON.stringify(objToSend));
+        console.log('----------------------------------------------------------------------------')
+      }
+
+      else{
+        res.status(400).send();
+        console.log('초대 코드에 해당하는 같이 보기 방 없음...');
+        console.log('----------------------------------------------------------------------------')
+      };
+
+    })
+  }
+  else{
+    console.log('데이터베이스가 정의되지 않음...');
+    res.status(400).send();
+    console.log('----------------------------------------------------------------------------')
+  }
+
+};
+
 // 로그아웃
 var logout = function (req, res) {
     res.status(200).send();
@@ -1731,6 +1780,8 @@ var signUp = functionUser.signUp;
 var enterRoom = functionUser.enterRoom;
 
 var getRecommendUserList = functionUser.getRecommendUserList;
+
+var getRemakeList = functionUser.getRemakeList;
 
 var makeroom = functionUser.makeroom;
 

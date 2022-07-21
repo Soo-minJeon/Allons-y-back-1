@@ -1540,13 +1540,17 @@ var email = function(req, res){
     }
 };
 
-var makeRoom = function (req, res) {
+var makeRoom = async function (req, res) {
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");
+  var paramId = req.body.id || req.query.id;
+  var paramRole = req.body.role || req.query.role;
+
   var RoomToken;
   var RoomCode;
 
   async function getToken() {
+    RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
     // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
 
     // express 및 agora-access-token 에 대한 참조 추출
@@ -1643,7 +1647,7 @@ var makeRoom = function (req, res) {
       console.log(`Listening on port: ${PORT}`);
     });
 
-    var url = "http://127.0.0.1:3001/rtc/test/publisher/uid/1";
+    var url = "http://127.0.0.1:3001/rtc/"+RoomCode+"/"+paramRole+"/userAccount/"+paramId;
     request(url, function (error, response, html) {
       if (error) {
         throw error;
@@ -1652,7 +1656,7 @@ var makeRoom = function (req, res) {
       html = html.toString().split('":"')
       result = html[1].replace('"}','')
       RoomToken = result
-      RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+      
       
       // port 종료
       server.close(function() {

@@ -1,3 +1,4 @@
+# editRatingUpdate.py (재가공 평점을 user_info.csv에 업데이트 하는 파일)
 # -*- coding: utf-8 -*-
 import pandas as pd
 import sys

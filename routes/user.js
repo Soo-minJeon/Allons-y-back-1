@@ -261,7 +261,7 @@ var watchresult = function(req, res) {
 var labelDetection = function(second, callback){
     const spawn = require('child_process').spawn;
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['video_test2.py']);
+    const result = spawn('python', ['genreAnalyze.py']);
     console.log("1. 장르 분석 실행 시작 ")
       result.stdout.on('data', function(data) {
       console.log("1. 장르 분석 실행끝! ")

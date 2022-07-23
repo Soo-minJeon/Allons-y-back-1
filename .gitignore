@@ -1,6 +1,6 @@
 *.csv
 .DS_Store
-video_test2.py
+genreAnalyze.py
 .DS_Store
 .idea/csv-plugin.xml
 rekognition_videoTest.py

@@ -377,7 +377,7 @@ var recommend1 = function(db, id, callback){
     const spawn = require('child_process').spawn;
 
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['test3_2.py', paramId]);
+    const result = spawn('python', ['recommend1.py', paramId]);
 
     // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
     result.stdout.on('data', function(data) {

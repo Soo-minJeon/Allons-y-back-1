@@ -513,7 +513,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                     if(result.length>0) {
                         console.log("likeModel 첫 생성")
                         const spawn = require('child_process').spawn;
-                        const results2 = spawn('python', ["find_loveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
+                        const results2 = spawn('python', ["recommend3_FindLoveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
 
                         results2.stdout.on('data', (data) => {
                             const stringRe = data.toString().replace(/\r/g, "");

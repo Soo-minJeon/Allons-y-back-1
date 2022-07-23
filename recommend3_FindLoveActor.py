@@ -1,3 +1,5 @@
+# recommend3_FindLoveActor -> 선호배우 추출 파일
+# (사용자가 시청한 영화 user_info.py에서 가져와 그 영화에 출연한 배우 가져옴)
 import pandas as pd
 import sys
 

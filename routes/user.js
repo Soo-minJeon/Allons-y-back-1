@@ -572,7 +572,7 @@ var recommend4 = function(db, id, callback){
     const spawn = require('child_process').spawn;
 
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['yearly_recommend.py',paramId]);
+    const result = spawn('python', ['recommend4_RandomYear.py',paramId]);
 
     result.stdout.on('data', (data) => {
       console.log("------check!--------")

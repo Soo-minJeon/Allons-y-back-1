@@ -338,7 +338,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     var getpython = "";
 
     // (param) 이미지 경로 재설정 필요
-    const result = spawnSync("python", ["rekognition/rekognition.py", path]);
+    const result = spawnSync("python", ["rekognition/rekognition_alone.py", path]);
 
     if (result.status !== 0) {
       process.stderr.write(result.stderr);

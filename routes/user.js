@@ -421,7 +421,7 @@ var recommend2 = function (id, callback) {
   var getpython = "";
 
   //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-  const result = spawnSync("python", ["recommend/main.py", paramId]);
+  const result = spawnSync("python", ["recommend/recommend2.py", paramId]);
 
   if (result.status !== 0) {
     process.stderr.write(result.stderr);
@@ -882,7 +882,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 
         param = paramTime + "/" + paramId + "/" + parammovieTitle;
         //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-        const result = spawnSync("python", ["eyetracking/eyetrack.py", param]);
+        const result = spawnSync("python", ["eyetracking/concentration.py", param]);
 
         if (result.status !== 0) {
           process.stderr.write(result.stderr);
@@ -1283,7 +1283,7 @@ var watchAloneEnd = async function(req, res){
 
           param = time + "/" + id + "/" + title;
 
-          const result = spawnSync("python", ["bucket_imgDelete.py", param]);
+          const result = spawnSync("python", ["userAnalyze_imgDelete.py", param]);
 
           if (result.status !== 0) {
             process.stderr.write(result.stderr);

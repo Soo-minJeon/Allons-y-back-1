@@ -1,9 +1,9 @@
+# 추천2(유사사용자 추천)
 import sys
 import numpy as np
 import pandas as pd # pandas
 from sklearn.metrics.pairwise import cosine_similarity
 
-# 수정필요한 부분 - movies : movie_info.csv 파일 경로 수정(현재 전수민 노트북 로컬 파일 경로로 설정해놓았음.)
 
 def process(id):
     # row, col 생략 없이 출력

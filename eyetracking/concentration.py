@@ -1,3 +1,5 @@
+#  사용자 집중도 분석
+
 import io
 import os
 import time

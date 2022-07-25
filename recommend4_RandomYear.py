@@ -104,4 +104,3 @@ yearList = [1940,1950,1960,1970,1980,1990] # 추후 연도 추가
 randomNum = random.choice(yearList)
 print(randomNum)
 user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd, randomNum)
-# user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)

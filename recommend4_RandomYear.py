@@ -300,7 +300,7 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
 # Estimate_Score_sum1 위 함수와 더불어 추천해주는 함수
 def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,yearly):
     df = data
-    user_release_ratio_list = genre_ratio(df, usernumber)  # 유저의 장르 비율을 가져온다.
+    #user_release_ratio_list = genre_ratio(df, usernumber)  # 유저의 장르 비율을 가져온다.
     # user_pop_ratio_list = user_pop_ratio(df, usernumber) # 유저의 popularity 비율을 가져온다.
     # user_language_ratio_list = user_language_ratio(df, usernumber) # 유저의 language 비율을 가져온다.
     user_df = moviedata.copy()
@@ -322,9 +322,9 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     movieInfo = movie_info2[movie_info2['release_date'] < yearly+9]
     movieInfo = movieInfo[movieInfo['release_date'] > yearly]
 
-    user_df_sum = Estimate_Score_genres(user_df, user_release_ratio_list) # 가중치 적용 함수
+    #user_df_sum = Estimate_Score_genres(user_df, user_release_ratio_list) # 가중치 적용 함수
     #user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
-    user_df_sum_relase = pd.merge(movieInfo, user_df_sum, on='original_title', how='left')
+    user_df_sum_relase = pd.merge(movieInfo, user_df, on='original_title', how='left')
     user_df_sum_relase = user_df_sum_relase.sort_values('Estimate_Score', ascending=False)
     user_df_sum_relase = user_df_sum_relase[['original_title', 'poster_path']]
     titleArray = []

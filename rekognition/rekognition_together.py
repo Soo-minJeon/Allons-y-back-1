@@ -1,3 +1,4 @@
+# 감정분석(함께보기)
 import csv
 import boto3
 import sys

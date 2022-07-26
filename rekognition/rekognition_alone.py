@@ -1,3 +1,4 @@
+# 감정분석(혼자보기)
 import csv
 import boto3
 import sys

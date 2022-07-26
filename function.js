@@ -188,40 +188,40 @@ var getRecommendUserList = function(result, callback){
   callback(null, resultArray)
 };
 
-// 리메이크 영화목록 추천 
-var getRemakeList = function(result, callback){
+// // 리메이크 영화목록 추천 
+// var getRemakeList = function(result, callback){
 
-  console.log('getRecommendUserList 호출됨.');
+//   console.log('getRecommendUserList 호출됨.');
 
-  splitResult = result.split('] [')
+//   splitResult = result.split('] [')
 
-  titles = splitResult[0];
-  titles = titles.split(", ")
-  titles[0] = titles[0].replace("[", '')
-  titles[0] = titles[0].replace("]", '')
-  // console.log("titles : ", titles)
+//   titles = splitResult[0];
+//   titles = titles.split(", ")
+//   titles[0] = titles[0].replace("[", '')
+//   titles[0] = titles[0].replace("]", '')
+//   // console.log("titles : ", titles)
 
-  posters = splitResult[1];
-  posters = posters.split(",")
-  posters[posters.length-1] = posters[posters.length-1].replace("]", '')
-  // console.log('posters : ', posters)
+//   posters = splitResult[1];
+//   posters = posters.split(",")
+//   posters[posters.length-1] = posters[posters.length-1].replace("]", '')
+//   // console.log('posters : ', posters)
 
-  resultTitleArray = []
-  resultPosterArray = []
+//   resultTitleArray = []
+//   resultPosterArray = []
 
-  for (let j = 0; j < titles.length; j++){
-    resultTitleArray[j] = titles[j].replace(/'/g, '').replace(/\s/gi, '');  
-    resultPosterArray[j] = posters[j].replace(/'/g, '').replace(/\s/gi, '');  
-  }
-  var obj = {
-    titleArray : resultTitleArray,
-    posterArray : resultPosterArray
-  }
+//   for (let j = 0; j < titles.length; j++){
+//     resultTitleArray[j] = titles[j].replace(/'/g, '').replace(/\s/gi, '');  
+//     resultPosterArray[j] = posters[j].replace(/'/g, '').replace(/\s/gi, '');  
+//   }
+//   var obj = {
+//     titleArray : resultTitleArray,
+//     posterArray : resultPosterArray
+//   }
 
-  // console.log("============================ 처리 결과 ============================\n", obj, "\n============================ 처리 결과 ============================\n");
+//   // console.log("============================ 처리 결과 ============================\n", obj, "\n============================ 처리 결과 ============================\n");
 
-  callback(null, obj)
-};
+//   callback(null, obj)
+// };
 
 // 같이보기 방 생성
 var makeroom = function (db, roomToken, roomCode, callback) {
@@ -338,7 +338,7 @@ var watchImageCaptureRekognition = function (db, userId, movieTitle, path, time,
     var getpython = "";
 
     // (param) 이미지 경로 재설정 필요
-    const result = spawnSync("python", ["rekognition/rekognition.py", path]);
+    const result = spawnSync("python", ["rekognition/rekognition_alone.py", path]);
 
     if (result.status !== 0) {
       process.stderr.write(result.stderr);
@@ -718,7 +718,7 @@ module.exports.authUser = authUser;
 module.exports.signUp = signUp;
 module.exports.enterRoom = enterRoom;
 module.exports.getRecommendUserList = getRecommendUserList;
-module.exports.getRemakeList = getRemakeList;
+// module.exports.getRemakeList = getRemakeList;
 module.exports.makeroom = makeroom;
 module.exports.sendEmail = sendEmail;
 module.exports.scene = scene;

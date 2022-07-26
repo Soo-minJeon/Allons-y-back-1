@@ -10,7 +10,7 @@ import csv
 # 활용할 csv 파일 만들기
 f = open("poster_path.csv", "a")
 
-meta = pd.read_csv('movies_metadata.csv',low_memory=False)
+meta = pd.read_csv('recommend/movies_metadata.csv',low_memory=False)
 
 # 필요한 컬럼만 가져온다. 아이디,제목,장르,개봉알,인기도,언어
 meta = meta[['id','original_title']]

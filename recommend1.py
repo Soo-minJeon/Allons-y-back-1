@@ -272,18 +272,11 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     df_user = df[(df['userId'] == usernumber) & (df['rating'] == rating)]  # userId로 받아온 사용자 데이터만, 주어진 평점일때만 남김
     df_user = df_user.set_index('movieId')
     df_user = df_user.join(moviedata)['original_title']
-    # print('1. 개인별 영화 추천을 위해 처리한 user 정보 : ')
-    # print(df_user)
-    #  유저의 연도 비율을 가져온다.
-    user_release_ratio_list = user_release_ratio(df, usernumber)  # 유저의 년도 비율을 가져온다.
-    # print('유저 연도 비율 : ')
-    # print(user_release_ratio_list)
+
     user_df = moviedata.copy()
     user_df = user_df[~user_df['movieId'].isin(dropdata)]  # 사용하지 않는 영화데이터 제거
-    # print('영화 메타 데이터 : ')
-    # print(user_df)
+
     data1 = Dataset.load_from_df(df[['userId', 'movieId', 'rating']], reader)  # 학습 데이터를 만들기 위해 Dataset 객체 생성
-    # data1 = <surprise.dataset.DatasetAutoFolds object at 0x7ff1d0196b00>
     trainset = data1.build_full_trainset()  # 데이터를 학습데이터로 만드는 과정
     svd.fit(trainset)  # 가지고있는 trainset으로 fit() 메소드를 실행시킨다. (fit = 훈련시킴)
     # Estimate_Score라는 새로운 칼럼을 만들고, 예측값 처리.
@@ -296,6 +289,40 @@ def user_difference(data, usernumber, rating, moviedata, dropdata, reader, svd):
     print(user_df['original_title'].head(10))
     return user_df
 
+
+# Estimate_Score_sum1 위 함수와 더불어 추천해주는 함수
+def temporary_recommend1(data, usernumber, rating, moviedata, dropdata, reader, algo):
+    df = data
+    user_df = moviedata.copy()
+    user_df = user_df[~user_df['movieId'].isin(dropdata)]
+    data1 = Dataset.load_from_df(df[['userId', 'movieId', 'rating']], reader)
+    trainset = data1.build_full_trainset()
+    algo.fit(trainset)
+    user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber, x).est)
+    user_df = user_df.sort_values('Estimate_Score', ascending=False)
+
+    #user_df_total = Estimate_Score_sum1(user_df, user_release_ratio_list)
+    user_df_sum_relase = pd.merge(movie_info, user_df, on='original_title', how='left')
+    user_df_sum_relase = user_df_sum_relase.sort_values('Estimate_Score', ascending=False)
+    user_df_sum_relase = user_df_sum_relase[['original_title', 'poster_path']]
+    titleArray = []
+    posterArray = []
+    user_df_sum_relase = user_df_sum_relase.head(10)
+    for i in range(len(user_df_sum_relase)):
+        titleArray.append(user_df_sum_relase.iloc[i]['original_title'])
+        posterArray.append(user_df_sum_relase.iloc[i]['poster_path'])
+
+    result_movie = ""
+    result_poster = ""
+
+    for i in range(len(titleArray)):
+        result_movie+=titleArray[i]+','
+        result_poster+=posterArray[i]+','
+
+    result_movie=result_movie.strip(',')
+    result_poster=result_poster.strip(',')
+    print("[" + result_movie + "],[" + result_poster + "]")
+    return user_df_sum_relase
 
 # Estimate_Score_sum1 위 함수와 더불어 추천해주는 함수
 def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo):
@@ -335,5 +362,7 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo)
     print("[" + result_movie + "],[" + result_poster + "]")
     return user_df_sum_relase
 
-user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd)
-# user_df665 = user_difference(df, 665, 5, meta, drop_movie_list, reader, svd)
+# 가중치 반영 함수 : variable_weight , 임시로 주석처리 해둔 것이니 나중에 주석처리 풀어야함
+#user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd)
+# 가중치 반영 안한 임시 함수 : temporary_recommend1
+user_df_sum_relase = temporary_recommend1(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd)

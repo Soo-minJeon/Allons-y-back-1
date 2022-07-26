@@ -102,19 +102,19 @@ var login = function(req, res){
                             if (result5){
                               recommend6(database,function(err, result6) {
                                 res.status(200).send(JSON.stringify(final_objToSend = {
-                                id: objToSend.id,
-                                name: objToSend.name,
-                                reco1: result1,
-                                reco2_1: result2[0],
-                                reco2_2 : result2[1],
-                                reco2_3 : result2[2],
-                                reco2_4 : result2[3],
-                                reco2_5 : result2[4],
-                                reco3 : result3,
-                                reco4 : result4,
-                                reco5 : result5,
-                                reco6 : result6
-                              }));
+                                    id: objToSend.id,
+                                    name: objToSend.name,
+                                    reco1: result1,
+                                    reco2_1: result2[0],
+                                    reco2_2 : result2[1],
+                                    reco2_3 : result2[2],
+                                    reco2_4 : result2[3],
+                                    reco2_5 : result2[4],
+                                    reco3 : result3,
+                                    reco4 : result4,
+                                    reco5 : result5,
+                                    reco6 : result6
+                                }));
                               console.log('final = ')
                               console.log(final_objToSend)
                               console.log("----------------------------------------------------------------------------");

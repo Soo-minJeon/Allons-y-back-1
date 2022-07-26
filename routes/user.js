@@ -3,6 +3,7 @@ var request = require("request");
 var personal_info = require("../personal_info");
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token"); // 아고라 토큰 발급 위해 필요
 const { time } = require('console');
+const { title } = require('process');
 
 // 회원가입 라우팅 함수
 var signup = function(req, res) {
@@ -98,8 +99,8 @@ var login = function(req, res){
                     if(result3) {
                       recommend4(database, reco_id, function(err, result4){
                         if(result4){
-                          recommend5(function(err, result5){
-                            if (result5){
+                          // recommend5(function(err, result5){
+                            // if (result5){
                               recommend6(database,function(err, result6) {
                                 res.status(200).send(JSON.stringify(final_objToSend = {
                                 id: objToSend.id,
@@ -112,20 +113,20 @@ var login = function(req, res){
                                 reco2_5 : result2[4],
                                 reco3 : result3,
                                 reco4 : result4,
-                                reco5 : result5,
+                                // reco5 : result5,
                                 reco6 : result6
                               }));
                               console.log('final = ')
                               console.log(final_objToSend)
                               console.log("----------------------------------------------------------------------------");
                               })
-                            }
-                            else{
-                              console.dir(err)
-                              res.status(404).send();
-                              console.log("----------------------------------------------------------------------------");
-                            }
-                          })
+                            // }
+                            // else{
+                            //   console.dir(err)
+                            //   res.status(404).send();
+                            //   console.log("----------------------------------------------------------------------------");
+                            // }
+                          // })
                         }
                         else{
                           console.log('추천4 오류 발생 : ', err)
@@ -205,12 +206,40 @@ var watchlist = function(req, res) {
     }
 };
 
+
+// 리메이크영화 추천(함수)
+var remake = function (title, callback) {
+  console.log("/(리메이크영화 추천) 함수 호출");
+
+  //파이썬 코드 실행 (유사 사용자 추천)
+  const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+  var getpython = "";
+
+  //result에는 유저에게 추천할 사용자들 id 가 들어있음.
+  const result = spawnSync("python", ["recommend/remake_recomment.py", title]);
+
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr);
+    callback(null, null)
+
+  } else {
+    
+    process.stderr.write(result.stderr);
+    getpython = result.stdout.toString().replace(/\n/g, "").replace(/\s*/g, "");
+    process.stdout.write(getpython);
+    callback(null, getpython)
+  }
+};
+
 // 감상결과
 var watchresult = function(req, res) {
     console.log('/watchresult(감상결과) 라우팅 함수 호출');
   
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 영화 아이디 받아오기
+    var remakeTitle = ''
+    var remakePoster = ''
+    var Isremake = 'none'
 
     var database = req.app.get('database');
 
@@ -222,7 +251,20 @@ var watchresult = function(req, res) {
           movieTitle: parammovieTitle,
         });
 
-        if (results.length > 0) {
+        await remake(parammovieTitle, function(err, result){
+          if (result!= 'false'){
+            Isremake = 'true'
+            remakes = result.split(',')
+            remakeTitle = remakes[0]
+            remakePoster = remakes[1]
+            // console.log('remaketitle : ', remakeTitle)
+          }
+          else{
+            Isremake = 'false'
+          }
+        })
+
+        if (results.length > 0 && remake != 'none') {
           // console.log(results);
 
           var objToSend = {
@@ -235,6 +277,9 @@ var watchresult = function(req, res) {
             highlight_array: results[0].highlight_array, // 감정폭 체크한 모든 기록 -- 그래프 제작에 이용
             rating: results[0].rating, // 평점
             comment: results[0].comment, // 감상평
+            remake : Isremake, // remake 존재유무
+            remakeTitle : remakeTitle, // remake title
+            remakePoster : remakePoster // remake poster path
           };
 
           res.status(200).send(JSON.stringify(objToSend));
@@ -608,47 +653,6 @@ var recommend4 = function(db, id, callback){
   }
 };
 
-// 추천 5- 리메이크영화 추천(함수)
-var recommend5 = function (callback) {
-  console.log("/recommend5 (리메이크영화 추천) 함수 호출");
-
-  //파이썬 코드 실행 (유사 사용자 추천)
-  const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
-  var getpython = "";
-
-  //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-  const result = spawnSync("python", ["recommend/remake_recomment.py"]);
-
-  if (result.status !== 0) {
-    process.stderr.write(result.stderr);
-
-    process.exit(result.status);
-  } else {
-    process.stdout.write(result.stdout);
-    process.stderr.write(result.stderr);
-    getpython = result.stdout.toString();
-  }
-
-  getRemakeList(getpython, function (err, result) {
-    // console.dir(result);
-
-    if (err) {
-      console.log("리메이작 목록 가져오는 중에 에러 발생 ...");
-      console.dir(err);
-      callback(err, null)
-    } else if (result) {
-      console.log("리메이작 가져오기 성공");
-      callback(null, result)
-    }
-    else {
-      console.log("리메이크작 목록 없음.");
-      console.log("\n\n");
-      callback(null, null)
-    }
-  });
-};
-
-
 // 추천6 - 고전 탑텐
 var recommend6 = function(db, callback){
   console.log('/recommend6 라우팅 함수 호출');
@@ -694,7 +698,6 @@ var recommend6 = function(db, callback){
       console.log("\n\n");
   }
 };
-
 
 // 영화검색 페이지에 영화 정보 전달하기
 var getAllMovieList = function(req, res){
@@ -1596,7 +1599,7 @@ var email = function(req, res){
     }
 };
 
-var makeRoom = async function (req, res) {
+var makeRoom = async function (req, res) { 
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");
   var paramId = req.body.id || req.query.id;

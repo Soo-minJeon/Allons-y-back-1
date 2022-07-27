@@ -22,4 +22,4 @@ def process(userId, rating, resultEmotionPer, concentration, parammovieTitle):
         f_object.close()
 
 #process("621",5.0,80,90,"Toy Story")
-process(str(sys.argv[1]), 5.0,sys.argv[3],sys.argv[4],sys.argv[5])
+process(str(sys.argv[1]), sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])

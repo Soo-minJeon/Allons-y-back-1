@@ -1450,9 +1450,9 @@ var watchAloneEnd = async function(req, res){
 
       }
 
-  // user_info.csv 업데이트 - 평점 가공 (감정부합도+집중도+평점)
+    // user_info.csv 업데이트 - 평점 가공 (감정부합도+집중도+평점)
       async function ratingUpdate(){
-          database.WatchModel.find({ userId : paramId, title : parammovieTitle }, function(err, results) {
+          database.WatchModel.find({ userId : paramId, title : "Toy Story" }, function(err, results) {
             if (err) {
               callback(err, null);
               return;
@@ -1460,8 +1460,8 @@ var watchAloneEnd = async function(req, res){
 
             if(results.length>0) {
               const existing = results[0]
-              //console.log(results[0]);
-              //console.log(results[0].rating);
+              console.log(results[0]);
+              console.log(results[0].rating);
               const spawn = require('child_process').spawn;
 
               database.UserModel.findById(paramId, function (err, result2) {
@@ -1473,7 +1473,7 @@ var watchAloneEnd = async function(req, res){
                       var recoID = result2[0].reco2_id
                       console.log("recoID: "+recoID)
                       // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-                      const result = spawn('python', ['recommend/findMovieID.py', recoID, results[0].rating, results[0].resultEmotionPer, results[0].concentration, parammovieTitle]);
+                      const result = spawn('python', ['recommend/editRatingUpdate.py', recoID, results[0].rating, results[0].resultEmotionPer, results[0].concentration, "Toy Story"]);
                       result.stdout.on('data', function(ls_result){
                           console.log(ls_result.toString());
                       })
@@ -1541,7 +1541,7 @@ var watchAloneEnd = async function(req, res){
         res.status(200).send(JSON.stringify(objToSend));
         console.log('----------------------------------------------------------------------------')
       }
-      main();
+      ratingUpdate();
       return;
 
     }

@@ -7,7 +7,7 @@ from pandas import read_csv
 
 def process(favorite_):
         ratings = pd.read_csv(
-                'recommend/user_info.csv',
+                'csv/user_info.csv',
                 low_memory=False)
         ratings = ratings.sort_values(['userId']) # 오름차순으로 정렬: 아이디가 겹치지 않게끔
         final_user = ratings.tail(1)['userId'] + 1
@@ -20,7 +20,7 @@ def process(favorite_):
         #print(favorite[0]) # 테스트용
         print(final_user)
 
-        df = read_csv('recommend/movie_info.csv')
+        df = read_csv('csv/movie_info.csv')
 
         for j in range(len(favorite)):
                 for i in range(len(df)):

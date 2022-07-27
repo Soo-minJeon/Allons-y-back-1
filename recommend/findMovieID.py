@@ -5,7 +5,7 @@ import sys
 from csv import DictWriter
 
 def process(userId, rating, resultEmotionPer, concentration, parammovieTitle):
-    df = pd.read_csv('recommend/movie_info.csv', low_memory=False)
+    df = pd.read_csv('csv/movie_info.csv', low_memory=False)
     for i in range(len(df)):
         if df['original_title'][i] == parammovieTitle:
             movieID = str(df['id'][i])
@@ -16,7 +16,7 @@ def process(userId, rating, resultEmotionPer, concentration, parammovieTitle):
     headersCSV = ['userId', 'movieId', 'rating']
     result_row = {'userId': userId, 'movieId': movieID, 'rating': rating}
 
-    with open('recommend/user_info.csv', 'a', newline='') as f_object:
+    with open('csv/user_info.csv', 'a', newline='') as f_object:
         writer_object = DictWriter(f_object, fieldnames=headersCSV)
         writer_object.writerow(result_row)
         f_object.close()

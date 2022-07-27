@@ -306,7 +306,7 @@ var watchresult = function(req, res) {
 var labelDetection = function(second, callback){
     const spawn = require('child_process').spawn;
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['genreAnalyze.py']);
+    const result = spawn('python', ['rekognition/genreAnalyze.py']);
     console.log("1. 장르 분석 실행 시작 ")
       result.stdout.on('data', function(data) {
       console.log("1. 장르 분석 실행끝! ")
@@ -318,7 +318,7 @@ var labelDetection = function(second, callback){
 };
 var celebrityDetection = function(second, callback){
       const spawn = require('child_process').spawn;
-      const result2 = spawn('python', ['celebrityAnalyze.py']);
+      const result2 = spawn('python', ['rekognition/celebrityAnalyze.py']);
 
       console.log("2. 배우 분석 실행 시작 ")
       result2.stdout.on('data', function(data) {
@@ -331,7 +331,7 @@ var celebrityDetection = function(second, callback){
 };
 var emotionDetection = function(second, callback){
     const spawn = require('child_process').spawn;
-    const result3 = spawn('python', ['emotionAnalyze.py']);
+    const result3 = spawn('python', ['rekognition/emotionAnalyze.py']);
 
     console.log("3. 감정 분석 실행 시작 ")
     result3.stdout.on('data', function(data) {
@@ -422,7 +422,7 @@ var recommend1 = function(db, id, callback){
     const spawn = require('child_process').spawn;
 
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['recommend1.py', paramId]);
+    const result = spawn('python', ['recommend/recommend1.py', paramId]);
 
     // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
     result.stdout.on('data', function(data) {
@@ -528,7 +528,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                 console.log('선호배우 : ' + fActor)
                 const spawn = require('child_process').spawn;
                 // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-                const results1 = spawn('python', ['recommend3.py',fActor]);
+                const results1 = spawn('python', ['recommend/recommend3.py',fActor]);
 
                 // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
                 results1.stdout.on('data', (data) => {
@@ -558,7 +558,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                     if(result.length>0) {
                         console.log("likeModel 첫 생성")
                         const spawn = require('child_process').spawn;
-                        const results2 = spawn('python', ["recommend3_FindLoveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
+                        const results2 = spawn('python', ["recommend/recommend3_FindLoveActor.py", result[0].reco2_id]); // 추천용 아이디 넣기
 
                         results2.stdout.on('data', (data) => {
                             const stringRe = data.toString().replace(/\r/g, "");
@@ -582,7 +582,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                             console.log("fActor : "+ fActor);
                             // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
                             console.log("선호배우 영화 추천 목록 가져오기 실행***")
-                            const results1 = spawn('python', ['recommend3.py',fActor]);
+                            const results1 = spawn('python', ['recommend/recommend3.py',fActor]);
 
                             // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
                             results1.stdout.on('data', (data) => {
@@ -617,7 +617,7 @@ var recommend4 = function(db, id, callback){
     const spawn = require('child_process').spawn;
 
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['recommend4_RandomYear.py',paramId]);
+    const result = spawn('python', ['recommend/recommend4_RandomYear.py',paramId]);
 
     result.stdout.on('data', (data) => {
       console.log("------check!--------")
@@ -666,7 +666,7 @@ var recommend6 = function(db, callback){
     const spawn = require('child_process').spawn;
 
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['recommend5_top.py']);
+    const result = spawn('python', ['recommend/recommend5_top.py']);
 
     result.stdout.on('data', (data) => {
       console.log("------check!--------")
@@ -1371,14 +1371,12 @@ var watchAloneEnd = async function(req, res){
                 }
           }
 
-//          labelDetection(database, 'second', function(err, result1) {
-//               paramGenre = result1
-//          });
-//          celebrityDetection(database, 'second', function(err, result2) {
-//               paramActor = result2
-//          });
-          paramGenre = "result1"
-          paramActor = "result2"
+          labelDetection(database, 'second', function(err, result1) {
+               paramGenre = result1
+          });
+          celebrityDetection(database, 'second', function(err, result2) {
+               paramActor = result2
+          });
           emotionDetection(database, 'second', function(err, result3) {
                 a = result3.split('\n')
                 paramEmotion = a[0]
@@ -1543,7 +1541,7 @@ var watchAloneEnd = async function(req, res){
         res.status(200).send(JSON.stringify(objToSend));
         console.log('----------------------------------------------------------------------------')
       }
-      sceneAnalyze();
+      main();
       return;
 
     }

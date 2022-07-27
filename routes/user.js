@@ -268,6 +268,7 @@ var watchresult = function(req, res) {
           // console.log(results);
 
           var objToSend = {
+            date: results[0].date,
             title: results[0].movieTitle,
             poster: results[0].poster,
             genres: results[0].genres,
@@ -752,6 +753,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
   console.log('/watchAloneStart 라우팅 함수 호출됨')
 
   var database = req.app.get('database');
+  var today = new Date();
 
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
@@ -794,6 +796,7 @@ var watchAloneStart = function(req, res){ // watch스키마 생성
     async function createWatchResult(){
       newWatch = new database.WatchModel({ 
         'userId': paramId, 
+        'date' : today.toLocaleDateString('en-US'),
         'movieTitle': parammovieTitle,
         'poster': posterurl,
         'genres': genres,
@@ -858,6 +861,7 @@ var watchImageCaptureEyetrack = async function(req, res){
 
   async function start() {
     var database = req.app.get("database");
+    var today = new Date();
 
     // eyetrack용 이미지를 s3버킷에 업로드 했다는 요청을 받으면
 
@@ -962,6 +966,7 @@ var watchImageCaptureEyetrack = async function(req, res){
         const existing = await database.WatchModel.find({
           userId: paramId,
           movieTitle: parammovieTitle,
+          date : today.toLocaleDateString('en-US')
         });
 
         if (existing.length > 0) {
@@ -977,6 +982,7 @@ var watchImageCaptureEyetrack = async function(req, res){
               // 감상목록 concentration 수정 //
               userId: paramId,
               movieTitle: parammovieTitle,
+              date : today.toLocaleDateString('en-US')
             },
             {
               $set: {
@@ -1003,6 +1009,7 @@ var watchImageCaptureEyetrack = async function(req, res){
             await database.WatchModel.find({
               userId: paramId,
               movieTitle: parammovieTitle,
+              date : today.toLocaleDateString('en-US')
             })
           );
           res.status(400).send();
@@ -1020,6 +1027,7 @@ var watchImageCaptureEyetrack = async function(req, res){
           const existing = await database.WatchModel.find({
             userId: paramId,
             movieTitle: parammovieTitle,
+            date : today.toLocaleDateString('en-US')
           });
   
           sleepCount = existing[0].sleepingCount+1;
@@ -1030,6 +1038,7 @@ var watchImageCaptureEyetrack = async function(req, res){
             {
               userId: paramId,
               movieTitle: parammovieTitle,
+              date : today.toLocaleDateString('en-US')
             },
             {
               $set: {
@@ -1176,6 +1185,7 @@ var watchAloneEnd = async function(req, res){
 
   async function main() {
     var database = req.app.get('database');
+    var today = new Date();
 
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
@@ -1200,6 +1210,7 @@ var watchAloneEnd = async function(req, res){
         var existing_watch = await database.WatchModel.find({
           userId: userId,
           movieTitle: movieTitle,
+          date : today.toLocaleDateString('en-US')
         }).clone();
 
         if (existing_watch) {
@@ -1421,7 +1432,7 @@ var watchAloneEnd = async function(req, res){
             );
         }
 
-        await database.WatchModel.findById(paramId, function (err, result2) {
+        await database.WatchModel.findByUserMovieTitleDate(paramId, parammovieTitle, today.toLocaleDateString('en-US'), function (err, result2) {
             if (err) {
               callback(err, null);
               return;
@@ -1452,7 +1463,8 @@ var watchAloneEnd = async function(req, res){
 
     // user_info.csv 업데이트 - 평점 가공 (감정부합도+집중도+평점)
       async function ratingUpdate(){
-          database.WatchModel.find({ userId : paramId, title : "Toy Story" }, function(err, results) {
+          // database.WatchModel.find({ userId : paramId, title : "Toy Story" }, function(err, results) {
+          database.WatchModel.find({ userId : paramId, title : parammovieTitle, date :today.toLocaleDateString('en-US') }, function(err, results) {
             if (err) {
               callback(err, null);
               return;
@@ -1505,6 +1517,7 @@ var watchAloneEnd = async function(req, res){
             // 감상목록 highlight_array 수정 //
             userId: paramId,
             movieTitle: parammovieTitle,
+            date : today.toLocaleDateString('en-US')
           },
           {
             $set: {
@@ -1600,6 +1613,8 @@ var addReview = function(req, res){
   console.log(req.body)
 
   var database = req.app.get('database');
+  var today = new Date();
+  
   var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
   var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
   var paramRating = req.body.rating || req.query.rating // 사용자가 매긴 평점
@@ -1608,7 +1623,7 @@ var addReview = function(req, res){
   async function getInfo() {
 
     const existing = await database.WatchModel.find(
-      { userId : paramId, title : parammovieTitle }).clone() 
+      { userId : paramId, title : parammovieTitle, date : today.toLocaleDateString('en-US') }).clone() 
 
     if (existing.length <= 0) {
       res.status(400).send();
@@ -1617,7 +1632,8 @@ var addReview = function(req, res){
   async function addreview(){
     await database.WatchModel.updateOne({ // 감상평,평점 업데이트
       userId: paramId,
-      movieTitle: parammovieTitle
+      movieTitle: parammovieTitle,
+      date : today.toLocaleDateString('en-US')
     }, {  
       $set: {
         rating: parseInt(paramRating),   

@@ -9,6 +9,7 @@ Schema.createSchema = function (mongoose) {
 
     var WatchSchema = mongoose.Schema({ // 감상기록
         userId: { type: String, required: true, 'default': '' },// 사용자 아이디
+        date: { type: String, required: true, 'default': '' }, // 감상날짜
         movieTitle: { type: String, required: true, 'default': '' },
         poster: { type: String, required: true },
         genres: { type: String, required: true },
@@ -38,6 +39,11 @@ Schema.createSchema = function (mongoose) {
     // WatchSchema userId, movieTitle 로 검색
     WatchSchema.static('findByUserMovieTitle', function (userId, movieTitle, callback) { // findByUserMovieId 함수 추가
         return this.find({ userId : userId , movieTitle : movieTitle }, callback);
+    });
+
+    // WatchSchema userId, movieTitle, date 로 검색
+    WatchSchema.static('findByUserMovieTitleDate', function (userId, movieTitle, date, callback) { // findByUserMovieId 함수 추가
+        return this.find({ userId : userId , movieTitle : movieTitle, date : date }, callback);
     });
 
     console.log('Schema 설정을 완료하였습니다.');

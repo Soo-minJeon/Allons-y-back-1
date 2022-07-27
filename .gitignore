@@ -6,6 +6,6 @@ rekognition/genreAnalyze.py
 rekognition_videoTest.py
 csv/movie_info_create.py
 csv/new_movie_info_create.py
-credentials.csv
-personal_info.js
+credential/credentials.csv
+credential/personal_info.js
 movie_info_new_create.py

@@ -1,4 +1,4 @@
-# 감정분석(함께보기)
+# 감정분석(혼자보기)
 import csv
 import boto3
 import sys
@@ -6,7 +6,7 @@ import sys
 def process(path):
 
     # aws 계정 정보 입력
-    with open('credentials.csv', 'r') as input:
+    with open('credential/credentials.csv', 'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:
@@ -23,7 +23,7 @@ def process(path):
 
 
     # 버킷 안의 사진이 들어있는 테스트 폴더
-    folder = "together/"
+    folder = "capture/"
 
     # 버킷/테스트 폴더/사진이름 (경로명) : capture/+'프론트에서 넘겨받은 파일명'
     photo = folder + str(path) 
@@ -37,28 +37,29 @@ def process(path):
         Attributes=["ALL"]
     )
 
-    resultString_arr = []
     resultString = []
 
     for key, value in response.items():
         if key == "FaceDetails":
-
             for people_att in value:
-                
+
                 # rekognition 결과 중, 감정정보만 찾아서 문자열 처리
                 emotion_index = (str(people_att).find('Emotions'))
                 landmark_index = (str(people_att).find('Landmarks'))
                 emotion_result = str(people_att)[emotion_index + 12: landmark_index]
 
                 total_result = emotion_result.split("'Type': ")
-                total = total_result[1][0:len(total_result[1]) - 4].split(", 'Confidence': ")
-                emotion = total[0].replace("'", "")
+                for i in range(1, len(total_result)):
+                    total = total_result[i][0:len(total_result[i]) - 4].split(", 'Confidence': ")
 
-                resultString_arr.append(emotion)
+                    emotion = total[0].replace("'", "")
+                    trust = total[1].replace("}", "")
 
-    print(resultString_arr)
+                    resultString.append(emotion)
+                    resultString.append(trust)
+
+    print(resultString)
 
 
 if __name__ == '__main__':
-    # process(sys.argv[1])
-    process('k8elpunvyts_30.jpg')
+    process(sys.argv[1])

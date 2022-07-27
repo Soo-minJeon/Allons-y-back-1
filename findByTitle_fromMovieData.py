@@ -10,9 +10,9 @@ def process(title):
 
         # csv 파일 불러오기
         movies = pd.read_csv(
-                '/recommend/movie_info.csv',
+                'recommend/movie_info.csv',
                 low_memory=False)
-        movies.columns = ['id', 'original_title', 'genres','runtime', 'release_date', 'actor', 'poster_path']
+        movies.columns = ['id', 'original_title', 'genres','runtime', 'release_date', 'actor', 'poster_path', 'remakeTitle', 'remakePoster']
 
         # 제목으로 정보 찾기
         find_row = movies.index[(movies['original_title'] == title)]

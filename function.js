@@ -297,7 +297,7 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
     console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion+', '+correctModel);
 
   // 아이디를 사용해 검색
-  db.likeModel.findById(id, function(err, results){
+  db.likeModel.findById(id, function(err, results) {
        if (err) {
           console.log('장면분석 중 에러 발생');
           console.dir(err);

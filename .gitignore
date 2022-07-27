@@ -4,7 +4,7 @@ genreAnalyze.py
 .DS_Store
 .idea/csv-plugin.xml
 rekognition_videoTest.py
-recommend/movie_info_create.py
+csv/movie_info_create.py
 recommend/new_movie_info_create.py
 credentials.csv
 personal_info.js

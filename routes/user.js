@@ -352,7 +352,7 @@ var sceneAnalyze = function(req, res) {
     var paramEmotion = null
     var paramCorrect = null
     // 감정맥스 초, 감정 종류 받아오기
-    //var maxSecond = req.body.maxSecond || req.query.maxSecond;
+    // var maxSecond = req.body.maxSecond || req.query.maxSecond;
     var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
 
       function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
@@ -1254,6 +1254,7 @@ var watchAloneEnd = async function(req, res){
           res.status(400).send();
         }
       }
+
       // 감정폭 측정기록 없을 때, 집중도 기록 가져오는 함수
       async function getEyetrackRecord(paramId, parammovieTitle){
         const existing = await database.EyetrackModel.find({userId : paramId, movieTitle : parammovieTitle})
@@ -1300,6 +1301,7 @@ var watchAloneEnd = async function(req, res){
         }
         deleteImg_from_python(highlightT, id, title);
       }
+
       // 영화 정보 찾기 -> 집중도 평균치 계산위해
       async function getMovieInfo(movieTitle) {
         var existing_movie = await database.MovieModel.find({
@@ -1325,6 +1327,76 @@ var watchAloneEnd = async function(req, res){
           console.log('----------------------------------------------------------------------------')
         }
       }
+
+      async function sceneAnalyze() {
+        console.log('sceneAnalyze 함수 호출');
+        //var database = req.app.get('database');
+        var paramGenre = null
+        var paramActor = null
+        var paramEmotion = null
+        var paramCorrect = null
+        // 감정맥스 초, 감정 종류 받아오기
+        // var maxSecond = req.body.maxSecond || req.query.maxSecond;
+        //var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
+
+          function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
+                var database = req.app.get('database');
+                // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+                if(database) {
+                   scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect,function(err, result) {
+                        if(err) {
+                            console.log('장면분석 정보 등록 에러 발생...');
+                            console.dir(err);
+                            res.status(400).send();
+                            console.log('----------------------------------------------------------------------------')
+                        }
+                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+                        if(result) {
+                          console.log('장면분석 정보 등록 성공.');
+                          console.dir(result);
+                          res.status(200).send();
+                          console.log('\n\n');
+                        } else { // 결과 객체가 없으면 실패 응답 전송
+                          console.log('장면분석 정보 등록 에러 발생...');
+                          res.status(400).send();
+                          console.log('----------------------------------------------------------------------------')
+                        }
+                  });
+                }
+                else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+                  console.log('장면분석 정보 등록 에러 발생...');
+                  console.dir(err);
+                  res.status(400).send();
+                  console.log('----------------------------------------------------------------------------')
+                }
+          }
+
+//          labelDetection(database, 'second', function(err, result1) {
+//               paramGenre = result1
+//          });
+//          celebrityDetection(database, 'second', function(err, result2) {
+//               paramActor = result2
+//          });
+          paramGenre = "result1"
+          paramActor = "result2"
+          emotionDetection(database, 'second', function(err, result3) {
+                a = result3.split('\n')
+                paramEmotion = a[0]
+                paramCorrect = a[1]
+                console.log(paramEmotion)
+          });
+
+          while (true) {
+              if (paramGenre && paramActor && paramEmotion && paramCorrect){
+                  dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
+                  break
+              }
+          }
+
+          console.log(paramGenre, paramActor, paramEmotion)
+          console.log("종료합니다..")
+      }
+
       // 감정 부합 확인
       async function emotionCorrectTest() {
         var resultSend=0;
@@ -1471,7 +1543,7 @@ var watchAloneEnd = async function(req, res){
         res.status(200).send(JSON.stringify(objToSend));
         console.log('----------------------------------------------------------------------------')
       }
-      main();
+      sceneAnalyze();
       return;
 
     }

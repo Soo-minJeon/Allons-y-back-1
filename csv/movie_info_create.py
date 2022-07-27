@@ -11,9 +11,9 @@ pd.set_option('mode.chained_assignment', 'warn') # SettingWithCopyWarning
 # 무시
 pd.set_option('mode.chained_assignment',  None) # <==== 경고를 끈다
 # 활용할 csv 파일 만들기
-f = open("movie_info.csv", "w")
+f = open("../recommend/movie_info.csv", "w")
 
-meta = pd.read_csv('movies_metadata.csv',low_memory=False)
+meta = pd.read_csv('../recommend/movies_metadata.csv', low_memory=False)
 # 필요한 컬럼만 가져온다. 아이디,제목,장르,개봉알,인기도,언어
 meta = meta[['id','original_title','genres','release_date','runtime', 'poster_path']]
 
@@ -36,7 +36,7 @@ for j in range(45465):
                 listActor.append((dic[5].split(':')[1]).strip().strip(''))
     actor['cast'][j]=listActor
 
-with open('movie_info.csv', 'a', newline='') as f_object:
+with open('../recommend/movie_info.csv', 'a', newline='') as f_object:
     dictwriter_object = csv.DictWriter(f_object, fieldnames=headersCSV)
     dictwriter_object.writeheader()
 

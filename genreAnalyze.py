@@ -94,7 +94,7 @@ class VideoDetect:
 
                     if int(labelDetection['Timestamp']/1000)<=second+5 and int(labelDetection['Timestamp']/1000)>=last:
                         label = labelDetection['Label']
-                        print(label['Name'])
+                        #print(label['Name'])
                         if label['Name'] in sf:
                             fscount+=1
                         if label['Name'] in adventure:

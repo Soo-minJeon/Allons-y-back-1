@@ -18,7 +18,7 @@ def preprocess():
     global s3
 
     # 버킷 접근 위한 기본 설정
-    with open('credentials.csv',
+    with open('../credential/credentials.csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)

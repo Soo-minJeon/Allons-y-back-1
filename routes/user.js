@@ -1,6 +1,6 @@
 var functionUser = require('../function');
 var request = require("request");
-var personal_info = require("../personal_info");
+var personal_info = require("../credential/personal_info");
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token"); // 아고라 토큰 발급 위해 필요
 const { time } = require('console');
 const { title } = require('process');
@@ -216,7 +216,7 @@ var remake = function (title, callback) {
   var getpython = "";
 
   //result에는 유저에게 추천할 사용자들 id 가 들어있음.
-  const result = spawnSync("python", ["recommend/remake_recomment.py", title]);
+  const result = spawnSync("python", ["recommend/remake_recommend.py", title]);
 
   if (result.status !== 0) {
     process.stderr.write(result.stderr);
@@ -422,7 +422,7 @@ var recommend1 = function(db, id, callback){
     // 1. child-process모듈의 spawn 취득
     const spawn = require('child_process').spawn;
 
-    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+    // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행 
     const result = spawn('python', ['recommend/recommend1.py', paramId]);
 
     // 3. stdout의 'data'이벤트리스너로 실행결과를 받는다.
@@ -1137,7 +1137,7 @@ var watchTogetherImageCapture = async function(req, res){
       var path = paramRoomCode + '_' + paramTime + '.jpg'
   
       // (param) 이미지 경로 재설정 필요
-      const result = spawnSync("python", ["rekognition/rekognition_together.py", path]);
+      const result = spawnSync("python", ["rekognition/userAnalyze_together.py", path]);
   
       if (result.status !== 0) {
         process.stderr.write(result.stderr);
@@ -1298,7 +1298,7 @@ var watchAloneEnd = async function(req, res){
 
           param = time + "/" + id + "/" + title;
 
-          const result = spawnSync("python", ["userAnalyze_imgDelete.py", param]);
+          const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
 
           if (result.status !== 0) {
             process.stderr.write(result.stderr);
@@ -2042,8 +2042,6 @@ var enterRoom = functionUser.enterRoom;
 
 var getRecommendUserList = functionUser.getRecommendUserList;
 
-var getRemakeList = functionUser.getRemakeList;
-
 var makeroom = functionUser.makeroom;
 
 var sendEmail = functionUser.sendEmail;
@@ -2070,4 +2068,4 @@ module.exports.watchTogetherEnd = watchTogetherEnd;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
 module.exports.watchTogetherImageCapture = watchTogetherImageCapture;
 module.exports.watchAloneEnd = watchAloneEnd;
-module.exports.addReview = addReview;
+module.exports.addReview = addReview; s

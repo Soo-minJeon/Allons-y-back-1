@@ -3,7 +3,7 @@ import boto3, json, sys, time, csv
 class VideoDetect:
     jobId = 'null' # 비디오 분석 작업용 ID, 작업 식별자
 
-    with open('credentials.csv', 'r') as input:
+    with open('credential/credentials.csv', 'r') as input:
         next(input)
         reader = csv.reader(input)
         for line in reader:

@@ -5,13 +5,13 @@ import sys
 import pandas as pd
 
 # 영화 데이터를 가져왔다.
-meta = pd.read_csv('csv/movies_metadata.csv', low_memory=False)
+meta = pd.read_csv('../csv/movies_metadata.csv', low_memory=False)
 # 필요한 컬럼만 가져온다. 아이디,제목,장르,개봉알,인기도,언어
 meta = meta[['id', 'popularity']]
-poster_info = pd.read_csv('csv/poster_path.csv', low_memory=False)
+poster_info = pd.read_csv('../csv/poster_path.csv', low_memory=False)
 poster_info['id'] = poster_info['id'].astype(object)
 meta = pd.merge(meta, poster_info, on='id', how='left')
-print(meta)
+#print(meta)
 
 # 간단하게 id 값을 movieId로 바꿔주고
 meta = meta.rename(columns={'id': 'movieId'})

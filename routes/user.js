@@ -2068,4 +2068,4 @@ module.exports.watchTogetherEnd = watchTogetherEnd;
 module.exports.watchImageCaptureEyetrack = watchImageCaptureEyetrack;
 module.exports.watchTogetherImageCapture = watchTogetherImageCapture;
 module.exports.watchAloneEnd = watchAloneEnd;
-module.exports.addReview = addReview; s
+module.exports.addReview = addReview; 

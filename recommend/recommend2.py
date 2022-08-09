@@ -48,10 +48,33 @@ def process(id):
     movieTitle = []
     moviePoster = []
 
+    k = 1
+
    # 가장 유사도가 높은 유저의 감상기록 가져오기
     for i in range(1, recommend_user + 1):
-        user = user_based_collab[client_user].sort_values(ascending=False)[:10].index[i]
+
+        count_rating = 0 # 평가한 영화가 25개 넘는 사용자만 추천
+
+        user = user_based_collab[client_user].sort_values(ascending=False).index[k]
         user2 = (title_user.loc[user].sort_values(ascending=False))
+
+        for j in range(0, len(user2.values)):
+            if (user2.values[j] > 0):
+                count_rating += 1
+
+
+        if (count_rating < 25):
+            while(count_rating < 25):
+                k += 1
+                count_rating = 0  # 평가한 영화가 25개 넘는 사용자만 추천
+                user = user_based_collab[client_user].sort_values(ascending=False).index[k]
+                user2 = (title_user.loc[user].sort_values(ascending=False))
+
+                for j in range(0, len(user2.values)):
+                    if (user2.values[j] > 0):
+                        count_rating += 1
+
+
         users.append(user)
         movieid = np.concatenate((movieid, user2.head(5).index.values), axis=0)
 
@@ -61,17 +84,22 @@ def process(id):
                 movieid_.append(j)
         movieid = movieid_
 
+
         if (len(movieid) < (i * 5)):
+            temp = 0
             while(len(movieid) < i * 5):
 
                 lack = (i*5) - len(movieid)
-                movieid = np.concatenate((movieid, user2.head(5+lack).index.values), axis=0)
+                movieid = np.concatenate((movieid, user2.head(5+lack+temp).index.values), axis=0)
 
                 movieid_ = []
                 for j in movieid:
                     if j not in movieid_:
                         movieid_.append(j)
                 movieid = movieid_
+                temp += 1
+
+        k += 1
 
     for i in range(len(movieid)):
         movieid[i] = int(movieid[i])
@@ -79,13 +107,12 @@ def process(id):
 
     for j in range(25):
         find_row = movies.index[(movies['movieId'] == movieid[j])]
-        # print(find_row[0])
         movieTitle.append(movies.loc[find_row[0]]['original_title'])
         moviePoster.append(movies.loc[find_row[0]]['poster_path'])
 
     print(users, movieTitle, moviePoster)
 
 if __name__ == '__main__':
-    # process(671)
+    # process(687)
     process(sys.argv[1])
 

@@ -29,9 +29,10 @@ def process(favorite_):
 
                                 # 일단 timestamp 넣어놓음. 삭제해야함
                                 headersCSV = ['userId','movieId','rating']
-                                result_row = {'userId':final_user,'movieId':movie_id[j],'rating':5.0}
+                                # result_row = {'userId':final_user,'movieId':movie_id[j],'rating':5.0} // 기존 코(오류발생)
+                                result_row = {'userId':final_user,'movieId':df['id'][i],'rating':5.0} # 바꿔서 실행해본 코드
 
-                                with open('recommend/user_info.csv', 'a', newline='') as f_object:
+                                with open('csv/user_info.csv', 'a', newline='') as f_object:
                                         writer_object = DictWriter(f_object, fieldnames=headersCSV)
                                         writer_object.writerow(result_row)
                                         f_object.close()

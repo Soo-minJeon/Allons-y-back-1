@@ -11,8 +11,8 @@ Schema.createSchema = function (mongoose) {
         genres: { type: String, required: false, 'default':'Comedy' }, // 선호 장르, 유저스키마로
         actors: { type: String, required: false }, // 선호 배우, 유저스키마로
         emotions: { type: String, required: false, 'default':'happy' }, // 선호 감정, 유저스키마로
-        correctModel: {type: String, required: false, 'default':''}, // 왓치스키마로 옮김
-        resultEmotionPer: {type: String , required:false, 'default':''} // 왓치스키마로 옮김
+        correctModel: {type: String, required: false, 'default':''} // 왓치스키마로 옮김
+        //resultEmotionPer: {type: String , required:false, 'default':''} // 왓치스키마로 옮김
     });
 
     console.log('Schema 정의를 완료하였습니다.');

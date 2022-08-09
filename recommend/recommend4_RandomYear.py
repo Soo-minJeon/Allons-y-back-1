@@ -9,7 +9,7 @@ import random
 # 무시
 pd.set_option('mode.chained_assignment', None)  # <==== 경고를 끈다
 
-movie_info = pd.read_csv('csv/movie_info.csv', low_memory=False)
+movie_info = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)
 movie_info = movie_info[['original_title', 'poster_path','release_date']]
 
 ratings = pd.read_csv('csv/user_info.csv', low_memory=False)  # 원본은 데이터가 많아서 small 데이터 사용
@@ -70,7 +70,7 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
     user_df['Estimate_Score'] = user_df['movieId'].apply(lambda x: algo.predict(usernumber, x).est)
     user_df = user_df.sort_values('Estimate_Score', ascending=False)
 
-    movie_info2 = pd.read_csv('csv/movie_info.csv', low_memory=False)
+    movie_info2 = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)
     movie_info2 = movie_info2[['original_title', 'poster_path', 'release_date']]
     movie_info2 = movie_info2.sort_values(by='release_date')
 
@@ -103,4 +103,4 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo,
 yearList = [1940,1950,1960,1970,1980,1990] # 추후 연도 추가
 randomNum = random.choice(yearList)
 print(randomNum)
-user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd, randomNum)
+user_df_sum_relase = variable_weight(df, 1, 6, meta, drop_movie_list, reader, svd, randomNum)

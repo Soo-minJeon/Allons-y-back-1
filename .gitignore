@@ -3,9 +3,9 @@
 rekognition/genreAnalyze.py
 .DS_Store
 .idea/csv-plugin.xml
-rekognition_videoTest.py
 csv/movie_info_create.py
 csv/new_movie_info_create.py
 credential/credentials.csv
 credential/personal_info.js
 movie_info_new_create.py
+csv/movie_info_create.py

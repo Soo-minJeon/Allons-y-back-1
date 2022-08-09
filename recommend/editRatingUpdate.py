@@ -5,7 +5,7 @@ import sys
 from csv import DictWriter
 
 def process(userId, rating, resultEmotionPer, concentration, parammovieTitle):
-    df = pd.read_csv('csv/movie_info.csv', low_memory=False)
+    df = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)
     for i in range(len(df)):
         if df['original_title'][i] == parammovieTitle:
             movieID = str(df['id'][i])

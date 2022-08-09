@@ -16,7 +16,7 @@ def process(userId):
 
     # 2. 시청 영화의 배우 movie_info.py에서 movieid로 찾아오기
     # 3. 배우 출력
-    movieData = pd.read_csv('csv/movie_info.csv', low_memory=False)
+    movieData = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)
     movieData = movieData[['id', 'actor']] # 필요한 컬럼만 가져온다.
 
     for j in range(0, len(movieData)):

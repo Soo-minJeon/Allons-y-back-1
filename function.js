@@ -246,7 +246,7 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
       });
   
       console.log("Messege email address : ", userid)
-      console.log('Message sent: %s', info.messageId);
+      console.log('Message sent: %s', info.messageId)
       console.log("Mail Code : ", code)
   
       callback(null, objToSend);
@@ -269,21 +269,48 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
           return;
        }
 
-        if(results.length < 0) {
-          console.log('회원정보가 없습니다.');
-        }
-        else {
-           var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion, 'correctModel':correctModel});
+        if(results.length <= 0) {
+          console.log('회원정보가 없습니다. 새로 생성합니다..');
+          var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion,'correctModel':correctModel});
 
            // save()로 저장
            user.save(function(err) {
                if(err) {
-                      callback(err, null);
-                      return;
+                   callback(err, null);
+                   return;
                }
                console.log('사용자 장면분석 데이터 추가함');
                callback(null, user);
            });
+        }
+        else {
+          console.log(results.length)
+          console.log('회원정보를 찾았습니다. 업데이트합니다..');
+          console.log(gen,actor,emotion,correctModel)
+
+          db.likeModel.deleteMany({id: 'pbkdpwls123'});
+          var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion,'correctModel':correctModel});
+          // save()로 저장
+           user.save(function(err) {
+               if(err) {
+                   callback(err, null);
+                   return;
+               }
+              console.log('사용자 장면분석 데이터 업데이트함');
+              callback(null, user);
+           });
+//          var user = db.likeModel.updateOne({ // 감상목록 emotion_array 수정 //
+//            id: id,
+//          }, {
+//            $set: {
+//               genres: 'love',
+//               actors : 'love',
+//               emotions: 'love',
+//               correctModel: 'love',
+//            },}
+//          )
+
+          // WatchSchema 업데이트 코드 작성
         }
   })
 };

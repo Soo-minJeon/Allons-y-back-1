@@ -20,7 +20,7 @@ def process(favorite_):
         #print(favorite[0]) # 테스트용
         print(final_user)
 
-        df = read_csv('csv/movie_info.csv')
+        df = read_csv('csv/movie_info_2_2.csv')
 
         for j in range(len(favorite)):
                 for i in range(len(df)):

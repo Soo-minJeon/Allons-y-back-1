@@ -3,13 +3,13 @@
 # -*- coding: utf-8 -*-
 import sys
 import pandas as pd
-from surprise import Reader, Dataset, SVD, NormalPredictor, KNNBasic  # 알고리즘이 들어간다.
-from surprise import BaselineOnly, SVDpp, NMF, SlopeOne, CoClustering  # 분석툴
+from surprise import Reader, Dataset, SVD  # 알고리즘이 들어간다.
+from surprise import BaselineOnly, NMF, SlopeOne  # 분석툴
 
 # 무시
 pd.set_option('mode.chained_assignment', None)  # <==== 경고를 끈다
 
-movie_info = pd.read_csv('csv/movie_info.csv', low_memory=False)
+movie_info = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)
 movie_info = movie_info[['original_title', 'poster_path']]
 
 ratings = pd.read_csv('csv/user_info.csv', low_memory=False)  # 원본은 데이터가 많아서 small 데이터 사용
@@ -77,7 +77,7 @@ def process(title):
 
     # csv 파일 불러오기
     movies = pd.read_csv(
-        'csv/movie_info.csv',
+        'csv/movie_info_2_2.csv',
         low_memory=False)
     movies.columns = ['id', 'original_title', 'poster_path']
 
@@ -99,7 +99,7 @@ def process(title):
 # 변수에 대한 가중치
 def user_release_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('csv/movie_info.csv', low_memory=False)  # 영화정보 가져옴
+    meta2 = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)  # 영화정보 가져옴
     value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
     value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
     value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
@@ -146,7 +146,7 @@ def user_release_ratio(df, usernumber):
 # 비율 가져옴 , 카운트 셈 - 데이터 편집
 def genre_ratio(df, usernumber):
     user_df = df[df['userId'] == usernumber]  # 평가 데이터에서 입력받은 유저 아이디의 데이터를 가져옴
-    meta2 = pd.read_csv('csv/movie_info.csv', low_memory=False)  # 영화정보 가져옴
+    meta2 = pd.read_csv('csv/movie_info_2_2.csv', low_memory=False)  # 영화정보 가져옴
     value_meta = meta2[['id', 'original_title', 'release_date', 'genres']]  # 필요한 영화 정보만 선별
     value_meta = value_meta.rename(columns={'id': 'movieId'})  # 이름 변경 : id를 movieId로 고침
     value_meta.movieId = pd.to_numeric(value_meta.movieId, errors='coerce')
@@ -366,3 +366,4 @@ def variable_weight(data, usernumber, rating, moviedata, dropdata, reader, algo)
 #user_df_sum_relase = variable_weight(df, sys.argv[1], 6, meta, drop_movie_list, reader, svd)
 # 가중치 반영 안한 임시 함수 : temporary_recommend1
 user_df_sum_relase = temporary_recommend1(df, 1, 6, meta, drop_movie_list, reader, svd)
+#print("[Broken Blossoms,Broken Blossoms,5 Card Stud,Sleepless in Seattle,While You Were Sleeping,Dead Man,座頭市,座頭市,Gremlins 2: The New Batch,Lonely Hearts],[/t/p/w300_and_h450_bestv2/9rZUn5x7dIeaC08WKXPlPlWL0Kk.jpg,/t/p/w300_and_h450_bestv2/l9rHRp7Yb2PVy5Qd5wUR9coXZoy.jpg,/t/p/w300_and_h450_bestv2/ow1esWlXoRPijAvR6GZQbv0uv9r.jpg,/t/p/w300_and_h450_bestv2/iLWsLVrfkFvOXOG9PbUAYg7AK3E.jpg,/t/p/w300_and_h450_bestv2/qNGO3ETcNwlWqK2kNRpbJSJRlos.jpg,/t/p/w300_and_h450_bestv2/gh7227sZsC28fQdl8c4wZ5QCppI.jpg,/t/p/w300_and_h450_bestv2/iCIycswWbX1EDS6PYYBcR9ohrC.jpg,/t/p/w300_and_h450_bestv2/uLpWIKg5DdLNan1o2u6gvQ6KIVe.jpg,/t/p/w300_and_h450_bestv2/jN7yvxnIHRozhq2mzWZDE5GPRc0.jpg,/t/p/w300_and_h450_bestv2/qnQK4JUwEUFDKt7dSMY2fJmhv2f.jpg]")

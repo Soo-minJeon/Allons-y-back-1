@@ -4,7 +4,7 @@ import sys
 
 def process(fActor):
     random_num = []
-    df = read_csv('csv/movie_info_2_2.csv')
+    df = read_csv('csv/movie_info.csv')
     result_movie = ""
     result_poster = ""
     fActor2 = str(fActor).strip('\n').strip('\n')

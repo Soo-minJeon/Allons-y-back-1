@@ -20,7 +20,7 @@ def process(param_origintitle):
     movieTitle = 'none'
     moviePoster = 'none'
 
-    f = open('csv/movie_info_2_2.csv', 'r')
+    f = open('csv/movie_info.csv', 'r')
     fs = csv.reader(f)
 
     for line in fs: # 리메이크 데이터(제목, 포스터)가 들어있는 영화의 movie_id 가져오기

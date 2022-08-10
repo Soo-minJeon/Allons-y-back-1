@@ -16,7 +16,7 @@ def process(id):
         'csv/user_info.csv',
         low_memory=False)
     movies = pd.read_csv(
-        'csv/movie_info_2_2.csv',
+        'csv/movie_info.csv',
         low_memory=False)
     movies.columns = ['movieId','original_title','genres','runtime','release_date','actor','poster_path', 'remakeTitle',
               'remakePoster']

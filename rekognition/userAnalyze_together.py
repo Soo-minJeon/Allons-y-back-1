@@ -3,7 +3,9 @@ import csv
 import boto3
 import sys
 
-def process(path):
+def process(roomCode, time):
+
+    resultString_arr = []
 
     # aws 계정 정보 입력
     with open('credential/credentials.csv', 'r') as input:
@@ -25,40 +27,63 @@ def process(path):
     # 버킷 안의 사진이 들어있는 테스트 폴더
     folder = "together/"
 
-    # 버킷/테스트 폴더/사진이름 (경로명) : capture/+'프론트에서 넘겨받은 파일명'
-    photo = folder + str(path) 
+    # bucket 하위 경로에 있는 object list 가져오기
+    s3 = boto3.client('s3', 
+                        aws_access_key_id=access_key_id,
+                        aws_secret_access_key=secret_access_key,
+                        region_name=region)
+    obj_list = s3.list_objects(Bucket = bucket, Prefix = folder)
+    contents_list = obj_list['Contents']
+
+    # 룸코드, 시간에 맞는 파일명 들어있는 리스트
+    file_list = []
+    for content in contents_list:
+        temp = content['Key'].split('/')
+        key = temp[1]
+
+        if roomCode+'_' in key and '_'+time+'.jpg' in key:
+            file_list.append(key)
     
-    response = client.detect_faces(
-        Image={
-            'S3Object': {
-                'Bucket': bucket,
-                'Name': photo
-            }},
-        Attributes=["ALL"]
-    )
+    if (len(file_list) <= 0):
+        print('None')
+    else: 
+        for i in range(len(file_list)):
 
-    resultString_arr = []
-    resultString = []
+            # 버킷/테스트 폴더/사진이름 (경로명) : capture/+'프론트에서 넘겨받은 파일명'
+            photo = folder + str(file_list[i]) 
 
-    for key, value in response.items():
-        if key == "FaceDetails":
+            response = client.detect_faces(
+                Image={
+                    'S3Object': {
+                        'Bucket': bucket,
+                        'Name': photo
+                    }},
+                Attributes=["ALL"]
+            )
 
-            for people_att in value:
-                
-                # rekognition 결과 중, 감정정보만 찾아서 문자열 처리
-                emotion_index = (str(people_att).find('Emotions'))
-                landmark_index = (str(people_att).find('Landmarks'))
-                emotion_result = str(people_att)[emotion_index + 12: landmark_index]
+            for key, value in response.items():
+                if key == "FaceDetails":
 
-                total_result = emotion_result.split("'Type': ")
-                total = total_result[1][0:len(total_result[1]) - 4].split(", 'Confidence': ")
-                emotion = total[0].replace("'", "")
+                    for people_att in value:
+                        
+                        # rekognition 결과 중, 감정정보만 찾아서 문자열 처리
+                        emotion_index = (str(people_att).find('Emotions'))
+                        landmark_index = (str(people_att).find('Landmarks'))
+                        emotion_result = str(people_att)[emotion_index + 12: landmark_index]
 
-                resultString_arr.append(emotion)
+                        total_result = emotion_result.split("'Type': ")
+                        total = total_result[1][0:len(total_result[1]) - 4].split(", 'Confidence': ")
+                        emotion = total[0].replace("'", "")
 
-    print(resultString_arr)
+                        resultString_arr.append(emotion)
+
+        print(resultString_arr)
 
 
 if __name__ == '__main__':
+    param = sys.argv[1]
+    # param = "aabbcc_0"
+    roomCode, time = param.split('_')
+    process(roomCode, time)
     # process(sys.argv[1])
-    process('k8elpunvyts_30.jpg')
+    # process('k8elpunvyts_30')

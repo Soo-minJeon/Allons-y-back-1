@@ -1147,7 +1147,7 @@ var watchTogetherImageCapture = async function(req, res){
         const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
         var getpython = "";
         // var path = paramRoomCode + '_' + paramTime + '.jpg'
-        paramTime = paramTime - 10  // 10초전의 사진들 분석
+        // paramTime = paramTime - 10  // 10초전의 사진들 분석
         var path = paramRoomCode + '_' + paramTime
   
         // (param) 이미지 경로 재설정 필요

@@ -239,9 +239,17 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
         to: userid,
         subject: '[하루뭅] 인증코드를 확인해주세요 ',
         text: code,
-        html: '<a>안녕하세요. <b>하루뭅(Harumub)</b>입니다.<br>'
-        +'고객님께서 입력하신 이메일의 소유확인을 위해 아래 인증번호를 회원가입 화면에 입력해주세요.</a> <br> <br><b>'
-        +code+'</b>'
+        html: 
+        '<div style=" width: 540px; height: 600px; border-top: 4px solid {$point_color}; margin: 80px auto; padding: 20px 0; box-sizing: border-box;">'+
+        '<div style="border-top: 1px solid #DDD; padding: 5px;"/><br /><br />'+
+        '<span style="color: {$point_color};"><b>메일인증</b></span> 안내입니다.'+
+        '<p style="font-size: 16px; line-height: 26px; margin-top: 50px; padding: 0 5px;">'+
+        '안녕하세요.<br />'+
+        '<b>하루뭅(Harumub)</b>에 가입해 주셔서 진심으로 감사드립니다.<br />'+
+        '고객님께서 입력하신 이메일의 소유확인을 위해 아래 인증번호를 회원가입 화면에 입력해주세요.'+ '<br> <br><b>'
+        +code+'</b>' + 
+        '<br /><br /><div style="border-top: 1px solid #DDD; padding: 5px;"/>'
+        
         
       });
   

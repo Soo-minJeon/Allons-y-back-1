@@ -1160,7 +1160,8 @@ var watchTogetherImageCapture = async function(req, res){
         } else {
           process.stdout.write(result.stdout);
           process.stderr.write(result.stderr);
-          getpython = result.stdout.toString();
+          getpython = result.stdout.toString().replace(/\n/g, "").replace(/\s*/g, "").replaceAll(" ", "");;
+          
           // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
           //console.log(getpython)
         }
@@ -1173,10 +1174,11 @@ var watchTogetherImageCapture = async function(req, res){
   
         // result_total = removedResult.split(", ");
         console.log('(같이보기)감정분석 결과 : ', getpython)
+        res.status(200).send(JSON.stringify(getpython))
       }
       rekognition_python()
   
-      res.status(200).send(JSON.stringify(getpython))
+      
       console.log('----------------------------------------------------------------------------')
     } else {
       console.log("데이터베이스가 정의되지 않음...");

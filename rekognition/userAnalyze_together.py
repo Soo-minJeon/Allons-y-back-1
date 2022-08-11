@@ -14,19 +14,20 @@ def process(roomCode, time):
         for line in reader:
             access_key_id = line[0]
             secret_access_key = line[1]
-
+    
+    # aws 관련 정보 입력(region, buket명, folder명)
     region = 'ap-northeast-2'
     bucket = "allonsybucket1"
+    folder = "together/"
 
+    # rekognition용 client 생성
     client = boto3.client('rekognition',
                           aws_access_key_id=access_key_id,
                           aws_secret_access_key=secret_access_key,
                           region_name=region)
 
 
-    # 버킷 안의 사진이 들어있는 테스트 폴더
-    folder = "together/"
-
+    # bucket 리스트 접근 위해 s3(객체) 생성
     # bucket 하위 경로에 있는 object list 가져오기
     s3 = boto3.client('s3', 
                         aws_access_key_id=access_key_id,
@@ -35,7 +36,7 @@ def process(roomCode, time):
     obj_list = s3.list_objects(Bucket = bucket, Prefix = folder)
     contents_list = obj_list['Contents']
 
-    # 룸코드, 시간에 맞는 파일명 들어있는 리스트
+    # (룸코드, 시간)에 맞는 파일명 들어있는 리스트
     file_list = []
     for content in contents_list:
         temp = content['Key'].split('/')
@@ -44,6 +45,7 @@ def process(roomCode, time):
         if roomCode+'_' in key and '_'+time+'.jpg' in key:
             file_list.append(key)
     
+    # bucket내에 (룸코드, 시간) 애 맞는 영화가 없으면 'None' 출력
     if (len(file_list) <= 0):
         print('None')
     else: 
@@ -85,5 +87,3 @@ if __name__ == '__main__':
     # param = "aabbcc_0"
     roomCode, time = param.split('_')
     process(roomCode, time)
-    # process(sys.argv[1])
-    # process('k8elpunvyts_30')

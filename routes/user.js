@@ -1174,7 +1174,8 @@ var watchTogetherImageCapture = async function(req, res){
   
         // result_total = removedResult.split(", ");
         console.log('(같이보기)감정분석 결과 : ', getpython)
-        res.status(200).send(JSON.stringify(getpython))
+        
+        res.status(200).send(JSON.stringify({emotion_array: getpython}));
       }
       rekognition_python()
   

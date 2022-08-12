@@ -41,7 +41,7 @@ def main(id, title, highlight_time):
     global s3
 
     testfolder = 'eyetracking/testfolder/' # 임시로 사진을 저장하는 폴더, 10초마다 아이트래킹 위해 저장되는 파일 저장하는 폴더, 나중에 삭제해야하는 정보
-    capture_folder = "capture/" # 10초마다 3번 저장한 모든 사진, 버킷
+    # capture_folder = "capture/" # 10초마다 3번 저장한 모든 사진, 버킷
     highlight_folder = "highlight/" # 감정맥스 하이라이트 장면 저장 폴더, 버킷
 
     img = id + '_'+title+'_'+str(highlight_time)+'.jpg'
@@ -100,6 +100,20 @@ def makeManifest(mypath, id, title):
                 delete = s3.delete_object(Bucket=bucket, Key=entry)
                 #print(entry)
 
+# 버킷 불러와서 필요없는 파일 삭제하는 함수
+def makeManifest_Together(mypath, roomCode):
+    # s3_bucket_name 버켓의 특정 폴더(mypath)하의 파일들만 가져옴
+    entries = get_all_keys(Bucket= bucket, Prefix=mypath) # 버킷 가져옴
+
+    for entry in entries:
+        #이미지만
+        if os.path.splitext(entry)[1].lower() in ('.png','.jpg','.jpeg'):
+
+            if roomCode+'_' in entry :
+                delete = s3.delete_object(Bucket=bucket, Key=entry)
+                #print(entry)
+
+
 
 
 if __name__ == "__main__":
@@ -112,14 +126,24 @@ if __name__ == "__main__":
     time = param[0] # 하이라이트 초
     id = param[1] # userId
     title = param[2]
+    folder = param[3] 
 
-    # 하이라이트 장면 시간대(초)를 받아와서, 해당 사진을 다운받고
-    main(id, title, time)
-    # 다운 받은 사진을 하이라이트 폴더에 업로드하고
-    # capture폴더 안의 사진을 모두 삭제한다.
-    makeManifest(capture_folder, id, title)
-    # main("smj85548554_toystory_10.jpg")
-    # 로컬 저장소 삭제
-    [os.remove(f)
-     for f in
-     glob.glob('eyetracking/testfolder/*.jpg')]
+    if (folder == "capture"):
+        capture_folder = "capture/" 
+
+        # 하이라이트 장면 시간대(초)를 받아와서, 해당 사진을 다운받고
+        main(id, title, time)
+        # 다운 받은 사진을 하이라이트 폴더에 업로드하고
+        # capture폴더 안의 사진을 모두 삭제한다.
+        makeManifest(capture_folder, id, title)
+
+        # 로컬 저장소 삭제
+        [os.remove(f)
+        for f in
+        glob.glob('eyetracking/testfolder/*.jpg')]
+    elif (folder == "together"):
+        capture_folder = "together/"
+        makeManifest_Together(capture_folder, id)
+
+    
+    

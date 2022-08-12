@@ -1316,7 +1316,7 @@ var watchAloneEnd = async function(req, res){
           const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
           var getpython = "";
 
-          param = time + "/" + id + "/" + title;
+          param = time + "/" + id + "/" + title + "/capture";
 
           const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
 
@@ -1619,6 +1619,25 @@ var watchTogetherEnd = function(req, res){
 
     var paramRoomCode = req.body.roomCode || req.query.roomCode; // 룸코드 받아오기
 
+    async function deleteImg_from_python(roomCode) {
+      //파이썬 코드 실행 (사용자 감정 분석)
+      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+
+      param = '0' + "/" + roomCode + "/" + '0' + "/together";
+
+      const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
+
+      if (result.status !== 0) {
+        process.stderr.write(result.stderr);
+
+        process.exit(result.status);
+      } else {
+        process.stdout.write(result.stdout);
+        process.stderr.write(result.stderr);
+        console.log(roomCode, "캡쳐 사진 삭제 완료");
+      }
+    }
+
     async function find_room(){
 
       var existing_room = await database.RoomModel.find({
@@ -1627,6 +1646,7 @@ var watchTogetherEnd = function(req, res){
 
       if (existing_room) {
         console.log('존재하는 룸 확인됨.')
+        deleteImg_from_python(paramRoomCode); // 이미지 삭제
         var a = await database.RoomModel.deleteOne({
           roomCode : paramRoomCode.toString()
         });

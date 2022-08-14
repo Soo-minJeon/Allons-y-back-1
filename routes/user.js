@@ -1136,46 +1136,59 @@ var watchTogetherImageCapture = async function(req, res){
 
   console.log('/watchTogetherImageCapture 라우팅 함수 호출됨. // ', paramTime, "초");
 
-  if (database){
-    function rekognition_python() {
-      //파이썬 코드 실행 (사용자 감정 분석)
-      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
-      var getpython = "";
-      var path = paramRoomCode + '_' + paramTime + '.jpg'
-
-      // (param) 이미지 경로 재설정 필요
-      const result = spawnSync("python", ["rekognition/userAnalyze_together.py", path]);
-
-      if (result.status !== 0) {
-        process.stderr.write(result.stderr);
-
-        process.exit(result.status);
-      } else {
-        process.stdout.write(result.stdout);
-        process.stderr.write(result.stderr);
-        getpython = result.stdout.toString();
-        // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
-        //console.log(getpython)
-      }
-
-      // 문자 예쁘게 정리
-      removedResult = getpython.replace(/\'/g, "");
-      removedResult = removedResult.replace(/\[/g, "");
-      removedResult = removedResult.replace(/\]/g, "");
-      removedResult = removedResult.replace(/\\n/g, "");
-
-      result_total = removedResult.split(", ");
-      console.log('(같이보기)감정분석 결과 : ', result_total)
-    }
-    rekognition_python()
-
-    res.status(200).send(JSON.stringify(result_total))
-    console.log('----------------------------------------------------------------------------')
-  } else {
-    console.log("데이터베이스가 정의되지 않음...");
-    res.status(400).send()
-    console.log('----------------------------------------------------------------------------')
+  if (paramTime == 0){
+    res.status(200).send('None') // 10초 전의 사진들 분석해야 함. 0초는 아무런 결과없이 리턴
   }
+  else{
+    if (database){
+      getpython = ''
+      function rekognition_python() {
+        //파이썬 코드 실행 (사용자 감정 분석)
+        const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+        var getpython = "";
+        // var path = paramRoomCode + '_' + paramTime + '.jpg'
+        // paramTime = paramTime - 10  // 10초전의 사진들 분석
+        var path = paramRoomCode + '_' + paramTime
+  
+        // (param) 이미지 경로 재설정 필요
+        const result = spawnSync("python", ["rekognition/userAnalyze_together.py", path]);
+  
+        if (result.status !== 0) {
+          process.stderr.write(result.stderr);
+  
+          process.exit(result.status);
+        } else {
+          process.stdout.write(result.stdout);
+          process.stderr.write(result.stderr);
+          getpython = result.stdout.toString().replace(/\n/g, "").replace(/\s*/g, "").replaceAll(" ", "");;
+          
+          // console.log('rekognition.py 결과 형식 : ', typeof (getpython))
+          //console.log(getpython)
+        }
+  
+        // // 문자 예쁘게 정리
+        // removedResult = getpython.replace(/\'/g, "");
+        // removedResult = removedResult.replace(/\[/g, "");
+        // removedResult = removedResult.replace(/\]/g, "");
+        // removedResult = removedResult.replace(/\\n/g, "");
+  
+        // result_total = removedResult.split(", ");
+        console.log('(같이보기)감정분석 결과 : ', getpython)
+        
+        res.status(200).send(JSON.stringify({emotion_array: getpython}));
+      }
+      rekognition_python()
+  
+      
+      console.log('----------------------------------------------------------------------------')
+    } else {
+      console.log("데이터베이스가 정의되지 않음...");
+      res.status(400).send()
+      console.log('----------------------------------------------------------------------------')
+    }
+  }
+
+  
 };
 
 // 감상 끝 - 혼자보기 - 테스트 데이터
@@ -1303,7 +1316,7 @@ var watchAloneEnd = async function(req, res){
           const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
           var getpython = "";
 
-          param = time + "/" + id + "/" + title;
+          param = time + "/" + id + "/" + title + "/capture";
 
           const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
 
@@ -1606,6 +1619,25 @@ var watchTogetherEnd = function(req, res){
 
     var paramRoomCode = req.body.roomCode || req.query.roomCode; // 룸코드 받아오기
 
+    async function deleteImg_from_python(roomCode) {
+      //파이썬 코드 실행 (사용자 감정 분석)
+      const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
+
+      param = '0' + "/" + roomCode + "/" + '0' + "/together";
+
+      const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
+
+      if (result.status !== 0) {
+        process.stderr.write(result.stderr);
+
+        process.exit(result.status);
+      } else {
+        process.stdout.write(result.stdout);
+        process.stderr.write(result.stderr);
+        console.log(roomCode, "캡쳐 사진 삭제 완료");
+      }
+    }
+
     async function find_room(){
 
       var existing_room = await database.RoomModel.find({
@@ -1614,6 +1646,7 @@ var watchTogetherEnd = function(req, res){
 
       if (existing_room) {
         console.log('존재하는 룸 확인됨.')
+        deleteImg_from_python(paramRoomCode); // 이미지 삭제
         var a = await database.RoomModel.deleteOne({
           roomCode : paramRoomCode.toString()
         });

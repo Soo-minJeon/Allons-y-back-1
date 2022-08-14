@@ -115,7 +115,7 @@ def preprocessing(id, title, path):
         , "shaking3", "", "man1", "asiangirl2", "test"
     ]
 
-    with open('credentials.csv',
+    with open('credential/credentials.csv',
               'r') as input:
         next(input)
         reader = csv.reader(input)

@@ -24,13 +24,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/csv/movie_info2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/csv/poster_path.csv">
           <value>
             <Attribute>

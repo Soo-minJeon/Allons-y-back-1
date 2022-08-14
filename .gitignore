@@ -1,6 +1,5 @@
 *.csv
 .DS_Store
-rekognition/genreAnalyze.py
 .DS_Store
 .idea/csv-plugin.xml
 csv/movie_info_create.py

@@ -1316,7 +1316,7 @@ var watchAloneEnd = async function(req, res){
           const spawnSync = require("child_process").spawnSync; // child-process 모듈의 spawn 획득
           var getpython = "";
 
-          param = time + "/" + id + "/" + title + "/capture";
+          param = time + "/" + id + "/" + title + "/" + "capture";
 
           const result = spawnSync("python", ["rekognition/userAnalyze_imgDelete.py", param]);
 

@@ -34,13 +34,13 @@ def preprocess():
                           aws_secret_access_key=secret_access_key,
                           region_name=region)
 
-def main(id, title, highlight_time):
+def main_down(id, title, highlight_time):
     global testfolder
     global capture_folder
     global highlight_folder
     global s3
 
-    testfolder = 'eyetracking/testfolder/' # 임시로 사진을 저장하는 폴더, 10초마다 아이트래킹 위해 저장되는 파일 저장하는 폴더, 나중에 삭제해야하는 정보
+    testfolder = './eyetracking/testfolder/' # 임시로 사진을 저장하는 폴더, 10초마다 아이트래킹 위해 저장되는 파일 저장하는 폴더, 나중에 삭제해야하는 정보
     # capture_folder = "capture/" # 10초마다 3번 저장한 모든 사진, 버킷
     highlight_folder = "highlight/" # 감정맥스 하이라이트 장면 저장 폴더, 버킷
 
@@ -54,18 +54,40 @@ def main(id, title, highlight_time):
     except : 
         print('bucket_imgDelete: 하이이이트 사진 다운받기 실패')
 
-    # 하이라이트 전용 폴더에 파일 업로드 to s3 하이라이트 전용 폴더 from Local
+    # main_upload(id, title, highlight_time)
+
+    # # 하이라이트 전용 폴더에 파일 업로드 to s3 하이라이트 전용 폴더 from Local
+    # try:
+    #     upload = s3.upload_file(testfolder + img, bucket, highlight_folder + img)
+    #     return upload
+    # except : 
+    #     print('bucket_imgDelete: 하이라이트 전용 폴더에 사진 업로드 실패')
+    
+
+    # # 로컬 저장소 삭제
+    # [os.remove(f)
+    #  for f in
+    #  glob.glob('eyetracking/testfolder/*.jpg')]
+
+def main_upload(id, title, highlight_time):
+    global testfolder
+    global capture_folder
+    global highlight_folder
+    global s3
+
+    testfolder = './eyetracking/testfolder/' # 임시로 사진을 저장하는 폴더, 10초마다 아이트래킹 위해 저장되는 파일 저장하는 폴더, 나중에 삭제해야하는 정보
+    # capture_folder = "capture/" # 10초마다 3번 저장한 모든 사진, 버킷
+    highlight_folder = "highlight/" # 감정맥스 하이라이트 장면 저장 폴더, 버킷
+
+    img = id + '_'+title+'_'+str(highlight_time)+'.jpg'
+
+     # 하이라이트 전용 폴더에 파일 업로드 to s3 하이라이트 전용 폴더 from Local
     try:
         upload = s3.upload_file(testfolder + img, bucket, highlight_folder + img)
         return upload
     except : 
         print('bucket_imgDelete: 하이라이트 전용 폴더에 사진 업로드 실패')
     
-
-    # 로컬 저장소 삭제
-    [os.remove(f)
-     for f in
-     glob.glob('eyetracking/testfolder/*.jpg')]
 
 def get_all_keys(**args):
 
@@ -120,7 +142,7 @@ if __name__ == "__main__":
     preprocess()
     
     param = str(sys.argv[1]).split("/")
-    #param = "40/smj8554/toy story".split("/")
+    # param = "30/allonsy/The Rock/capture".split("/")
 
     # 매개변수 3가지
     time = param[0] # 하이라이트 초
@@ -132,18 +154,20 @@ if __name__ == "__main__":
         capture_folder = "capture/" 
 
         # 하이라이트 장면 시간대(초)를 받아와서, 해당 사진을 다운받고
-        main(id, title, time)
+        main_down(id, title, time)
+        main_upload(id, title, time)
         # 다운 받은 사진을 하이라이트 폴더에 업로드하고
         # capture폴더 안의 사진을 모두 삭제한다.
         makeManifest(capture_folder, id, title)
 
-        # 로컬 저장소 삭제
-        [os.remove(f)
-        for f in
-        glob.glob('eyetracking/testfolder/*.jpg')]
     elif (folder == "together"):
         capture_folder = "together/"
         makeManifest_Together(capture_folder, id)
+
+    # 로컬 저장소 삭제
+    [os.remove(f)
+    for f in
+    glob.glob('eyetracking/testfolder/*.jpg')]
 
     
     

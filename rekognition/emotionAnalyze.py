@@ -171,19 +171,19 @@ class VideoDetect:
         self.startJobId = response2['JobId']
 
 
-def main():
+def main(second):
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
     video = 'avengers.mp4'
 
     analyzer = VideoDetect(roleArn, bucket, video)
-    analyzer.CreateTopicandQueue()
+    #analyzer.CreateTopicandQueue()
 
     analyzer.StartDetection3()
     if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetFaceDetectionResults(72333)  # 72초에 사용자 감정의 폭 Max
+        analyzer.GetFaceDetectionResults(second)  # 72초에 사용자 감정의 폭 Max
 
-    analyzer.DeleteTopicandQueue()
+    #analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
-    main()
+    main(72333)

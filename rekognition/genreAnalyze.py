@@ -117,44 +117,6 @@ class VideoDetect:
             genreList.append('animation')
         print(genreList)
 
-    def GetFaceDetectionResults(self,second): # 장면분석, 감정은 가장 크게 느낀 2가지만 가져오기.
-            second = int(second / 1000)
-            emotionList = ""
-            correctSchema = "" # 수행모델을 위한 10초 간격의 감정정보
-            timeList = []
-            maxResults = 10
-            paginationToken = ''
-            finished = False
-            t=0
-
-            while finished == False:
-                response = self.rek.get_face_detection(JobId=self.startJobId, MaxResults=maxResults, NextToken=paginationToken)
-
-                for faceDetection in response['Faces']:
-                    time = faceDetection['Timestamp']//1000 # 초로 분류됨
-                    if time//10==t:
-                        t+=1
-                        timeList.append(time)
-                        #print(faceDetection['Face']['Emotions'][0])
-                        #print(faceDetection['Timestamp'])
-                        correctSchema += ((faceDetection['Face']['Emotions'][0])["Type"]) + " "
-
-                    if faceDetection['Timestamp'] / 1000 >= 5:
-                        last1 = second - 5
-                        if int(faceDetection['Timestamp'] / 1000) <= second + 5 and int(faceDetection['Timestamp'] / 1000) >= last1:
-                            if ((faceDetection['Face']['Emotions'][0])["Type"]) not in emotionList:
-                                if int((faceDetection['Face']['Emotions'][0])["Confidence"])>=80 and ((faceDetection['Face']['Emotions'][0])["Type"])!="CALM":
-                                    emotionList += (((faceDetection['Face']['Emotions'][0])["Type"]))+ " "
-                        else:
-                            continue
-
-                if 'NextToken' in response:
-                    paginationToken = response['NextToken']
-                else:
-                    finished = True
-            print(emotionList)
-            print(correctSchema)
-
     def CreateTopicandQueue(self):
 
         millis = str(int(round(time.time() * 1000)))
@@ -216,44 +178,6 @@ class VideoDetect:
                                                                        'SNSTopicArn': self.snsTopicArn})
         self.startJobId = response1['JobId']
 
-    def StartDetection3(self):
-        # 감정 인식 아이디 발급
-        response2 = self.rek.start_face_detection(Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
-                                                 NotificationChannel={'RoleArn': self.roleArn,
-                                                                      'SNSTopicArn': self.snsTopicArn},
-                                                 FaceAttributes='ALL')
-        self.startJobId = response2['JobId']
-
-    def StartDetection2(self):
-        # 유명인 인식 아이디 발급
-        response3 = self.rek.start_celebrity_recognition(
-            Video={'S3Object': {'Bucket': self.bucket, 'Name': self.video}},
-            NotificationChannel={'RoleArn': self.roleArn, 'SNSTopicArn': self.snsTopicArn})
-        self.startJobId = response3['JobId']
-
-    def GetCelebrityDetectionResults(self,second):
-        second = int(second / 1000)
-        maxResults = 10
-        paginationToken = ''
-        finished = False
-        celeblist = []
-        while finished == False:
-            response = self.rek.get_celebrity_recognition(JobId=self.startJobId, MaxResults=maxResults,NextToken=paginationToken)
-
-            for celebrityRecognition in response['Celebrities']:
-                if celebrityRecognition['Timestamp']/1000>=2:
-                    last = second-2
-                    if int(celebrityRecognition['Timestamp']/1000)<=second+2 and int(celebrityRecognition['Timestamp']/1000)>=last:
-                        if str(celebrityRecognition['Celebrity']['Name']) not in celeblist:
-                            name = str(celebrityRecognition['Celebrity']['Name'])
-                            celeblist.append(name)
-                    else:
-                        continue
-            if 'NextToken' in response:
-                paginationToken = response['NextToken']
-            else:
-                finished = True
-        print(celeblist)
 
 def main():
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
@@ -265,9 +189,10 @@ def main():
 
     analyzer.StartDetection1()
     if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetLabelDetectionResults(25000)  # 25초에 사용자 감정의 폭 Max
+        analyzer.GetLabelDetectionResults(72333)  # 25초에 사용자 감정의 폭 Max
 
     #analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
+    # main(sys.argv[1])
     main()

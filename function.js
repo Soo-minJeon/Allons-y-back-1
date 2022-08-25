@@ -269,17 +269,16 @@ var sendEmail = function (sendemail, sendpass, userid, callback) {
 var scene = function(db, id, gen, actor, emotion,correctModel,callback){
     console.log('sceneAnalyze 호출됨' + id + ', ' + gen + ', ' + actor+' , ' + emotion+', '+correctModel);
 
-  // 아이디를 사용해 검색
-  db.likeModel.findById(id, function(err, results) {
+    // 아이디를 사용해 검색
+    db.likeModel.findById(id, function(err, results) {
        if (err) {
           console.log('장면분석 중 에러 발생');
           console.dir(err);
           return;
        }
-
-        if(results.length <= 0) {
+       if(results.length <= 0) {
           console.log('회원정보가 없습니다. 새로 생성합니다..');
-          var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion,'correctModel':correctModel});
+          var user = new db.likeModel({id : id, genres: gen, actors : actor, emotions:emotion, correctModel:correctModel});
 
            // save()로 저장
            user.save(function(err) {
@@ -291,36 +290,23 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
                callback(null, user);
            });
         }
-        else {
+       else {
           console.log(results.length)
-          console.log('회원정보를 찾았습니다. 업데이트합니다..');
+          console.log('회원정보를 찾았습니다. 업데이트합니다..')
           console.log(gen,actor,emotion,correctModel)
-
-          db.likeModel.deleteMany({id: 'pbkdpwls123'});
-          var user = new db.likeModel({'id' : id, 'genres': gen, 'actors' : actor, 'emotions':emotion,'correctModel':correctModel});
-          // save()로 저장
-           user.save(function(err) {
-               if(err) {
-                   callback(err, null);
-                   return;
-               }
-              console.log('사용자 장면분석 데이터 업데이트함');
-              callback(null, user);
-           });
-//          var user = db.likeModel.updateOne({ // 감상목록 emotion_array 수정 //
-//            id: id,
-//          }, {
-//            $set: {
-//               genres: 'love',
-//               actors : 'love',
-//               emotions: 'love',
-//               correctModel: 'love',
-//            },}
-//          )
-
-          // WatchSchema 업데이트 코드 작성
-        }
-  })
+          var user = db.likeModel.updateOne({ id: id }, {
+             $set: {
+                genres : gen,
+                actors : actor,
+                emotions : emotion,
+                correctModel : correctModel
+             }},
+          );
+          callback(null,user)
+          //db.likeModel.deleteOne({genres: "paramGenre"});
+          //var user = new db.likeModel({'id' : id, 'genres': 'love', 'actors' : actor, 'emotions':emotion,'correctModel':correctModel});
+       }
+    })
 };
 
 // 사용자 감정분석

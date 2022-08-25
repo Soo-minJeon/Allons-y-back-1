@@ -1,6 +1,7 @@
 var functionUser = require('../function');
 var request = require("request");
 var personal_info = require("../credential/personal_info");
+var spawn = require('child_process').spawn;
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token"); // 아고라 토큰 발급 위해 필요
 const { time } = require('console');
 const { title } = require('process');
@@ -308,9 +309,8 @@ var watchresult = function(req, res) {
 };
 
 var labelDetection = function(second, callback){
-    const spawn = require('child_process').spawn;
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['rekognition/genreAnalyze.py']);
+    const result = spawn('python', ['rekognition/genreAnalyze.py',second]);
     console.log("1. 장르 분석 실행 시작 ")
     result.stdout.on('data', function(data) {
         console.log("1. 장르 분석 실행끝! ")
@@ -321,8 +321,7 @@ var labelDetection = function(second, callback){
     });
 };
 var celebrityDetection = function(second, callback){
-      const spawn = require('child_process').spawn;
-      const result2 = spawn('python', ['rekognition/celebrityAnalyze.py']);
+      const result2 = spawn('python', ['rekognition/celebrityAnalyze.py',second]);
 
       console.log("2. 배우 분석 실행 시작 ")
       result2.stdout.on('data', function(data) {
@@ -333,9 +332,9 @@ var celebrityDetection = function(second, callback){
           callback(null,stringResult);
       });
 };
+
 var emotionDetection = function(second, callback){
-    const spawn = require('child_process').spawn;
-    const result3 = spawn('python', ['rekognition/emotionAnalyze.py']);
+    const result3 = spawn('python', ['rekognition/emotionAnalyze.py',second]);
 
     console.log("3. 감정 분석 실행 시작 ")
     result3.stdout.on('data', function(data) {
@@ -349,66 +348,122 @@ var emotionDetection = function(second, callback){
 
 // 장면분석
 var sceneAnalyze = function(req, res) {
-//    console.log('/sceneAnalyze 라우팅 함수 호출');
-//    var database = req.app.get('database');
-//    var paramGenre = null
-//    var paramActor = null
-//    var paramEmotion = null
-//    var paramCorrect = null
-//    // 감정맥스 초, 감정 종류 받아오기
-//    // var maxSecond = req.body.maxSecond || req.query.maxSecond;
-//    var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
+    console.log('/sceneAnalyze 라우팅 함수 호출');
+    var database = req.app.get('database');
+    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+    var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+
+    function sceneAnalyze() {
+        console.log('sceneAnalyze 함수 호출');
+        //var database = req.app.get('database');
+        var paramGenre = null
+        var paramActor = null
+        var paramEmotion = null
+        var paramCorrect = null
+        // 감정맥스 초, 감정 종류 받아오기
+        // var maxSecond = req.body.maxSecond || req.query.maxSecond;
+        // var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
+        var second = 72333
+        function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
+                // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+                if(database) {
+                   scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect, function(err, result) {
+                        if(err) {
+                            console.log('장면분석 정보 등록 에러 발생...');
+                            console.dir(err);
+                            res.status(400).send();
+                            console.log('----------------------------------------------------------------------------')
+                        }
+                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+                        if(result) {
+                          console.log('장면분석 정보 등록 성공.');
+                          console.dir(result);
+                          res.status(200).send();
+                          console.log('\n\n');
+                        } else { // 결과 객체가 없으면 실패 응답 전송
+                          console.log('장면분석 정보 등록 에러 발생...');
+                          res.status(400).send();
+                          console.log('----------------------------------------------------------------------------')
+                        }
+                  });
+                }
+                else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+                  console.log('장면분석 정보 등록 에러 발생...');
+                  console.dir(err);
+                  res.status(400).send();
+                  console.log('----------------------------------------------------------------------------')
+                }
+          }
+        // 함수 비동기
+        labelDetection(72333, function(err, result1) {
+               if(result1){
+                  paramGenre = result1
+                  console.log(paramGenre)
+                  celebrityDetection(72333, function(err, result2) {
+                    if(result2){
+                        paramActor = result2
+                        console.log(paramActor)
+                        emotionDetection(72333, function(err, result3) {
+                            if(result3){
+                                a = result3.split('\n')
+                                paramEmotion = a[0]
+                                paramCorrect = a[1]
+                                console.log(paramEmotion)
+                                if (paramGenre && paramActor && paramEmotion && paramCorrect){
+                                   dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
+                                   console.log("---값 확인----")
+                                   console.log(paramGenre, paramActor, paramEmotion, paramCorrect)
+                                }
+                            }
+                        });
+                    }
+                  });
+               }
+          })
+
+//        // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
+//        const result = spawn('python', ['rekognition/genreAnalyze.py',second]);
+//        console.log("1. 장르 분석 실행 시작 ")
+//        result.stdout.on('data', function(data) {
+//            console.log("1. 장르 분석 실행끝! ")
+//            const stringResult = data.toString();
+//            console.log("test : "+stringResult)
+//            paramGenre = stringResult
+//        });
 //
-//      function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
-//            var database = req.app.get('database');
-//            // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
-//            if(database) {
-//               scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect,function(err, result) {
-//                if(err) {
-//                    console.log('장면분석 정보 등록 에러 발생...');
-//                    console.dir(err);
-//                    res.status(400).send();
-//                    console.log('----------------------------------------------------------------------------')
-//                }
-//               // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-//                if(result) {
-//                  console.log('장면분석 정보 등록 성공.');
-//                  console.dir(result);
-//                  res.status(200).send();
-//                  console.log('\n\n');
-//                } else { // 결과 객체가 없으면 실패 응답 전송
-//                  console.log('장면분석 정보 등록 에러 발생...');
-//                  res.status(400).send();
-//                  console.log('----------------------------------------------------------------------------')
-//                }
-//              });
-//            }
-//            else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
-//              console.log('장면분석 정보 등록 에러 발생...');
-//              console.dir(err);
-//              res.status(400).send();
-//              console.log('----------------------------------------------------------------------------')
-//            }
-//      }
-//
-//      labelDetection('second', function(err, result1) {
-//           paramGenre = result1
-//      });
-//      celebrityDetection('second', function(err, result2) {
-//           paramActor = result2
-//      });
-//      emotionDetection('second', function(err, result3) {
-//            a = result3.split('\n')
-//            paramEmotion = a[0]
-//            paramCorrect = a[1]
-//      });
-//
-//      while (true) {
-//          if (paramGenre && paramActor && paramEmotion && paramCorrect){
-//              dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
-//              break
-//          }
-//      }
+//        const result2 = spawn('python', ['rekognition/celebrityAnalyze.py',second]);
+//        console.log("2. actor 분석 실행 시작 ")
+//        result2.stdout.on('data', function(data) {
+//            console.log("2. actor 분석 실행끝! ")
+//            const stringResult = data.toString();
+//            console.log("test : "+stringResult)
+//            paramActor = stringResult
+//        });
+
+// 함수 동기
+//        labelDetection(72333, function(err, result1) {
+//               paramGenre = result1
+//        });
+//        celebrityDetection(72333, function(err, result2) {
+//               paramActor = result2
+//        });
+//        emotionDetection(72333, function(err, result3) {
+//                a = result3.split('\n')
+//                paramEmotion = a[0]
+//                paramCorrect = a[1]
+//                console.log(paramEmotion)
+//        });
+
+//        while (true) {
+//              //console.log("함수 바깥 결과 paramActor : " + paramActor)
+//              if (paramGenre && paramActor && paramEmotion && paramCorrect){
+//                  dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
+//                  break
+//              }
+//        }
+    }
+
+    sceneAnalyze()
 }
 
 // 추천1 - 컨텐츠 기반(함수) - 테스트데이터 - 실행시수정
@@ -1195,6 +1250,10 @@ var watchTogetherImageCapture = async function(req, res){
 // 맥스 감정 추출, 하이라이트 장면 처리(보안 위한 사진 삭제), 집중도, 정규화,
 var watchAloneEnd = async function(req, res){
   console.log('/watchAlonEnd 라우팅 함수 호출');
+  var database = req.app.get('database');
+  var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
+  var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
+
 
   // function delay(){
   //   return new Promise(function(resolve){
@@ -1203,12 +1262,9 @@ var watchAloneEnd = async function(req, res){
   // }
   // await delay();
 
-  async function main() {
-    var database = req.app.get('database');
+  function main() {
     var today = new Date();
 
-    var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
-    var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
     // var paramId = "smj8554"; // 사용자 아이디 받아오기
     // var parammovieTitle = 'toy story'; // 감상중인 영화 제목 받아오기
     var tmp_highlight_array // 정규화 전 배열
@@ -1359,94 +1415,6 @@ var watchAloneEnd = async function(req, res){
         }
       }
 
-      async function sceneAnalyze() {
-        console.log('sceneAnalyze 함수 호출');
-        //var database = req.app.get('database');
-        var paramGenre = null
-        var paramActor = null
-        var paramEmotion = null
-        var paramCorrect = null
-        // 감정맥스 초, 감정 종류 받아오기
-        // var maxSecond = req.body.maxSecond || req.query.maxSecond;
-        //var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
-
-          function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
-                // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
-                if(database) {
-                   scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect, function(err, result) {
-                        if(err) {
-                            console.log('장면분석 정보 등록 에러 발생...');
-                            console.dir(err);
-                            res.status(400).send();
-                            console.log('----------------------------------------------------------------------------')
-                        }
-                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-                        if(result) {
-                          console.log('장면분석 정보 등록 성공.');
-                          console.dir(result);
-                          res.status(200).send();
-                          console.log('\n\n');
-                        } else { // 결과 객체가 없으면 실패 응답 전송
-                          console.log('장면분석 정보 등록 에러 발생...');
-                          res.status(400).send();
-                          console.log('----------------------------------------------------------------------------')
-                        }
-                  });
-                }
-                else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
-                  console.log('장면분석 정보 등록 에러 발생...');
-                  console.dir(err);
-                  res.status(400).send();
-                  console.log('----------------------------------------------------------------------------')
-                }
-          }
-          dbSet("paramGenre", "paramActor", "paramEmotion", "paramCorrect")
-          labelDetection('second', function(err, result1) {
-               if(result1){
-                  paramGenre = result1
-                  console.log(paramGenre)
-                  celebrityDetection('second', function(err, result2) {
-                    if(result2){
-                        paramActor = result2
-                        console.log(paramActor)
-                        emotionDetection('second', function(err, result3) {
-                            if(result3){
-                                a = result3.split('\n')
-                                paramEmotion = a[0]
-                                paramCorrect = a[1]
-                                console.log(paramEmotion)
-                                if (paramGenre && paramActor && paramEmotion && paramCorrect){
-                                   dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
-                                   console.log("---값 확인----")
-                                   console.log(paramGenre, paramActor, paramEmotion, paramCorrect)
-                                }
-                            }
-                        });
-                    }
-                  });
-               }
-          });
-          labelDetection(database, 'second', function(err, result1) {
-               paramGenre = result1
-          });
-          celebrityDetection(database, 'second', function(err, result2) {
-               paramActor = result2
-          });
-          emotionDetection(database, 'second', function(err, result3) {
-                a = result3.split('\n')
-                paramEmotion = a[0]
-                paramCorrect = a[1]
-                console.log(paramEmotion)
-          });
-
-          while (true) {
-              if (paramGenre && paramActor && paramEmotion && paramCorrect){
-                  dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
-                  break
-              }
-          }
-      }
-
       // 감정 부합 확인
       async function emotionCorrectTest() {
         var resultSend=0;
@@ -1588,10 +1556,10 @@ var watchAloneEnd = async function(req, res){
         });
 
         await ratingUpdate();
-        await sceneAnalyze();
+
         var objToSend = {
-          genres : movie_genre,
-          poster : movie_poster
+          genres : "movie_genre",
+          poster : "movie_poster"
         }
         res.status(200).send(JSON.stringify(objToSend));
         console.log('----------------------------------------------------------------------------')
@@ -1653,7 +1621,7 @@ var watchTogetherEnd = function(req, res){
         console.log('룸코드 [' + paramRoomCode + '] 삭제 완료')
         res.status(200).send()
         console.log('----------------------------------------------------------------------------')
-      }else {
+      } else {
         console.log("해당하는 방 정보를 찾을 수 없음.")
         res.status(400).send()
         console.log('----------------------------------------------------------------------------')
@@ -1661,7 +1629,7 @@ var watchTogetherEnd = function(req, res){
     }
 
     find_room()
-  }else {
+  } else {
     console.log("데이터베이스가 정의되지 않음...");
     res.status(400).send()
     console.log('----------------------------------------------------------------------------')

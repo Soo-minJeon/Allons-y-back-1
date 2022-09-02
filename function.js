@@ -276,8 +276,9 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
           console.dir(err);
           return;
        }
+       console.log("결과 확인 : " + results)
        if(results.length <= 0) {
-          console.log('회원정보가 없습니다. 새로 생성합니다..');
+          console.log('회원정보가 없습니다. 새로 생성합니다..')
           var user = new db.likeModel({id : id, genres: gen, actors : actor, emotions:emotion, correctModel:correctModel});
 
            // save()로 저장
@@ -289,17 +290,18 @@ var scene = function(db, id, gen, actor, emotion,correctModel,callback){
                console.log('사용자 장면분석 데이터 추가함');
                callback(null, user);
            });
-        }
+       }
        else {
           console.log(results.length)
           console.log('회원정보를 찾았습니다. 업데이트합니다..')
           console.log(gen,actor,emotion,correctModel)
+
           var user = db.likeModel.updateOne({ id: id }, {
              $set: {
                 genres : gen,
                 actors : actor,
                 emotions : emotion,
-                correctModel : correctModel
+                correctModel : "correc233tModel"
              }},
           );
           callback(null,user)

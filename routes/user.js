@@ -353,6 +353,14 @@ var sceneAnalyze = function(req, res) {
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
 
+//    var second1 = database.WatchModel.findByUserMovieTitle({
+//          userId: paramId,
+//          movieTitle: parammovieTitle
+//    }, function(err, results) {
+//        return results
+//    });
+//    console.log("second check : " + second1);
+
     function sceneAnalyze() {
         console.log('sceneAnalyze 함수 호출');
         //var database = req.app.get('database');
@@ -362,38 +370,77 @@ var sceneAnalyze = function(req, res) {
         var paramCorrect = null
         // 감정맥스 초, 감정 종류 받아오기
         // var maxSecond = req.body.maxSecond || req.query.maxSecond;
-        // var paramId = 'pbkdpwls1';//req.body.id || req.query.id;
         var second = 72333
-        function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
-                // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
-                if(database) {
-                   scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect, function(err, result) {
-                        if(err) {
-                            console.log('장면분석 정보 등록 에러 발생...');
-                            console.dir(err);
-                            res.status(400).send();
-                            console.log('----------------------------------------------------------------------------')
-                        }
-                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-                        if(result) {
-                          console.log('장면분석 정보 등록 성공.');
-                          console.dir(result);
-                          res.status(200).send();
-                          console.log('\n\n');
-                        } else { // 결과 객체가 없으면 실패 응답 전송
-                          console.log('장면분석 정보 등록 에러 발생...');
-                          res.status(400).send();
-                          console.log('----------------------------------------------------------------------------')
-                        }
-                  });
+        async function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
+            // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
+            if(database) {
+                var len = database.likeModel.findById(paramId, function(err, results) {
+                       if (err) {
+                          console.log('장면분석 중 에러 발생');
+                          console.dir(err);
+                          return;
+                       }
+                       if(results.length <= 0) {
+                          console.log('회원정보가 없습니다. 새로 생성합니다..')
+                          return results.length;
+                       }
+                       else {
+                          console.log(results.length)
+                          console.log('회원정보를 찾았습니다. 업데이트합니다..')
+                          return results.length;
+                       }
+                })
+                len = String(len).length
+                if (len > 0) {
+                    var user = await database.likeModel.updateOne({ id: paramId }, {
+                        $set: {
+                           genres : paramGenre,
+                           actors : paramActor,
+                           emotions : paramEmotion,
+                           correctModel : paramCorrect
+                        }},
+                    );
+                    console.log(user)
                 }
-                else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
+                else {
+                   var user = new database.likeModel({id : paramId, genres: paramGenre, actors : paramActor, emotions:paramEmotion, correctModel:paramCorrect});
+
+                   // save()로 저장
+                   user.save(function(err) {
+                       if(err) {
+                           return;
+                       }
+                       console.log('사용자 장면분석 데이터 추가함');
+                       return user;
+                   });
+                }
+//                   await scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect, function(err, result) {
+//                        if(err) {
+//                            console.log('장면분석 정보 등록 에러 발생...');
+//                            console.dir(err);
+//                            res.status(400).send();
+//                            console.log('----------------------------------------------------------------------------')
+//                        }
+//                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
+//                        if(result) {
+//                          console.log('장면분석 정보 등록 성공.');
+//                          console.dir(result);
+//                          res.status(200).send();
+//                          console.log('\n\n');
+//                        } else { // 결과 객체가 없으면 실패 응답 전송
+//                          console.log('장면분석 정보 등록 에러 발생...');
+//                          res.status(400).send();
+//                          console.log('----------------------------------------------------------------------------')
+//                        }
+//                  });
+                }
+            else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
                   console.log('장면분석 정보 등록 에러 발생...');
                   console.dir(err);
                   res.status(400).send();
                   console.log('----------------------------------------------------------------------------')
                 }
-          }
+        }
         // 함수 비동기
         labelDetection(72333, function(err, result1) {
                if(result1){
@@ -419,7 +466,7 @@ var sceneAnalyze = function(req, res) {
                     }
                   });
                }
-          })
+        })
 
 //        // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
 //        const result = spawn('python', ['rekognition/genreAnalyze.py',second]);

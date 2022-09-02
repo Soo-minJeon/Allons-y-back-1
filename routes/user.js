@@ -1605,8 +1605,8 @@ var watchAloneEnd = async function(req, res){
         await ratingUpdate();
 
         var objToSend = {
-          genres : "movie_genre",
-          poster : "movie_poster"
+          genres : movie_genre,
+          poster : movie_poster
         }
         res.status(200).send(JSON.stringify(objToSend));
         console.log('----------------------------------------------------------------------------')

@@ -1771,6 +1771,40 @@ var makeRoom = async function (req, res) {
   var RoomToken;
   var RoomCode;
 
+  async function makeRTCToken() {
+    RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+
+    const RtcTokenBuilder = require("../rtcToken/RtcTokenBuilder2").RtcTokenBuilder;
+    const RtcRole = require("../rtcToken/RtcTokenBuilder2").Role;
+
+    const appID = personal_info.APP_ID;
+    const appCertificate = personal_info.APP_CERTIFICATE;
+
+    const channelName = Math.random().toString(36).substr(2, 11); 
+    const account = paramId; 
+
+    const role = RtcRole.PUBLISHER;
+
+    const expirationInSeconds = 86400; // 3600s = 1시간 => 24시간: 60초 * 60분 * 24시간 = 86400 초
+    const tokenExpirationInSecond = 86400;
+    const privilegeExpirationInSecond = 86400;
+
+    console.log("Channel Name: \n" + channelName + "\n");
+
+    // Build token with user account
+    RoomToken = RtcTokenBuilder.buildTokenWithUserAccount(
+      appID,
+      appCertificate,
+      channelName,
+      account,
+      role,
+      tokenExpirationInSecond,
+      privilegeExpirationInSecond
+    );
+    console.log("Token with user account: \n" + RoomToken + "\n");
+    vaildToken(RoomToken, RoomCode)
+  }
+
   async function getToken() {
     RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
     // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
@@ -1927,7 +1961,8 @@ var makeRoom = async function (req, res) {
 
   if (database) {
     async function main() {
-      await getToken()
+      // await getToken()
+      await makeRTCToken()
     }
     main();
   } else {
@@ -1945,7 +1980,7 @@ var enterroom = function(req, res){
 
     var paramRoomCode = req.body.roomCode || req.query.roomCode;
     var paramId = req.body.id || req.query.id;
-    var paramRole = req.body.role || req.query.role;
+    var RoomToken = 0;
 
     console.log('입력된 룸 코드 : ' + paramRoomCode);
 
@@ -1959,7 +1994,6 @@ var enterroom = function(req, res){
 
       else if (result){
         console.log('초대 코드에 해당하는 함께보기 방 검색 성공');
-        RoomToken = 0
 
         async function getToken(callback) {
           // const: 상수 선언 => 선언과 동시에 리터럴값 할당 및 이후 재할당 불가
@@ -2083,7 +2117,44 @@ var enterroom = function(req, res){
           });
 
         }
-        await getToken()
+        async function makeRTCToken() {
+      
+          const RtcTokenBuilder = require("../rtcToken/RtcTokenBuilder2").RtcTokenBuilder;
+          const RtcRole = require("../rtcToken/RtcTokenBuilder2").Role;
+      
+          const appID = personal_info.APP_ID;
+          const appCertificate = personal_info.APP_CERTIFICATE;
+      
+          const channelName = Math.random().toString(36).substr(2, 11); 
+          const account = paramId; 
+      
+          const role = RtcRole.PUBLISHER;
+      
+          const expirationInSeconds = 86400; // 3600s = 1시간 => 24시간: 60초 * 60분 * 24시간 = 86400 초
+          const tokenExpirationInSecond = 86400;
+          const privilegeExpirationInSecond = 86400;
+      
+          console.log("Channel Name: \n" + channelName + "\n");
+      
+          // Build token with user account
+          RoomToken = RtcTokenBuilder.buildTokenWithUserAccount(
+            appID,
+            appCertificate,
+            channelName,
+            account,
+            role,
+            tokenExpirationInSecond,
+            privilegeExpirationInSecond
+          );
+          console.log("Token with user account: \n" + RoomToken + "\n");
+          var objToSend = {
+            roomToken : RoomToken
+          };
+          res.status(200).send(JSON.stringify(objToSend));
+          console.log('----------------------------------------------------------------------------')
+        }
+        // await getToken()
+        await makeRTCToken();
       }
 
       else{

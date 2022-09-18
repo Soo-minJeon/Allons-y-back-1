@@ -135,7 +135,7 @@ class VideoDetect:
         maxResults = 10
         paginationToken = ''
         finished = False
-        celeblist = []
+        celeblist = ""
         while finished == False:
             response = self.rek.get_celebrity_recognition(JobId=self.startJobId, MaxResults=maxResults,NextToken=paginationToken)
 
@@ -145,15 +145,14 @@ class VideoDetect:
                     if int(celebrityRecognition['Timestamp']/1000)<=second+2 and int(celebrityRecognition['Timestamp']/1000)>=last:
                         if str(celebrityRecognition['Celebrity']['Name']) not in celeblist:
                             name = str(celebrityRecognition['Celebrity']['Name'])
-                            celeblist.append(name)
+                            celeblist+=name
                     else:
                         continue
             if 'NextToken' in response:
                 paginationToken = response['NextToken']
             else:
                 finished = True
-        #print(celeblist) # 임시 주석
-        print('Tom Hanks')
+        print(celeblist) # 임시 주석
 
 def main(second):
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'

@@ -152,7 +152,8 @@ class VideoDetect:
                 paginationToken = response['NextToken']
             else:
                 finished = True
-        print(celeblist)
+        #print(celeblist) # 임시 주석
+        print('Tom Hanks')
 
 def main(second):
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'

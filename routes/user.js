@@ -1773,6 +1773,7 @@ var makeRoom = async function (req, res) {
 
   async function makeRTCToken() {
     RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+    // RoomCode = 'test'
 
     const RtcTokenBuilder = require("../rtcToken/RtcTokenBuilder2").RtcTokenBuilder;
     const RtcRole = require("../rtcToken/RtcTokenBuilder2").Role;
@@ -1780,7 +1781,8 @@ var makeRoom = async function (req, res) {
     const appID = personal_info.APP_ID;
     const appCertificate = personal_info.APP_CERTIFICATE;
 
-    const channelName = Math.random().toString(36).substr(2, 11); 
+    const channelName = RoomCode;
+    // const channelName = 'test'; 
     const account = paramId; 
 
     const role = RtcRole.PUBLISHER;
@@ -1935,7 +1937,7 @@ var makeRoom = async function (req, res) {
       if (result.length > 0) {
         console.log("초대 코드 중복, 다시 생성..");
 
-        getToken();
+        makeRTCToken(); //getToken();
       } else {
         var room = new database.RoomModel({ roomToken : RoomToken, roomCode: RoomCode });
         console.log("RoomCode : " + RoomCode);

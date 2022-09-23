@@ -84,6 +84,6 @@ def process(roomCode, time):
 
 if __name__ == '__main__':
     param = sys.argv[1]
-    # param = "aabbcc_0"
+    #param = "71l1psztn0m_30"
     roomCode, time = param.split('_')
     process(roomCode, time)

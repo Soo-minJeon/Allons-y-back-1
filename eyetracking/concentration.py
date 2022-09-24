@@ -387,17 +387,17 @@ def process(eye_points_L, eye_points_R, facial_landmarks, _gray, frame, i):
                         distance_sum = (l_distance + r_distance) // 2
                         warning = (distance_sum / (radious * 2)) * 50
 
-                cv2.circle(frame, center_left, int(l_radious), color, 1, cv2.LINE_AA)
-                cv2.circle(frame, center_right, int(r_radious), color, 1, cv2.LINE_AA)
+                # cv2.circle(frame, center_left, int(l_radious), color, 1, cv2.LINE_AA)
+                # cv2.circle(frame, center_right, int(r_radious), color, 1, cv2.LINE_AA)
 
-                cv2.circle(canvas, center_left, int(l_radious), color, -1, cv2.LINE_AA)
-                cv2.circle(canvas, center_right, int(r_radious), color, -1, cv2.LINE_AA)
+                # cv2.circle(canvas, center_left, int(l_radious), color, -1, cv2.LINE_AA)
+                # cv2.circle(canvas, center_right, int(r_radious), color, -1, cv2.LINE_AA)
 
-                cv2.polylines(frame, [mesh_points[LEFT_EYE]], True, color, 1, cv2.LINE_AA)
-                cv2.polylines(frame, [mesh_points[RIGHT_EYE]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[LEFT_EYE]], True, color, 1, cv2.LINE_AA)
+                # cv2.polylines(frame, [mesh_points[RIGHT_EYE]], True, color, 1, cv2.LINE_AA)
 
-                cv2.circle(frame, standard_center_l, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
-                cv2.circle(frame, standard_center_r, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
+                # cv2.circle(frame, standard_center_l, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
+                # cv2.circle(frame, standard_center_r, int(radious), (255, 0, 0), 5, cv2.LINE_AA)
 
                 LEFT_SUB = mesh_points[LEFT_EYE[4]][1] - mesh_points[LEFT_EYE[12]][1]
                 RIGHT_SUB = mesh_points[RIGHT_EYE[4]][1] - mesh_points[RIGHT_EYE[12]][1]

@@ -18,7 +18,6 @@ class VideoDetect:
 
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'animation_label_test.mp4'
     startJobId = 'null'
 
     sqsQueueUrl = 'https://sqs.ap-northeast-2.amazonaws.com/392553513869/allonsyQueue' #
@@ -179,20 +178,18 @@ class VideoDetect:
         self.startJobId = response1['JobId']
 
 
-def main():
+def main(second,movieFileName):
     roleArn = 'arn:aws:iam::392553513869:role/serviceRekognition'
     bucket = 'allonsybucket1'
-    video = 'animation_label_test.mp4'
+    video = movieFileName
 
     analyzer = VideoDetect(roleArn, bucket, video)
     #analyzer.CreateTopicandQueue()
 
     analyzer.StartDetection1()
     if analyzer.GetSQSMessageSuccess() == True:
-        analyzer.GetLabelDetectionResults(72333)  # 25초에 사용자 감정의 폭 Max
-
+        analyzer.GetLabelDetectionResults(int(second))  # 25초에 사용자 감정의 폭 Max
     #analyzer.DeleteTopicandQueue()
 
 if __name__ == "__main__":
-    # main(sys.argv[1])
-    main()
+    main(sys.argv[1],sys.argv[2])

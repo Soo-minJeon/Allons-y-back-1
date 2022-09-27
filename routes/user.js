@@ -308,9 +308,9 @@ var watchresult = function(req, res) {
     }
 };
 
-var labelDetection = function(second, callback){
+var labelDetection = function(second,movieFileName, callback){
     // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-    const result = spawn('python', ['rekognition/genreAnalyze.py',second]);
+    const result = spawn('python', ['rekognition/genreAnalyze.py',second,movieFileName]);
     console.log("1. 장르 분석 실행 시작 ")
     result.stdout.on('data', function(data) {
         console.log("1. 장르 분석 실행끝! ")
@@ -320,8 +320,8 @@ var labelDetection = function(second, callback){
         callback(null,stringResult);
     });
 };
-var celebrityDetection = function(second, callback){
-      const result2 = spawn('python', ['rekognition/celebrityAnalyze.py',second]);
+var celebrityDetection = function(second,movieFileName, callback){
+      const result2 = spawn('python', ['rekognition/celebrityAnalyze.py',second,movieFileName]);
 
       console.log("2. 배우 분석 실행 시작 ")
       result2.stdout.on('data', function(data) {
@@ -333,8 +333,8 @@ var celebrityDetection = function(second, callback){
       });
 };
 
-var emotionDetection = function(second, callback){
-    const result3 = spawn('python', ['rekognition/emotionAnalyze.py',second]);
+var emotionDetection = function(second,movieFileName, callback){
+    const result3 = spawn('python', ['rekognition/emotionAnalyze.py',second,movieFileName]);
 
     console.log("3. 감정 분석 실행 시작 ")
     result3.stdout.on('data', function(data) {
@@ -352,14 +352,7 @@ var sceneAnalyze = function(req, res) {
     var database = req.app.get('database');
     var paramId = req.body.id || req.query.id; // 사용자 아이디 받아오기
     var parammovieTitle = req.body.movieTitle || req.query.movieTitle; // 감상중인 영화 제목 받아오기
-
-//    var second1 = database.WatchModel.findByUserMovieTitle({
-//          userId: paramId,
-//          movieTitle: parammovieTitle
-//    }, function(err, results) {
-//        return results
-//    });
-//    console.log("second check : " + second1);
+    var movieFileName = parammovieTitle+".mp4"
 
     function sceneAnalyze() {
         console.log('sceneAnalyze 함수 호출');
@@ -370,8 +363,10 @@ var sceneAnalyze = function(req, res) {
         var paramCorrect = null
         // 감정맥스 초, 감정 종류 받아오기
         // var maxSecond = req.body.maxSecond || req.query.maxSecond;
-        var second = 72333
+        //var second = 72333
+
         async function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
+            paramActor=''
             // 데이터 베이스 객체가 초기화된 경우, signup 함수 호출하여 사용자 추가
             if(database) {
                 var len = database.likeModel.findById(paramId, function(err, results) {
@@ -392,16 +387,29 @@ var sceneAnalyze = function(req, res) {
                 })
                 len = String(len).length
                 if (len > 0) {
-                    var user = await database.likeModel.updateOne({ id: paramId }, {
-                        $set: {
-                           genres : paramGenre,
-                           actors : paramActor,
-                           emotions : paramEmotion,
-                           correctModel : paramCorrect
-                        }},
-                    );
-                    console.log(user)
+                    if (paramActor!=''){
+                        var user = await database.likeModel.updateOne({ id: paramId }, {
+                            $set: {
+                               genres : paramGenre,
+                               actors : paramActor,
+                               emotions : paramEmotion,
+                               correctModel : paramCorrect
+                            }},
+                        );
+                        console.log(user)
+                    }
+                    else {
+                        var user = await database.likeModel.updateOne({ id: paramId }, {
+                            $set: {
+                               genres : paramGenre,
+                               emotions : paramEmotion,
+                               correctModel : paramCorrect
+                            }},
+                        );
+                        console.log(user)
+                    }
                 }
+
                 else {
                    var user = new database.likeModel({id : paramId, genres: paramGenre, actors : paramActor, emotions:paramEmotion, correctModel:paramCorrect});
 
@@ -442,15 +450,22 @@ var sceneAnalyze = function(req, res) {
                 }
         }
         // 함수 비동기
-        labelDetection(72333, function(err, result1) {
+        console.log(movieFileName)
+
+        database.WatchModel.findByUserMovieTitle(paramId,parammovieTitle, function(err, results) {
+            //console.log("second : "+results[0].highlight_time.toString())
+            second = results[0].highlight_time.toString()
+
+            console.log("second check : " + second);
+            labelDetection(second,movieFileName, function(err, result1) {
                if(result1){
                   paramGenre = result1
                   console.log(paramGenre)
-                  celebrityDetection(72333, function(err, result2) {
+                  celebrityDetection(second,movieFileName, function(err, result2) {
                     if(result2){
                         paramActor = result2
                         console.log(paramActor)
-                        emotionDetection(72333, function(err, result3) {
+                        emotionDetection(second,movieFileName, function(err, result3) {
                             if(result3){
                                 a = result3.split('\n')
                                 paramEmotion = a[0]
@@ -467,47 +482,7 @@ var sceneAnalyze = function(req, res) {
                   });
                }
         })
-
-//        // 2. spawn을 통해 "python 파이썬파일.py" 명령어 실행
-//        const result = spawn('python', ['rekognition/genreAnalyze.py',second]);
-//        console.log("1. 장르 분석 실행 시작 ")
-//        result.stdout.on('data', function(data) {
-//            console.log("1. 장르 분석 실행끝! ")
-//            const stringResult = data.toString();
-//            console.log("test : "+stringResult)
-//            paramGenre = stringResult
-//        });
-//
-//        const result2 = spawn('python', ['rekognition/celebrityAnalyze.py',second]);
-//        console.log("2. actor 분석 실행 시작 ")
-//        result2.stdout.on('data', function(data) {
-//            console.log("2. actor 분석 실행끝! ")
-//            const stringResult = data.toString();
-//            console.log("test : "+stringResult)
-//            paramActor = stringResult
-//        });
-
-// 함수 동기
-//        labelDetection(72333, function(err, result1) {
-//               paramGenre = result1
-//        });
-//        celebrityDetection(72333, function(err, result2) {
-//               paramActor = result2
-//        });
-//        emotionDetection(72333, function(err, result3) {
-//                a = result3.split('\n')
-//                paramEmotion = a[0]
-//                paramCorrect = a[1]
-//                console.log(paramEmotion)
-//        });
-
-//        while (true) {
-//              //console.log("함수 바깥 결과 paramActor : " + paramActor)
-//              if (paramGenre && paramActor && paramEmotion && paramCorrect){
-//                  dbSet(paramGenre, paramActor, paramEmotion, paramCorrect)
-//                  break
-//              }
-//        }
+        });
     }
 
     sceneAnalyze()

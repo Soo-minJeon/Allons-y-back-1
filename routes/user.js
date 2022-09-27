@@ -356,14 +356,10 @@ var sceneAnalyze = function(req, res) {
 
     function sceneAnalyze() {
         console.log('sceneAnalyze 함수 호출');
-        //var database = req.app.get('database');
         var paramGenre = null
         var paramActor = null
         var paramEmotion = null
         var paramCorrect = null
-        // 감정맥스 초, 감정 종류 받아오기
-        // var maxSecond = req.body.maxSecond || req.query.maxSecond;
-        //var second = 72333
 
         async function dbSet(paramGenre, paramActor, paramEmotion,paramCorrect) {
             paramActor=''
@@ -422,26 +418,7 @@ var sceneAnalyze = function(req, res) {
                        return user;
                    });
                 }
-//                   await scene(database, paramId, paramGenre, paramActor, paramEmotion,paramCorrect, function(err, result) {
-//                        if(err) {
-//                            console.log('장면분석 정보 등록 에러 발생...');
-//                            console.dir(err);
-//                            res.status(400).send();
-//                            console.log('----------------------------------------------------------------------------')
-//                        }
-//                        // 결과 객체 확인하여 추가된 데이터 있으면 성공 응답 전송
-//                        if(result) {
-//                          console.log('장면분석 정보 등록 성공.');
-//                          console.dir(result);
-//                          res.status(200).send();
-//                          console.log('\n\n');
-//                        } else { // 결과 객체가 없으면 실패 응답 전송
-//                          console.log('장면분석 정보 등록 에러 발생...');
-//                          res.status(400).send();
-//                          console.log('----------------------------------------------------------------------------')
-//                        }
-//                  });
-                }
+            }
             else { // 데이터베이스 객체가 초기화되지 않은 경우 실패 응답 전송
                   console.log('장면분석 정보 등록 에러 발생...');
                   console.dir(err);

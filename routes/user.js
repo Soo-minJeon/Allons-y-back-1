@@ -94,15 +94,15 @@ var login = function(req, res){
         recommend1(database, reco_id, function(err, result1){
             if (result1){
                 console.log(result1)
-                  recommend2(reco_id, function(err, result2) {
-                    if (result2){
-                        recommend3(database,paramId, function(err, result3) {
-                            if(result3) {
-                              recommend4(database, reco_id, function(err, result4){
-                                if(result4){
-                                  // recommend5(function(err, result5){
-                                    // if (result5){
-                                      recommend6(database,function(err, result6) {
+                   recommend2(reco_id, function(err, result2) {
+                     if (result2){
+                         recommend3(database,paramId, function(err, result3) {
+                             if(result3) {
+                               recommend4(database, reco_id, function(err, result4){
+                                 if(result4){
+                                  //  recommend5(function(err, result5){
+                                  //    if (result5){
+                                       recommend6(database,function(err, result6) {
                                         res.status(200).send(JSON.stringify(final_objToSend = {
                                             id: objToSend.id,
                                             name: objToSend.name,
@@ -130,7 +130,7 @@ var login = function(req, res){
                                     //   res.status(404).send();
                                     //   console.log("----------------------------------------------------------------------------");
                                     // }
-                                  // })
+                                    // })
                                 }
                                 else{
                                   console.log('추천4 오류 발생 : ', err)
@@ -520,7 +520,7 @@ var recommend1 = function(db, id, callback){
       console.log(titleArray)
 
       posterArray = []
-      posterArray = array[1].replace(']',"").split(',');
+      posterArray = array[1].replace(']',"").split(','); //replace(']\r\n',"").split(','); // window: \r 문자 제거
       console.log("posterArray:")
       console.log(posterArray)
 
@@ -627,7 +627,7 @@ var recommend3 = function(db, id, callback) { // 수정중
                     console.log(titleArray)
 
                     posterArray = []
-                    posterArray = array[1].replace(']',"").split(',');
+                    posterArray = array[1].replace(']',"").split(','); //replace(']\r\n',"").split(','); // window: \r 문자 제거
                     console.log("posterArray:")
                     console.log(posterArray)
 
@@ -719,7 +719,7 @@ var recommend4 = function(db, id, callback){
       console.log(titleArray)
 
       posterArray = []
-      posterArray = array[1].replace(']',"").split(',');
+      posterArray = array[1].replace(']',"").split(','); // replace(']\r\n',"").split(','); // window: \r 문자 제거
       console.log("posterArray:")
       console.log(posterArray)
 
@@ -766,7 +766,7 @@ var recommend6 = function(db, callback){
       console.log(titleArray)
 
       posterArray = []
-      posterArray = array[1].replace(']',"").split(',');
+      posterArray = array[1].replace(']',"").split(','); // replace(']\r\n',"").split(','); // window: \r 문자 제거
       console.log("posterArray:")
       console.log(posterArray)
 
@@ -1741,13 +1741,14 @@ var makeRoom = async function (req, res) {
   console.log("/makeRoom 라우팅 함수 호출됨");
   var database = req.app.get("database");
   var paramId = req.body.id || req.query.id;
-  var paramRole = req.body.role || req.query.role;
+  //var paramRole = req.body.role || req.query.role;
 
   var RoomToken;
   var RoomCode;
 
   async function makeRTCToken() {
-    RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+    //RoomCode = Math.random().toString(36).substr(2,11); // 랜덤으로 방 초대코드 생성
+    RoomCode = 'test'
 
     const RtcTokenBuilder = require("../rtcToken/RtcTokenBuilder2").RtcTokenBuilder;
     const RtcRole = require("../rtcToken/RtcTokenBuilder2").Role;
@@ -1755,7 +1756,8 @@ var makeRoom = async function (req, res) {
     const appID = personal_info.APP_ID;
     const appCertificate = personal_info.APP_CERTIFICATE;
 
-    const channelName = Math.random().toString(36).substr(2, 11); 
+    const channelName = RoomCode;
+    // const channelName = 'test'; 
     const account = paramId; 
 
     const role = RtcRole.PUBLISHER;
@@ -1821,11 +1823,10 @@ var makeRoom = async function (req, res) {
       }
 
       // get role
-      let role = RtcRole.SUBSCRIBER;
-      //if (req.query.role == 'publisher') {
-      if (req.params.role === "publisher") {
-        role = RtcRole.PUBLISHER;
-      }
+      let role = RtcRole.PUBLISHER;
+      // if (req.params.role === "subscriber") { //req.query.role
+      //   role = RtcRole.SUBSCRIBER;
+      // }
 
       // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
       // let expireTime = req.query.expireTime;
@@ -1910,7 +1911,7 @@ var makeRoom = async function (req, res) {
       if (result.length > 0) {
         console.log("초대 코드 중복, 다시 생성..");
 
-        getToken();
+        makeRTCToken(); //getToken();
       } else {
         var room = new database.RoomModel({ roomToken : RoomToken, roomCode: RoomCode });
         console.log("RoomCode : " + RoomCode);
@@ -2010,11 +2011,10 @@ var enterroom = function(req, res){
             }
 
             // get role
-            let role = RtcRole.SUBSCRIBER;
-            //if (req.query.role == 'publisher') {
-            if (req.params.role === "publisher") {
-              role = RtcRole.PUBLISHER;
-            }
+            let role = RtcRole.PUBLISHER;
+            // if (req.params.role === "subscriber") { //req.query.role
+            //   role = RtcRole.SUBSCRIBER;
+            // }
 
             // 토큰 만료 시간 설정 (선택적으로 전달) - get the expire time
             // let expireTime = req.query.expireTime;

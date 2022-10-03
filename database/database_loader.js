@@ -29,7 +29,7 @@ function connect(app, config) {
     // 연결 끊어졌을 때 5초 후 재연결
     database.db.on("disconnected", function () {
         console.log("연결이 끊어졌습니다. 5초 후 재연결합니다.");
-        setInterval(connectDB, 5000);
+        setInterval(connect, 5000);
     });
 };
 

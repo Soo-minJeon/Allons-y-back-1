@@ -8,6 +8,12 @@ database.init = function(app, config) {
     connect(app, config);
 };
 
+var options = {
+    serverSelectionTimeoutMS : 30000, // default : 30000 // 30 초
+    socketTimeoutMS : 360000, // default : 360000 // 360000ms로 설정하면 30 초 동안 아무런 활동이 없을 경우 소켓이 닫힌다.
+    connectTimeoutMS : 30000 // default : 30000 // 30 초
+};
+
 function connect(app, config) {
     console.log('connect 호출됨.');
 
@@ -15,7 +21,8 @@ function connect(app, config) {
     console.log("데이터베이스 연결을 시도합니다.");
     // 몽구스 초기 설정
     mongoose.Promise = global.Promise; // mongoose의 Promise 객체는 global의 Promise 객체 사용하도록 함
-    mongoose.connect(config.db_url); // db연결 시 connect 호출, 동시에 db 연결 정보를 파라미터로 넘김
+//    mongoose.connect(config.db_url); // db연결 시 connect 호출, 동시에 db 연결 정보를 파라미터로 넘김
+    mongoose.connect(config.db_url, options); // db연결 시 connect 호출, 동시에 db 연결 정보를 파라미터로 넘김
     database.db = mongoose.connection; // db 연결 여부를 mongoose 객체에 들어있는 connection 객체로 확인
 
     database.db.on("error", console.error.bind(console, "mongoose connection error."));
